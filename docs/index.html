@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>quant-notes</title>
+<meta name="description" content="Interactive study notes on systematic trading: concepts explained with simulated labs, every page cited to books and papers.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#F7F5EF;--panel:#FFFFFF;--ink:#1E2430;--muted:#5C6473;--line:#D9D5CB;--accent:#1F6F8B;--accent-soft:#D8E9EF;
+  --display:'Fraunces',Georgia,serif;--body:'Atkinson Hyperlegible',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#12161C;--panel:#1A2029;--ink:#E9E6DF;--muted:#A3AAB6;--line:#2E3540;--accent:#6FB8D1;--accent-soft:#1E3440;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;padding:56px 16px 80px}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(36px,6vw,54px);line-height:1.1;margin:0}
+p{margin:0}.lede{font-size:20px;color:var(--muted)}
+.list{display:flex;flex-direction:column;gap:12px}
+a.card{display:grid;grid-template-columns:52px 1fr;gap:14px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;color:inherit;text-decoration:none}
+a.card:hover{border-color:var(--accent)}
+.num{font-family:var(--mono);font-size:13px;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:6px 0;text-align:center}
+.card b{font-family:var(--display);font-weight:600;font-size:20px;display:block}
+.card span{color:var(--muted);font-size:15px}
+.soon{opacity:.55}
+.note{font-size:14px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">quant-notes · interactive</p>
+  <h1>Notes from building a trading model</h1>
+  <p class="lede">One page per concept, written while building a long/short model on gold and bitcoin from scratch. Each page has sliders you can move, every chart is simulated so the true answer is known, and every page ends with the books and papers it came from.</p>
+  <div class="list">
+    <a class="card" href="ewma.html"><span class="num">02</span><span><b>An average that forgets</b><span>EWMA and volatility: how to measure how bouncy a market is right now, and why that number sizes every position.</span></span></a>
+    <div class="card soon"><span class="num">01</span><span><b>Time-series momentum</b><span>Coming: the trend rule, its lookbacks, and the 2012 paper that measured it across 58 markets.</span></span></div>
+    <div class="card soon"><span class="num">03</span><span><b>The honest backtest</b><span>Coming: the one-bar lag, costs, and the seven ways a backtest lies.</span></span></div>
+  </div>
+  <p class="note">Written by a chemistry graduate learning quantitative trading. Nothing here is investment advice or a performance claim; all series are simulated.</p>
+</div>
+</body>
+</html>

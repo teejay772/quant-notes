@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EWMA and Volatility · quant-notes</title>
+<meta name="description" content="Interactive note: exponentially weighted moving averages and volatility estimation, with simulated labs and sources.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column (~720px) with wide "lab" panels that break out to ~1040px for the interactive charts. */
+:root{
+  --bg:#F7F5EF; --panel:#FFFFFF; --ink:#1E2430; --muted:#5C6473; --line:#D9D5CB;
+  --accent:#1F6F8B; --accent-soft:#D8E9EF; --warm:#C2651E; --warm-soft:#F6E2D2;
+  --good:#2E7D4F; --code-bg:#1B222C; --code-fg:#E8EBF0;
+  --display:'Fraunces',Georgia,serif; --body:'Atkinson Hyperlegible',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#12161C; --panel:#1A2029; --ink:#E9E6DF; --muted:#A3AAB6; --line:#2E3540;
+  --accent:#6FB8D1; --accent-soft:#1E3440; --warm:#E5945A; --warm-soft:#3E2A1C;
+  --good:#6DBE8C; --code-bg:#0D1116; --code-fg:#E8EBF0; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#12161C; --panel:#1A2029; --ink:#E9E6DF; --muted:#A3AAB6; --line:#2E3540;
+  --accent:#6FB8D1; --accent-soft:#1E3440; --warm:#E5945A; --warm-soft:#3E2A1C;
+  --good:#6DBE8C; --code-bg:#0D1116; --code-fg:#E8EBF0; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;
+  padding-block:0 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:720px;margin:0 auto}
+.wide{max-width:1040px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);font-weight:600;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(38px,6vw,58px)}
+h2{font-size:30px;margin-top:64px}
+h3{font-size:21px}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+header{padding-block:56px 24px;display:flex;flex-direction:column;gap:16px}
+.lede{font-size:21px;color:var(--muted);max-width:620px}
+section{display:flex;flex-direction:column;gap:18px}
+.lab{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px;margin-top:8px}
+.lab-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.lab-head .tag{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.controls{display:flex;gap:24px;flex-wrap:wrap}
+.ctl{display:flex;flex-direction:column;gap:6px;flex:1 1 220px;min-width:0}
+.ctl label{font-size:14px;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.ctl output{font-family:var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent);height:28px}
+canvas{width:100%;height:auto;display:block;max-width:100%}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{display:flex;flex-direction:column;gap:2px;padding:10px 12px;background:var(--accent-soft);border-radius:8px}
+.stat b{font-family:var(--mono);font-size:20px;font-weight:500;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted)}
+.formula{font-family:var(--mono);font-size:16px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;white-space:nowrap}
+.formula .k{color:var(--accent)}.formula .w{color:var(--warm)}
+.reading{font-size:15px;color:var(--muted);padding-left:16px;border-left:3px solid var(--accent-soft)}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+.note{font-size:13px;color:var(--muted)}
+.callout{background:var(--warm-soft);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.callout b{color:var(--warm)}
+dfn{font-style:normal;border-bottom:1px dotted var(--accent);cursor:help;position:relative}
+dfn:hover::after,dfn:focus::after{content:attr(title);position:absolute;left:0;top:1.6em;z-index:5;background:var(--ink);color:var(--bg);font-size:13px;line-height:1.4;padding:8px 10px;border-radius:6px;width:260px;max-width:70vw;font-style:normal}
+/* tree */
+.tree{display:flex;flex-direction:column;gap:0;align-items:center}
+.node{background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:10px 14px;font-size:15px;cursor:pointer;text-align:left;color:var(--ink);font-family:var(--body);min-width:0;max-width:100%;display:flex;flex-direction:column;gap:2px}
+.node:hover,.node:focus-visible{border-color:var(--accent);outline:none}
+.node.on{border-color:var(--accent);background:var(--accent-soft)}
+.node small{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.root{border-color:var(--accent);font-weight:700}
+.stem{width:2px;height:22px;background:var(--line)}
+.branches{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%}
+.branch{display:flex;flex-direction:column;align-items:center;gap:8px}
+.branch .kids{display:flex;flex-direction:column;gap:8px;width:100%}
+.explain{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;font-size:15px;display:flex;flex-direction:column;gap:6px;min-height:84px}
+/* flow */
+.flow{display:flex;flex-direction:column;gap:0;align-items:stretch}
+.step{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:start;padding:12px;border-radius:10px;cursor:pointer;border:1.5px solid transparent;background:none;text-align:left;font-family:var(--body);color:var(--ink);width:100%}
+.step:hover,.step:focus-visible{border-color:var(--line);outline:none}
+.step.on{border-color:var(--accent);background:var(--accent-soft)}
+.step .n{font-family:var(--mono);font-size:13px;color:var(--accent);background:var(--panel);border:1px solid var(--line);border-radius:50%;width:32px;height:32px;display:grid;place-items:center}
+.step .t{font-weight:700;font-size:16px}
+.step .c{font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:2px;white-space:pre-wrap;word-break:break-word}
+.step.danger .n{color:var(--warm);border-color:var(--warm)}
+.arrow{width:2px;height:16px;background:var(--line);margin-left:27px}
+pre{margin:0;background:var(--code-bg);color:var(--code-fg);font-family:var(--mono);font-size:13.5px;line-height:1.55;padding:16px 18px;border-radius:10px;overflow-x:auto}
+pre .cm{color:#8FA3B8}pre .kw{color:#9CDCFE}
+.conv{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.conv div{background:var(--accent-soft);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.conv b{font-family:var(--mono);font-weight:500;font-size:18px;font-variant-numeric:tabular-nums}
+.conv span{font-size:12px;color:var(--muted)}
+.conv input{font-family:var(--mono);font-size:18px;width:100%;border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:var(--panel);color:var(--ink)}
+.mistakes{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.mk{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;font-size:15px}
+.mk b{color:var(--warm)}
+.gloss{display:grid;grid-template-columns:1fr;gap:10px;font-size:15px}
+.gloss div{display:grid;grid-template-columns:150px 1fr;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.gloss b{font-family:var(--mono);font-weight:500;font-size:14px}
+button.pill{font-family:var(--body);font-size:14px;padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button.pill:hover{border-color:var(--accent)}
+.bridge{display:flex;gap:10px;align-items:flex-start;font-size:15px;padding:12px 14px;border:1px dashed var(--line);border-radius:10px}
+.bridge .arr{color:var(--accent);font-family:var(--mono)}
+@media (max-width:560px){.branches{grid-template-columns:1fr}.gloss div{grid-template-columns:1fr;gap:2px}h2{font-size:26px}}
+@media (prefers-reduced-motion:no-preference){.node,.step{transition:background .15s,border-color .15s}}
+</style>
+<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}</style>
+</head>
+<body>
+
+
+
+
+
+<header class="wrap">
+  <p class="eyebrow">Quant notes · interactive · EWMA</p>
+  <h1>An average that forgets</h1>
+  <p class="lede">The Exponentially Weighted Moving Average is a running average that trusts recent days more than old ones. In finance it is the standard way to measure how "bouncy" a market is right now, and that number drives how big your positions are. Move the sliders. Every chart updates.</p>
+  <p class="note">All series on this page are simulated so the "true" answer is known. Nothing here is market data or a performance claim.</p>
+</header>
+
+<!-- 1. The idea -->
+<section class="wrap">
+  <h2>1 · Two ways to average</h2>
+  <p>A <strong>simple moving average</strong> looks back a fixed number of days and gives each of them the same vote. Day 20 counts as much as yesterday; day 21 counts for nothing. That sharp edge is unnatural: a market does not suddenly forget what happened three weeks ago.</p>
+  <p>An <strong>EWMA</strong> gives every past day a vote, but each day's vote shrinks by a fixed factor the further back it is. Yesterday counts most, the day before a bit less, and so on forever. There is no edge, only a smooth fade. One number, <span class="formula" style="display:inline;padding:2px 6px">λ</span> (lambda, "the memory"), sets how fast the fade is.</p>
+</section>
+
+<section class="wide">
+  <div class="lab">
+    <div class="lab-head"><h3>Lab A · How much does each past day count?</h3><span class="tag">weights · illustrative</span></div>
+    <div class="controls">
+      <div class="ctl"><label for="lamA">Memory λ <output id="lamAOut">0.94</output></label><input type="range" id="lamA" min="0.70" max="0.99" step="0.005" value="0.94"></div>
+      <div class="ctl"><label for="winA">Simple window (days) <output id="winAOut">20</output></label><input type="range" id="winA" min="5" max="120" step="1" value="20"></div>
+    </div>
+    <canvas id="cvA" width="1000" height="300"></canvas>
+    <div class="legend"><span><i style="background:var(--accent)"></i>EWMA weight per day</span><span><i style="background:var(--warm)"></i>Simple-average weight per day</span></div>
+    <div class="stats">
+      <div class="stat"><b id="hlA">11.1</b><span>half-life, days (weight halves)</span></div>
+      <div class="stat"><b id="comA">15.7</b><span>centre of mass, days ("average age" of the data)</span></div>
+      <div class="stat"><b id="w1A">6.0%</b><span>yesterday's share of the total</span></div>
+      <div class="stat"><b id="w60A">1.4%</b><span>share still held by days older than 60</span></div>
+    </div>
+    <p class="note">Try λ = 0.94: that is the value RiskMetrics made famous for daily data. Try λ = 0.985: that is roughly a 60-day centre of mass, the setting used in the time-series momentum paper on sheet 1.</p>
+  </div>
+</section>
+
+<!-- 2. Formula -->
+<section class="wrap">
+  <h2>2 · The formula, read aloud</h2>
+  <div class="formula">EWMA<sub>t</sub> = <span class="k">λ</span> · EWMA<sub>t−1</sub> + <span class="w">(1 − λ)</span> · x<sub>t</sub></div>
+  <p class="reading">"Today's average is λ parts of yesterday's average plus (1 − λ) parts of today's new observation." You never store the history. You keep one number and nudge it each day.</p>
+  <p>Unrolling that recursion shows where the name comes from. Each old observation ends up multiplied by λ raised to its age:</p>
+  <div class="formula">EWMA<sub>t</sub> = (1 − λ) · [ x<sub>t</sub> + λ x<sub>t−1</sub> + λ<sup>2</sup> x<sub>t−2</sub> + λ<sup>3</sup> x<sub>t−3</sub> + … ]</div>
+  <p class="reading">The weights 1, λ, λ², λ³ … are a geometric series. Multiplying by (1 − λ) makes them sum to exactly one, so it is a true weighted average. The weight is an exponential function of age, hence "exponentially weighted".</p>
+  <p>Three ways to say the same λ, which you will meet in code and papers:</p>
+  <div class="formula">half-life = ln(½) / ln(λ)     centre of mass = λ / (1 − λ)     α = 1 − λ</div>
+  <p class="reading">Half-life: after this many days, a data point has lost half its weight. Centre of mass: the weighted average age of the data being used. α (alpha): the share given to the newest point. All four describe one fade; pick whichever reads most naturally.</p>
+</section>
+
+<!-- 3. Volatility -->
+<section class="wrap">
+  <h2>3 · From averages to volatility</h2>
+  <p><dfn title="The size of a market's typical daily move, up or down. Measured as the standard deviation of returns, usually quoted per year.">Volatility</dfn> is the typical size of a day's move, ignoring direction. A market that moves ±0.5% a day is calm; one that moves ±3% a day is wild. You cannot observe volatility directly. You estimate it from recent <dfn title="Today's price divided by yesterday's, minus one. The percentage change.">returns</dfn>.</p>
+  <p>The recipe is: square each daily return (so up and down moves both count as "movement"), average the squares, take the square root. The only question is <em>which average</em>.</p>
+  <div class="bridge"><span class="arr">→</span><span>Use a simple average of squared returns over a window and you get <strong>rolling realised volatility</strong>, the plain <code style="font-family:var(--mono)">rolling(N).std()</code>.</span></div>
+  <div class="bridge"><span class="arr">→</span><span>Use an EWMA of squared returns and you get <strong>EWMA volatility</strong>, the RiskMetrics estimator.</span></div>
+  <div class="formula">σ<sup>2</sup><sub>t</sub> = <span class="k">λ</span> · σ<sup>2</sup><sub>t−1</sub> + <span class="w">(1 − λ)</span> · r<sup>2</sup><sub>t−1</sub></div>
+  <p class="reading">"Today's variance estimate is λ parts yesterday's estimate plus (1 − λ) parts yesterday's squared return." Note the t−1 on the return: the estimate for today uses only returns you had already seen. Take the square root for σ, then multiply by √252 (trading days) to quote it per year.</p>
+</section>
+
+<section class="wide">
+  <div class="lab">
+    <div class="lab-head"><h3>Lab B · Which estimator tracks a change in volatility faster?</h3><span class="tag">simulated · not market data</span></div>
+    <p class="note">The simulated market is calm, then turns wild on day 200, then calms down on day 350. Because it is simulated, the true volatility is known (grey band). Watch how long each estimator takes to catch up, and how noisy each is while it waits.</p>
+    <div class="controls">
+      <div class="ctl"><label for="lamB">EWMA memory λ <output id="lamBOut">0.94</output></label><input type="range" id="lamB" min="0.80" max="0.99" step="0.005" value="0.94"></div>
+      <div class="ctl"><label for="winB">Rolling window (days) <output id="winBOut">60</output></label><input type="range" id="winB" min="5" max="250" step="1" value="60"></div>
+      <div class="ctl"><label for="seedB">Simulation seed <output id="seedBOut">7</output></label><input type="range" id="seedB" min="1" max="30" step="1" value="7"></div>
+    </div>
+    <canvas id="cvB1" width="1000" height="150"></canvas>
+    <canvas id="cvB2" width="1000" height="300"></canvas>
+    <div class="legend"><span><i style="background:#9AA0AA;height:10px;opacity:.5"></i>true vol (known because simulated)</span><span><i style="background:var(--accent)"></i>EWMA vol</span><span><i style="background:var(--warm)"></i>rolling-window vol</span></div>
+    <div class="stats">
+      <div class="stat"><b id="errE">–</b><span>EWMA: average error vs truth (vol points)</span></div>
+      <div class="stat"><b id="errR">–</b><span>rolling: average error vs truth (vol points)</span></div>
+      <div class="stat"><b id="lagE">–</b><span>EWMA: days to reach 80% of the jump</span></div>
+      <div class="stat"><b id="lagR">–</b><span>rolling: days to reach 80% of the jump</span></div>
+    </div>
+    <div class="callout"><b>What to notice.</b><span>Short memory (low λ, small window) reacts fast but jitters. Long memory is smooth but late. There is no free lunch; you are choosing where on that trade-off to sit. The rolling window also has a second problem: when a wild day finally falls out of the window, the estimate drops suddenly, for no economic reason. EWMA never does that.</span></div>
+  </div>
+</section>
+
+<!-- 4. Family tree -->
+<section class="wrap">
+  <h2>4 · The family of volatility estimators</h2>
+  <p>EWMA is one branch of a bigger tree. Click any box to see what it is, what it needs, and when people use it.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="tree">
+      <button class="node root" data-k="root">Volatility estimators<small>how big are the moves right now?</small></button>
+      <div class="stem"></div>
+      <div class="branches">
+        <div class="branch"><button class="node" data-k="close">From closing prices<small>needs: one price per day</small></button><div class="stem"></div>
+          <div class="kids">
+            <button class="node" data-k="roll">Rolling std (realised vol)<small>equal weights · window N</small></button>
+            <button class="node on" data-k="ewma">EWMA / RiskMetrics<small>fading weights · λ</small></button>
+            <button class="node" data-k="garch">GARCH(1,1)<small>fading weights + a long-run anchor</small></button>
+          </div></div>
+        <div class="branch"><button class="node" data-k="rich">From richer data<small>needs: high/low or intraday prices</small></button><div class="stem"></div>
+          <div class="kids">
+            <button class="node" data-k="park">Parkinson / Garman–Klass<small>uses the day's high and low</small></button>
+            <button class="node" data-k="rv">Intraday realised variance<small>sum of 5-minute squared returns</small></button>
+            <button class="node" data-k="iv">Implied volatility<small>backed out of option prices</small></button>
+          </div></div>
+      </div>
+    </div>
+    <div class="explain" id="treeX"></div>
+  </div>
+</section>
+
+<!-- 5. Flow -->
+<section class="wrap">
+  <h2>5 · Where it sits in a backtest</h2>
+  <p>A <dfn title="A simulation of how a trading rule would have done on past data, run under the strict rule that at each day you only know what was knowable that day.">backtest</dfn> is a pipeline. Volatility enters at one specific step, and the step right after it is where most beginners' backtests silently cheat. Click a step for the detail.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="flow" id="flow">
+      <button class="step" data-k="f1"><span class="n">1</span><span><span class="t">Prices</span><br><span class="c">px: daily closes</span></span></button><div class="arrow"></div>
+      <button class="step" data-k="f2"><span class="n">2</span><span><span class="t">Returns</span><br><span class="c">r = px.pct_change()</span></span></button><div class="arrow"></div>
+      <button class="step on" data-k="f3"><span class="n">3</span><span><span class="t">Volatility estimate (EWMA)</span><br><span class="c">sigma = r.ewm(alpha=1-lam).std() * sqrt(252)</span></span></button><div class="arrow"></div>
+      <button class="step" data-k="f4"><span class="n">4</span><span><span class="t">Signal</span><br><span class="c">sig = sign(px / px.shift(L) - 1)   # or any rule</span></span></button><div class="arrow"></div>
+      <button class="step" data-k="f5"><span class="n">5</span><span><span class="t">Position size = risk target ÷ volatility</span><br><span class="c">pos = sig * target_vol / sigma</span></span></button><div class="arrow"></div>
+      <button class="step danger" data-k="f6"><span class="n">6</span><span><span class="t">Shift one day. The step that keeps you honest.</span><br><span class="c">pos = pos.shift(1)</span></span></button><div class="arrow"></div>
+      <button class="step" data-k="f7"><span class="n">7</span><span><span class="t">P&amp;L and costs</span><br><span class="c">pnl = pos * r - tc * pos.diff().abs()</span></span></button><div class="arrow"></div>
+      <button class="step" data-k="f8"><span class="n">8</span><span><span class="t">Metrics</span><br><span class="c">sharpe = sqrt(252) * pnl.mean() / pnl.std()</span></span></button>
+    </div>
+    <div class="explain" id="flowX"></div>
+  </div>
+</section>
+
+<!-- 6. Code -->
+<section class="wrap">
+  <h2>6 · In pandas</h2>
+  <p>pandas has EWMA built in as <code style="font-family:var(--mono)">.ewm()</code>. It accepts the fade in any of the four spellings from section 2. Type a half-life and see the others.</p>
+  <div class="lab">
+    <div class="conv">
+      <div><span>half-life (days)</span><input id="hlIn" type="number" min="0.5" max="500" step="0.5" value="11"></div>
+      <div><span>λ (lambda)</span><b id="cLam">0.939</b></div>
+      <div><span>alpha = 1 − λ</span><b id="cAlpha">0.061</b></div>
+      <div><span>com = λ/(1−λ)</span><b id="cCom">15.4</b></div>
+      <div><span>span = 2/α − 1</span><b id="cSpan">31.8</b></div>
+    </div>
+    <p class="note">Any one of <code style="font-family:var(--mono)">halflife=, alpha=, com=, span=</code> fully specifies the same fade. Pass exactly one.</p>
+  </div>
+<pre><span class="cm"># r is a pandas Series of daily returns, oldest first</span>
+<span class="cm"># three ways to write the same EWMA volatility (λ ≈ 0.94)</span>
+vol_a = r.ewm(halflife=11).std()
+vol_b = r.ewm(alpha=0.06).std()
+vol_c = r.ewm(com=15.7).std()
+
+<span class="cm"># quoted per year, and lagged one day so today's size uses</span>
+<span class="cm"># only returns that were already known this morning</span>
+sigma = (vol_a * 252 ** 0.5).shift(1)
+
+<span class="cm"># the plain rolling version, for comparison</span>
+sigma_roll = (r.rolling(60).std() * 252 ** 0.5).shift(1)</pre>
+  <p class="note">Default pandas <code style="font-family:var(--mono)">.ewm().std()</code> applies a small bias correction (<code style="font-family:var(--mono)">bias=False</code>) and centres on the mean, so it will not match the RiskMetrics recursion to the last decimal. For sizing positions the difference is irrelevant; for reproducing a paper, pass <code style="font-family:var(--mono)">bias=True</code> and apply it to <code style="font-family:var(--mono)">r**2</code> instead.</p>
+</section>
+
+
+<section class="wrap">
+  <h2>In this project</h2>
+  <div class="callout"><b>How the xau-btc-models backtester spells it.</b><span>This page uses λ = 0.94 and √252, the stock-market conventions from the RiskMetrics document. The project's <code style="font-family:var(--mono)">realised_vol</code> uses <code style="font-family:var(--mono)">r.ewm(span=30, adjust=False).std() * sqrt(365)</code>: span 30 is λ ≈ 0.935, almost the same fade, and 365 because the daily table has one row per calendar day (bitcoin trades every day; gold is forward-filled over weekends and frozen by a tradable mask). The lag is applied once to the whole target, <code style="font-family:var(--mono)">pos = target.shift(1)</code>, which includes the volatility inside it, rather than to σ on its own. Same protection, one place.</span></div>
+</section>
+
+<!-- 7. Mistakes -->
+<section class="wrap">
+  <h2>7 · Three ways this goes wrong</h2>
+  <div class="mistakes">
+    <div class="mk"><b>Peeking.</b><span>Sizing today's trade with a volatility that includes today's return. The fix is one line, <code style="font-family:var(--mono)">.shift(1)</code>, and forgetting it makes results look better than they could ever be in practice.</span></div>
+    <div class="mk"><b>One number for the whole history.</b><span>Dividing by <code style="font-family:var(--mono)">r.std()</code> over the full sample. That uses 2026 to size trades in 2015. Any estimator must be rolling or expanding.</span></div>
+    <div class="mk"><b>Mixing units.</b><span>Daily vol × √252 is annual vol. Comparing a daily σ to an annual target, or using 365 for a 252-day market, quietly scales every position by the wrong factor.</span></div>
+  </div>
+</section>
+
+<!-- 8. Glossary -->
+<section class="wrap">
+  <h2>8 · Words used here</h2>
+  <div class="gloss">
+    <div><b>return</b><span>today's price ÷ yesterday's − 1. A 1% rise is 0.01.</span></div>
+    <div><b>volatility (σ)</b><span>standard deviation of returns: the typical size of a move. Quoted per year by convention.</span></div>
+    <div><b>variance (σ²)</b><span>volatility squared. Easier to average, which is why the recursion runs on squares.</span></div>
+    <div><b>realised vol</b><span>volatility measured from returns that actually happened, as opposed to implied vol, which is what option prices expect.</span></div>
+    <div><b>λ, half-life, com, α</b><span>four spellings of how fast the EWMA forgets. See section 2.</span></div>
+    <div><b>look-ahead bias</b><span>using information in a backtest that was not available at the time. The most common reason a backtest looks too good.</span></div>
+    <div><b>vol targeting</b><span>choosing position size so that each trade carries the same expected risk: size = target ÷ σ.</span></div>
+    <div><b>RiskMetrics</b><span>a 1990s J.P. Morgan risk method that popularised λ = 0.94 for daily EWMA volatility.</span></div>
+    <div><b>GARCH</b><span>an EWMA for variance with one extra term pulling the estimate back toward a long-run level.</span></div>
+  </div>
+  <p class="note" style="margin-top:12px">Companion to sheet 1 (time-series momentum), where the same EWMA, with a 60-day centre of mass, sizes every position.</p>
+</section>
+
+
+<section class="wrap">
+  <h2>Sources</h2>
+  <div class="gloss">
+    <div><b>RiskMetrics</b><span>J.P. Morgan / Reuters, <em>RiskMetrics Technical Document</em>, 4th ed., 1996. The origin of the EWMA variance recursion and the λ = 0.94 daily default (ch. 5).</span></div>
+    <div><b>Carver</b><span>R. Carver, <em>Systematic Trading</em>, Harriman House, 2015. Volatility targeting and position sizing by recent volatility (ch. 9–10); why the estimate should be fast-moving.</span></div>
+    <div><b>Moskowitz et al.</b><span>T. Moskowitz, Y. H. Ooi, L. H. Pedersen, "Time Series Momentum", <em>Journal of Financial Economics</em> 104 (2012). Positions scaled by an EWMA volatility with a 60-day centre of mass (section 2).</span></div>
+    <div><b>Parkinson; Garman–Klass</b><span>M. Parkinson, "The Extreme Value Method for Estimating the Variance of the Rate of Return", <em>Journal of Business</em> 53 (1980); M. Garman and M. Klass, "On the Estimation of Security Price Volatilities from Historical Data", <em>Journal of Business</em> 53 (1980). Range-based estimators in section 4.</span></div>
+    <div><b>Andersen et al.</b><span>T. Andersen, T. Bollerslev, F. Diebold, P. Labys, "Modeling and Forecasting Realized Volatility", <em>Econometrica</em> 71 (2003). Intraday realised variance.</span></div>
+    <div><b>Bollerslev</b><span>T. Bollerslev, "Generalized Autoregressive Conditional Heteroskedasticity", <em>Journal of Econometrics</em> 31 (1986). GARCH(1,1).</span></div>
+    <div><b>pandas</b><span><em>pandas.Series.ewm</em> documentation: the four equivalent spellings <code style="font-family:var(--mono)">com, span, halflife, alpha</code>, and the <code style="font-family:var(--mono)">adjust</code> and <code style="font-family:var(--mono)">bias</code> switches.</span></div>
+  </div>
+  <p class="note" style="margin-top:12px">All charts on this page are generated from simulated series inside the page; no market data is used. Part of <a href="index.html" style="color:var(--accent)">quant-notes</a>.</p>
+</section>
+
+<script>
+(function(){
+const css=k=>getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+const $=id=>document.getElementById(id);
+function setup(c){const dpr=window.devicePixelRatio||1;const W=c.width,H=c.height;const ctx=c.getContext('2d');c.style.aspectRatio=W+'/'+H;
+  if(c._dpr!==dpr){c.width=W*dpr;c.height=H*dpr;c._dpr=dpr;c._W=W;c._H=H;}ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);return {ctx,W,H};}
+// ---------- Lab A ----------
+function drawA(){
+  const lam=+$('lamA').value, win=+$('winA').value;
+  $('lamAOut').value=lam.toFixed(3); $('winAOut').value=win;
+  const hl=Math.log(0.5)/Math.log(lam), com=lam/(1-lam);
+  $('hlA').textContent=hl.toFixed(1); $('comA').textContent=com.toFixed(1);
+  $('w1A').textContent=((1-lam)*100).toFixed(1)+'%'; $('w60A').textContent=(Math.pow(lam,60)*100).toFixed(1)+'%';
+  const c=$('cvA'); const {ctx,W,H}=setup(c);
+  const N=120, padL=44,padR=10,padT=12,padB=26, pw=W-padL-padR, ph=H-padT-padB;
+  const ewW=[],smW=[]; for(let i=0;i<N;i++){ewW.push((1-lam)*Math.pow(lam,i)); smW.push(i<win?1/win:0);}
+  const ymax=Math.max(...ewW,...smW)*1.1;
+  ctx.font='11px '+css('--mono'); ctx.fillStyle=css('--muted'); ctx.strokeStyle=css('--line'); ctx.lineWidth=1;
+  for(let g=0;g<=4;g++){const y=padT+ph-ph*g/4; ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(W-padR,y);ctx.stroke(); ctx.textAlign='right'; ctx.fillText((ymax*g/4*100).toFixed(1)+'%',padL-6,y+4);}
+  ctx.textAlign='center'; for(const d of [0,20,40,60,80,100]){const x=padL+pw*(d+0.5)/N; ctx.fillText(d===0?'yesterday':d+' d ago',x,H-8);}
+  const bw=pw/N;
+  ctx.fillStyle=css('--warm'); ctx.globalAlpha=.55; for(let i=0;i<N;i++){const h=ph*smW[i]/ymax; ctx.fillRect(padL+i*bw,padT+ph-h,bw-0.5,h);} ctx.globalAlpha=1;
+  ctx.fillStyle=css('--accent'); for(let i=0;i<N;i++){const h=ph*ewW[i]/ymax; ctx.fillRect(padL+i*bw,padT+ph-h,Math.max(bw-0.5,1),h);}
+  // half-life marker
+  const xh=padL+pw*(hl+0.5)/N; ctx.strokeStyle=css('--ink'); ctx.setLineDash([3,3]); ctx.beginPath();ctx.moveTo(xh,padT);ctx.lineTo(xh,padT+ph);ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle=css('--ink'); ctx.textAlign='left'; ctx.fillText('half-life '+hl.toFixed(1)+' d',xh+5,padT+12);
+}
+['lamA','winA'].forEach(id=>$(id).addEventListener('input',drawA));
+// ---------- Lab B ----------
+function rng(seed){let s=seed*9301+49297;return()=>{s=(s*1103515245+12345)%2147483648;return s/2147483648;};}
+function gauss(r){let u=0,v=0;while(u===0)u=r();while(v===0)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+const T=500; let sim=null;
+function simulate(seed){const r=rng(seed);const tv=[],ret=[];for(let t=0;t<T;t++){const ann=(t<200)?0.12:(t<350)?0.45:0.18;tv.push(ann);ret.push(gauss(r)*ann/Math.sqrt(252));}sim={tv,ret,seed};}
+function drawB(){
+  const lam=+$('lamB').value, win=+$('winB').value, seed=+$('seedB').value;
+  $('lamBOut').value=lam.toFixed(3); $('winBOut').value=win; $('seedBOut').value=seed;
+  if(!sim||sim.seed!==seed) simulate(seed);
+  const {tv,ret}=sim; const A=Math.sqrt(252);
+  // EWMA variance on squared returns, using r_{t-1}
+  const ew=[]; let v=ret[0]*ret[0]; for(let t=0;t<T;t++){ if(t>0) v=lam*v+(1-lam)*ret[t-1]*ret[t-1]; ew.push(Math.sqrt(v)*A); }
+  const ro=[]; for(let t=0;t<T;t++){ if(t<win){ro.push(NaN);continue;} let s=0,s2=0; for(let i=t-win;i<t;i++){s+=ret[i];s2+=ret[i]*ret[i];} const m=s/win; ro.push(Math.sqrt(Math.max(s2/win-m*m,0)*win/(win-1))*A); }
+  // stats
+  let eE=0,eR=0,nR=0; for(let t=0;t<T;t++){eE+=Math.abs(ew[t]-tv[t]); if(!isNaN(ro[t])){eR+=Math.abs(ro[t]-tv[t]);nR++;}}
+  $('errE').textContent=(eE/T*100).toFixed(1); $('errR').textContent=nR?(eR/nR*100).toFixed(1):'–';
+  const target=0.12+0.8*(0.45-0.12); const lag=(arr)=>{for(let t=200;t<350;t++){if(arr[t]>=target)return t-200;}return '>150';};
+  $('lagE').textContent=lag(ew); $('lagR').textContent=lag(ro);
+  // returns chart
+  {const c=$('cvB1'); const {ctx,W,H}=setup(c); const padL=44,padR=10,padT=8,padB=4,pw=W-padL-padR,ph=H-padT-padB; const ymax=0.06;
+   ctx.font='11px '+css('--mono'); ctx.fillStyle=css('--muted'); ctx.textAlign='right'; ctx.fillText('+6%',padL-6,padT+10); ctx.fillText('−6%',padL-6,H-padB); ctx.fillText('daily',padL-6,padT+ph/2-2); ctx.fillText('return',padL-6,padT+ph/2+10);
+   ctx.strokeStyle=css('--line'); ctx.beginPath();ctx.moveTo(padL,padT+ph/2);ctx.lineTo(W-padR,padT+ph/2);ctx.stroke();
+   ctx.strokeStyle=css('--muted'); ctx.lineWidth=1; for(let t=0;t<T;t++){const x=padL+pw*t/T; const y=padT+ph/2-ph/2*Math.max(-1,Math.min(1,ret[t]/ymax)); ctx.beginPath();ctx.moveTo(x,padT+ph/2);ctx.lineTo(x,y);ctx.stroke();}}
+  // vol chart
+  {const c=$('cvB2'); const {ctx,W,H}=setup(c); const padL=44,padR=10,padT=12,padB=26,pw=W-padL-padR,ph=H-padT-padB; const ymax=0.70;
+   const X=t=>padL+pw*t/T, Y=v=>padT+ph-ph*Math.min(v,ymax)/ymax;
+   ctx.font='11px '+css('--mono'); ctx.fillStyle=css('--muted'); ctx.strokeStyle=css('--line'); ctx.lineWidth=1;
+   for(const g of [0,0.2,0.4,0.6]){ctx.beginPath();ctx.moveTo(padL,Y(g));ctx.lineTo(W-padR,Y(g));ctx.stroke();ctx.textAlign='right';ctx.fillText((g*100).toFixed(0)+'%',padL-6,Y(g)+4);}
+   ctx.textAlign='center'; for(const d of [0,100,200,300,400]){ctx.fillText('day '+d,X(d),H-8);}
+   ctx.fillStyle='#9AA0AA'; ctx.globalAlpha=.25; ctx.beginPath(); ctx.moveTo(X(0),Y(0)); for(let t=0;t<T;t++)ctx.lineTo(X(t),Y(tv[t])); ctx.lineTo(X(T-1),Y(0)); ctx.closePath(); ctx.fill(); ctx.globalAlpha=1;
+   const line=(arr,col,w)=>{ctx.strokeStyle=col;ctx.lineWidth=w;ctx.beginPath();let pen=false;for(let t=0;t<T;t++){if(isNaN(arr[t])){pen=false;continue;}const x=X(t),y=Y(arr[t]);if(!pen){ctx.moveTo(x,y);pen=true;}else ctx.lineTo(x,y);}ctx.stroke();};
+   line(ro,css('--warm'),1.8); line(ew,css('--accent'),2.2);
+   ctx.fillStyle=css('--muted'); ctx.textAlign='left'; ctx.fillText('annualised volatility',padL+6,padT+10);}
+}
+['lamB','winB','seedB'].forEach(id=>$(id).addEventListener('input',drawB));
+// ---------- Tree ----------
+const TREE={
+ root:['Every box below answers one question: how big are the moves right now? They differ in what data they need and how fast they react.'],
+ close:['Needs only a closing price per day, which is what you get from any free data source. This is the branch you will use first.'],
+ roll:['<b>Rolling standard deviation.</b> Take the last N returns, equal weights, compute their standard deviation. Simple and transparent. Weakness: a big day enters and leaves the window abruptly, so the estimate jumps twice for one event. Typical N: 20, 60, 120 days.'],
+ ewma:['<b>EWMA (RiskMetrics).</b> Same idea, but weights fade geometrically with age, controlled by λ. Reacts smoothly, needs no window choice, and stores a single number. λ = 0.94 for daily data is the common default; λ ≈ 0.985 gives a 60-day centre of mass. Weakness: has no notion of a "normal" level, so after a shock it only drifts back as fast as new calm days arrive.'],
+ garch:['<b>GARCH(1,1).</b> σ²<sub>t</sub> = ω + α r²<sub>t−1</sub> + β σ²<sub>t−1</sub>. Set ω = 0 and α + β = 1 and you get EWMA exactly. The extra ω term pulls the estimate back toward a long-run average, so forecasts for next month mean-revert. Parameters are fitted by maximum likelihood rather than chosen. Used for forecasting, less often for day-to-day position sizing.'],
+ rich:['These use more information per day than the close, so they are less noisy, but they need high/low or intraday data, which is harder to get clean for gold spot or crypto.'],
+ park:['<b>Range-based (Parkinson 1980, Garman–Klass 1980).</b> A day\'s high-minus-low range carries a lot of information about that day\'s volatility. Parkinson uses only the range; Garman–Klass adds open and close. Several times more efficient than close-to-close for the same number of days. Weakness: sensitive to bad high/low prints and to markets that close overnight.'],
+ rv:['<b>Intraday realised variance.</b> Sum the squared 5-minute returns inside the day. With enough intraday data this is close to observing the day\'s volatility directly rather than estimating it. This is what "realised volatility" means in the academic literature (Andersen, Bollerslev and co-authors). Weakness: microstructure noise at very fine sampling, and you need tick or minute data.'],
+ iv:['<b>Implied volatility.</b> Not an estimate from past prices at all. It is the volatility that makes an option\'s market price agree with a pricing model (Black–Scholes). It is forward-looking and tends to run above realised vol on average. Useful as a comparison, not as a sizing input for a model that trades the underlying.']
+};
+document.querySelectorAll('.node').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.node').forEach(n=>n.classList.remove('on'));b.classList.add('on');$('treeX').innerHTML=TREE[b.dataset.k][0];}));
+$('treeX').innerHTML=TREE.ewma[0];
+// ---------- Flow ----------
+const FLOW={
+ f1:'A column of closing prices, one per trading day, oldest first. Check for gaps and duplicate dates before anything else; a single doubled row will create a fake 0% return and a fake jump.',
+ f2:'Percentage change from one close to the next. Everything downstream is built on returns, not prices, because returns are comparable across assets and across time.',
+ f3:'The EWMA of squared returns, square-rooted, scaled by √252. This is the "how bouncy is it now" number. λ, half-life, com or span: pick one spelling. The estimate at day t uses returns up to day t.',
+ f4:'The rule that says long or short. Here it is the sign of the trailing return (sheet 1\'s trend rule), but any rule slots in. It too is built only from data up to day t.',
+ f5:'Divide the risk you want by the risk the market is giving you. If target is 10% a year and σ is 40%, hold a quarter-size position. This is why BTC and gold can sit in one book: each is scaled to the same expected risk.',
+ f6:'<b>Shift by one.</b> Steps 3 to 5 used data up to and including day t\'s close. You cannot trade at a close you have not seen yet. So the position computed from day t is held during day t+1. One line, <code style="font-family:var(--mono)">pos.shift(1)</code>. Skip it and your backtest trades on tomorrow\'s news; the "profit" is pure look-ahead.',
+ f7:'Each day\'s profit is the position you were holding times that day\'s return. Costs are charged whenever the position changes: a cost rate times the absolute change in position. Never compute P&L from the percentage change of a spread or of an equity curve.',
+ f8:'Annualised Sharpe is the usual headline: mean daily P&L over its standard deviation, times √252. Report it net of costs and alongside how many variants you tried; a Sharpe picked from fifty attempts is not a Sharpe.'
+};
+document.querySelectorAll('.step').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.step').forEach(n=>n.classList.remove('on'));b.classList.add('on');$('flowX').innerHTML=FLOW[b.dataset.k];}));
+$('flowX').innerHTML=FLOW.f3;
+// ---------- Converter ----------
+function conv(){const hl=Math.max(0.1,+$('hlIn').value||11);const lam=Math.pow(0.5,1/hl),a=1-lam;$('cLam').textContent=lam.toFixed(3);$('cAlpha').textContent=a.toFixed(3);$('cCom').textContent=(lam/(1-lam)).toFixed(1);$('cSpan').textContent=(2/a-1).toFixed(1);}
+$('hlIn').addEventListener('input',conv);
+// ---------- boot ----------
+function all(){drawA();drawB();conv();}
+all();
+window.addEventListener('resize',()=>{drawA();drawB();});
+if(window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',all);}
+new MutationObserver(all).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+</script>
+
+
+</body>
+</html>
