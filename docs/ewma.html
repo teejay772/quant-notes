@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>EWMA and Volatility · quant-notes</title>
-<meta name="description" content="Interactive note: exponentially weighted moving averages and volatility estimation, with simulated labs and sources.">
+<title>EWMA and Volatility</title>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
@@ -25,6 +24,8 @@
   --good:#6DBE8C; --code-bg:#0D1116; --code-fg:#E8EBF0; color-scheme:dark }
 
 *{box-sizing:border-box}
+sub,sup{font-size:0.68em;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-0.55em}sub{top:0.3em}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;
   padding-block:0 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .wrap{max-width:720px;margin:0 auto}
@@ -390,7 +391,7 @@ const TREE={
  close:['Needs only a closing price per day, which is what you get from any free data source. This is the branch you will use first.'],
  roll:['<b>Rolling standard deviation.</b> Take the last N returns, equal weights, compute their standard deviation. Simple and transparent. Weakness: a big day enters and leaves the window abruptly, so the estimate jumps twice for one event. Typical N: 20, 60, 120 days.'],
  ewma:['<b>EWMA (RiskMetrics).</b> Same idea, but weights fade geometrically with age, controlled by λ. Reacts smoothly, needs no window choice, and stores a single number. λ = 0.94 for daily data is the common default; λ ≈ 0.985 gives a 60-day centre of mass. Weakness: has no notion of a "normal" level, so after a shock it only drifts back as fast as new calm days arrive.'],
- garch:['<b>GARCH(1,1).</b> σ²<sub>t</sub> = ω + α r²<sub>t−1</sub> + β σ²<sub>t−1</sub>. Set ω = 0 and α + β = 1 and you get EWMA exactly. The extra ω term pulls the estimate back toward a long-run average, so forecasts for next month mean-revert. Parameters are fitted by maximum likelihood rather than chosen. Used for forecasting, less often for day-to-day position sizing.'],
+ garch:['<b>GARCH(1,1).</b><div class="formula" style="margin:4px 0 2px">σ<sup>2</sup><sub>t</sub> = ω + <span class="w">α</span> · r<sup>2</sup><sub>t−1</sub> + <span class="k">β</span> · σ<sup>2</sup><sub>t−1</sub></div>Read: "today\'s variance = a floor (ω) + α parts yesterday\'s squared return + β parts yesterday\'s variance." Set ω = 0 and α + β = 1 and you get EWMA exactly. The extra ω term pulls the estimate back toward a long-run average, so forecasts for next month mean-revert. Parameters are fitted by maximum likelihood rather than chosen. Used for forecasting, less often for day-to-day position sizing.'],
  rich:['These use more information per day than the close, so they are less noisy, but they need high/low or intraday data, which is harder to get clean for gold spot or crypto.'],
  park:['<b>Range-based (Parkinson 1980, Garman–Klass 1980).</b> A day\'s high-minus-low range carries a lot of information about that day\'s volatility. Parkinson uses only the range; Garman–Klass adds open and close. Several times more efficient than close-to-close for the same number of days. Weakness: sensitive to bad high/low prints and to markets that close overnight.'],
  rv:['<b>Intraday realised variance.</b> Sum the squared 5-minute returns inside the day. With enough intraday data this is close to observing the day\'s volatility directly rather than estimating it. This is what "realised volatility" means in the academic literature (Andersen, Bollerslev and co-authors). Weakness: microstructure noise at very fine sampling, and you need tick or minute data.'],
