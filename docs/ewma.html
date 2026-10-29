@@ -55,6 +55,13 @@ canvas{width:100%;height:auto;display:block;max-width:100%}
 .stat span{font-size:13px;color:var(--muted)}
 .formula{font-family:var(--mono);font-size:16px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;white-space:nowrap}
 .formula .k{color:var(--accent)}.formula .w{color:var(--warm)}
+.formula{display:flex;align-items:center;gap:.35em;flex-wrap:nowrap;line-height:1.4}
+.formula .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 .15em}
+.formula .frac span{padding:0 .3em;white-space:nowrap}
+.formula .frac span:first-child{border-bottom:1.5px solid currentColor}
+.formula .big{font-size:1.4em;line-height:1}
+.formulas{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.formulas .formula{justify-content:center}
 .reading{font-size:15px;color:var(--muted);padding-left:16px;border-left:3px solid var(--accent-soft)}
 .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
 .legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
@@ -86,6 +93,11 @@ dfn:hover::after,dfn:focus::after{content:attr(title);position:absolute;left:0;t
 .step .c{font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:2px;white-space:pre-wrap;word-break:break-word}
 .step.danger .n{color:var(--warm);border-color:var(--warm)}
 .arrow{width:2px;height:16px;background:var(--line);margin-left:27px}
+.flowgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
+.flowgrid .explain{position:relative;margin-top:0;min-height:0}
+.flowgrid .explain::after{content:"";position:absolute;left:-16px;top:18px;border:10px solid transparent;border-right-color:var(--warm);border-left:0}
+@media (prefers-reduced-motion:no-preference){.flowgrid .explain{transition:transform .25s ease}}
+@media (max-width:760px){.flowgrid{grid-template-columns:1fr}.flowgrid .explain{transform:none!important}.flowgrid .explain::after{left:24px;top:-10px;border:10px solid transparent;border-bottom-color:var(--warm);border-top:0}}
 pre{margin:0;background:var(--code-bg);color:var(--code-fg);font-family:var(--mono);font-size:13.5px;line-height:1.55;padding:16px 18px;border-radius:10px;overflow-x:auto}
 pre .cm{color:#8FA3B8}pre .kw{color:#9CDCFE}
 .conv{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
@@ -96,9 +108,12 @@ pre .cm{color:#8FA3B8}pre .kw{color:#9CDCFE}
 .mistakes{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
 .mk{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;font-size:15px}
 .mk b{color:var(--warm)}
+.mk .plain{margin-top:4px;padding:6px 10px;background:var(--warm-soft);border-radius:6px;font-size:14px;line-height:1.5}
 .gloss{display:grid;grid-template-columns:1fr;gap:10px;font-size:15px}
 .gloss div{display:grid;grid-template-columns:150px 1fr;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
 .gloss b{font-family:var(--mono);font-weight:500;font-size:14px}
+.gloss .plain{display:block;margin-top:4px;padding:6px 10px;background:var(--warm-soft);border-radius:6px;font-size:14px;line-height:1.5}
+
 button.pill{font-family:var(--body);font-size:14px;padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
 button.pill:hover{border-color:var(--accent)}
 .bridge{display:flex;gap:10px;align-items:flex-start;font-size:15px;padding:12px 14px;border:1px dashed var(--line);border-radius:10px}
@@ -150,13 +165,18 @@ button.pill:hover{border-color:var(--accent)}
 <section class="wrap">
   <h2>2 · The formula, read aloud</h2>
   <div class="formula">EWMA<sub>t</sub> = <span class="k">λ</span> · EWMA<sub>t−1</sub> + <span class="w">(1 − λ)</span> · x<sub>t</sub></div>
-  <p class="reading">"Today's average is λ parts of yesterday's average plus (1 − λ) parts of today's new observation." You never store the history. You keep one number and nudge it each day.</p>
+  <p class="reading">"Today's average is <span style="color:var(--accent)">λ</span> parts of yesterday's average plus <span style="color:var(--warm)">(1 − λ)</span> parts of today's new observation." You never store the history. You keep one number and nudge it each day. Blue is the share kept from the past; orange is the share given to the newest point. The two always add to 1.</p>
   <p>Unrolling that recursion shows where the name comes from. Each old observation ends up multiplied by λ raised to its age:</p>
-  <div class="formula">EWMA<sub>t</sub> = (1 − λ) · [ x<sub>t</sub> + λ x<sub>t−1</sub> + λ<sup>2</sup> x<sub>t−2</sub> + λ<sup>3</sup> x<sub>t−3</sub> + … ]</div>
-  <p class="reading">The weights 1, λ, λ², λ³ … are a geometric series. Multiplying by (1 − λ) makes them sum to exactly one, so it is a true weighted average. The weight is an exponential function of age, hence "exponentially weighted".</p>
+  <div class="formula">EWMA<sub>t</sub> = <span class="w">(1 − λ)</span> · <span class="big">[</span> x<sub>t</sub> + <span class="k">λ</span> x<sub>t−1</sub> + <span class="k">λ<sup>2</sup></span> x<sub>t−2</sub> + <span class="k">λ<sup>3</sup></span> x<sub>t−3</sub> + … <span class="big">]</span></div>
+  <div class="formula">EWMA<sub>t</sub> = <span class="w">(1 − λ)</span> · <span class="big">Σ</span><sub style="align-self:flex-end">i = 0, 1, 2, …</sub> <span class="k">λ<sup>i</sup></span> · x<sub>t−i</sub></div>
+  <p class="reading">The second line is the first written compactly: Σ means "add up for every i", where i is how many days back the observation is. The weights <span style="color:var(--accent)">1, λ, λ², λ³ …</span> are a geometric series. Multiplying by <span style="color:var(--warm)">(1 − λ)</span> makes them sum to exactly one, so it is a true weighted average. The weight is an exponential function of age, hence "exponentially weighted".</p>
   <p>Three ways to say the same λ, which you will meet in code and papers:</p>
-  <div class="formula">half-life = ln(½) / ln(λ)     centre of mass = λ / (1 − λ)     α = 1 − λ</div>
-  <p class="reading">Half-life: after this many days, a data point has lost half its weight. Centre of mass: the weighted average age of the data being used. α (alpha): the share given to the newest point. All four describe one fade; pick whichever reads most naturally.</p>
+  <div class="formulas">
+    <div class="formula">half-life = <span class="frac"><span>ln(½)</span><span>ln(<span class="k">λ</span>)</span></span></div>
+    <div class="formula">centre of mass = <span class="frac"><span><span class="k">λ</span></span><span><span class="w">1 − λ</span></span></span></div>
+    <div class="formula"><span class="w">α</span> = <span class="w">1 − λ</span></div>
+  </div>
+  <p class="reading">Half-life: after this many days, a data point has lost half its weight. Centre of mass: the weighted average age of the data being used. α (alpha): the share given to the newest point, the same orange quantity as above. All four describe one fade; pick whichever reads most naturally.</p>
 </section>
 
 <!-- 3. Volatility -->
@@ -167,7 +187,8 @@ button.pill:hover{border-color:var(--accent)}
   <div class="bridge"><span class="arr">→</span><span>Use a simple average of squared returns over a window and you get <strong>rolling realised volatility</strong>, the plain <code style="font-family:var(--mono)">rolling(N).std()</code>.</span></div>
   <div class="bridge"><span class="arr">→</span><span>Use an EWMA of squared returns and you get <strong>EWMA volatility</strong>, the RiskMetrics estimator.</span></div>
   <div class="formula">σ<sup>2</sup><sub>t</sub> = <span class="k">λ</span> · σ<sup>2</sup><sub>t−1</sub> + <span class="w">(1 − λ)</span> · r<sup>2</sup><sub>t−1</sub></div>
-  <p class="reading">"Today's variance estimate is λ parts yesterday's estimate plus (1 − λ) parts yesterday's squared return." Note the t−1 on the return: the estimate for today uses only returns you had already seen. Take the square root for σ, then multiply by √252 (trading days) to quote it per year.</p>
+  <div class="formula">σ<sub>annual</sub> = √<span style="border-top:1.5px solid currentColor;padding:0 .2em">σ<sup>2</sup><sub>t</sub></span> · √<span style="border-top:1.5px solid currentColor;padding:0 .2em">252</span></div>
+  <p class="reading">"Today's variance estimate is <span style="color:var(--accent)">λ</span> parts yesterday's estimate plus <span style="color:var(--warm)">(1 − λ)</span> parts yesterday's squared return." Note the t−1 on the return: the estimate for today uses only returns you had already seen. The second line turns it into the number people quote: square root to get back from variance to volatility, then √252 (trading days in a year) to state it per year.</p>
 </section>
 
 <section class="wide">
@@ -232,6 +253,8 @@ button.pill:hover{border-color:var(--accent)}
 </section>
 <section class="wide">
   <div class="lab">
+    <p class="note">Click a step. The explanation appears beside it.</p>
+    <div class="flowgrid">
     <div class="flow" id="flow">
       <button class="step" data-k="f1"><span class="n">1</span><span><span class="t">Prices</span><br><span class="c">px: daily closes</span></span></button><div class="arrow"></div>
       <button class="step" data-k="f2"><span class="n">2</span><span><span class="t">Returns</span><br><span class="c">r = px.pct_change()</span></span></button><div class="arrow"></div>
@@ -243,6 +266,7 @@ button.pill:hover{border-color:var(--accent)}
       <button class="step" data-k="f8"><span class="n">8</span><span><span class="t">Metrics</span><br><span class="c">sharpe = sqrt(252) * pnl.mean() / pnl.std()</span></span></button>
     </div>
     <div class="explain" id="flowX"></div>
+    </div>
   </div>
 </section>
 
@@ -283,26 +307,28 @@ sigma_roll = (r.rolling(60).std() * 252 ** 0.5).shift(1)</pre>
 <!-- 7. Mistakes -->
 <section class="wrap">
   <h2>7 · Three ways this goes wrong</h2>
+  <p>All three are versions of the same error: letting a decision in the past use a number that only existed later.</p>
   <div class="mistakes">
-    <div class="mk"><b>Peeking.</b><span>Sizing today's trade with a volatility that includes today's return. The fix is one line, <code style="font-family:var(--mono)">.shift(1)</code>, and forgetting it makes results look better than they could ever be in practice.</span></div>
-    <div class="mk"><b>One number for the whole history.</b><span>Dividing by <code style="font-family:var(--mono)">r.std()</code> over the full sample. That uses 2026 to size trades in 2015. Any estimator must be rolling or expanding.</span></div>
-    <div class="mk"><b>Mixing units.</b><span>Daily vol × √252 is annual vol. Comparing a daily σ to an annual target, or using 365 for a 252-day market, quietly scales every position by the wrong factor.</span></div>
+    <div class="mk"><b>Using today's move to decide today's trade.</b><span>In a backtest you decide the size of Monday's trade using the volatility number. If that number already includes Monday's return, you are using a move that had not happened yet when the decision was made. In real life you could never do that. In a backtest it is easy to do by accident, and it makes the results look better than any real trader could achieve.</span><span class="plain">Fix: compute the volatility, then push it one day later with <code style="font-family:var(--mono)">.shift(1)</code>, so Monday's trade uses Friday's number.</span></div>
+    <div class="mk"><b>One volatility number for all ten years.</b><span>Taking the standard deviation of the entire history, one number, and using it to size every trade from the first day to the last. The trades in 2015 are then sized with information from 2026. Same problem as above, on a larger scale.</span><span class="plain">Fix: the volatility must be recomputed every day from the days before it. Rolling or EWMA, never one number for the whole sample.</span></div>
+    <div class="mk"><b>Daily numbers mixed with yearly ones.</b><span>Volatility is usually quoted per year, but it is computed from daily returns. Converting between the two means multiplying by the square root of the number of trading days in a year, √252 ≈ 15.9. Compare a daily number to a yearly target without converting, or use 365 for a market that trades 252 days, and every position ends up the wrong size.</span><span class="plain">Fix: decide once whether you work in daily or yearly units, and convert everything to it before dividing.</span></div>
   </div>
 </section>
 
 <!-- 8. Glossary -->
 <section class="wrap">
   <h2>8 · Words used here</h2>
+  <p class="note">Each entry: the technical definition first, then the same idea in everyday words in the orange strip.</p>
   <div class="gloss">
-    <div><b>return</b><span>today's price ÷ yesterday's − 1. A 1% rise is 0.01.</span></div>
-    <div><b>volatility (σ)</b><span>standard deviation of returns: the typical size of a move. Quoted per year by convention.</span></div>
-    <div><b>variance (σ²)</b><span>volatility squared. Easier to average, which is why the recursion runs on squares.</span></div>
-    <div><b>realised vol</b><span>volatility measured from returns that actually happened, as opposed to implied vol, which is what option prices expect.</span></div>
-    <div><b>λ, half-life, com, α</b><span>four spellings of how fast the EWMA forgets. See section 2.</span></div>
-    <div><b>look-ahead bias</b><span>using information in a backtest that was not available at the time. The most common reason a backtest looks too good.</span></div>
-    <div><b>vol targeting</b><span>choosing position size so that each trade carries the same expected risk: size = target ÷ σ.</span></div>
-    <div><b>RiskMetrics</b><span>a 1990s J.P. Morgan risk method that popularised λ = 0.94 for daily EWMA volatility.</span></div>
-    <div><b>GARCH</b><span>an EWMA for variance with one extra term pulling the estimate back toward a long-run level.</span></div>
+    <div><b>return</b><span>today's price ÷ yesterday's − 1. A 1% rise is 0.01.<span class="plain">how much you made or lost in one day, as a percentage. Gold at 100 yesterday and 101 today is a return of 1%.</span></span></div>
+    <div><b>volatility (σ)</b><span>standard deviation of returns: the typical size of a move. Quoted per year by convention.<span class="plain">how jumpy the market is. A calm market moves a little each day, a volatile one swings a lot. It says nothing about direction, only size.</span></span></div>
+    <div><b>variance (σ²)</b><span>volatility squared. Easier to average, which is why the recursion runs on squares.<span class="plain">the same "jumpiness" idea, but squared so that up and down moves do not cancel each other out when you average them. Take the square root to get back to volatility.</span></span></div>
+    <div><b>realised vol</b><span>volatility measured from returns that actually happened, as opposed to implied vol, which is what option prices expect.<span class="plain">how jumpy the market actually was, measured after the fact from the moves that happened. "Implied" vol is instead a guess about the future, read off option prices.</span></span></div>
+    <div><b>λ, half-life, com, α</b><span>four spellings of how fast the EWMA forgets. See section 2.<span class="plain">four dials that all set the same thing: how quickly old days stop mattering. Half-life is the easiest to picture: "after this many days, a day's vote has shrunk to half."</span></span></div>
+    <div><b>look-ahead bias</b><span>using information in a backtest that was not available at the time. The most common reason a backtest looks too good.<span class="plain">accidentally letting your test "see tomorrow's newspaper". Any result built that way is fiction, however good it looks.</span></span></div>
+    <div><b>vol targeting</b><span>choosing position size so that each trade carries the same expected risk: size = target ÷ σ.<span class="plain">bet smaller when the market is jumpy and bigger when it is calm, so that every bet risks about the same amount of money.</span></span></div>
+    <div><b>RiskMetrics</b><span>a 1990s J.P. Morgan risk method that popularised λ = 0.94 for daily EWMA volatility.<span class="plain">a bank's published rule book from the 1990s. Its choice of λ = 0.94 became the default everyone copies.</span></span></div>
+    <div><b>GARCH</b><span>an EWMA for variance with one extra term pulling the estimate back toward a long-run level.<span class="plain">an EWMA that also remembers what "normal" looks like, so after a wild patch it expects things to drift back to normal rather than staying wild forever.</span></span></div>
   </div>
   <p class="note" style="margin-top:12px">Companion to sheet 1 (time-series momentum), where the same EWMA, with a 60-day centre of mass, sizes every position.</p>
 </section>
@@ -411,8 +437,11 @@ const FLOW={
  f7:'Each day\'s profit is the position you were holding times that day\'s return. Costs are charged whenever the position changes: a cost rate times the absolute change in position. Never compute P&L from the percentage change of a spread or of an equity curve.',
  f8:'Annualised Sharpe is the usual headline: mean daily P&L over its standard deviation, times √252. Report it net of costs and alongside how many variants you tried; a Sharpe picked from fifty attempts is not a Sharpe.'
 };
-document.querySelectorAll('.step').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.step').forEach(n=>n.classList.remove('on'));b.classList.add('on');$('flowX').innerHTML=FLOW[b.dataset.k];}));
-$('flowX').innerHTML=FLOW.f3;
+function placeFlowX(){const on=document.querySelector('.step.on'); if(!on) return; const box=$('flowX'); const flow=$('flow');
+  const maxY=Math.max(0,flow.offsetHeight-box.offsetHeight); const y=Math.min(on.offsetTop-flow.offsetTop,maxY); box.style.transform='translateY('+y+'px)';}
+document.querySelectorAll('.step').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.step').forEach(n=>n.classList.remove('on'));b.classList.add('on');$('flowX').innerHTML=FLOW[b.dataset.k];placeFlowX();}));
+$('flowX').innerHTML=FLOW.f3; placeFlowX();
+window.addEventListener('resize',placeFlowX); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(placeFlowX);
 // ---------- Converter ----------
 function conv(){const hl=Math.max(0.1,+$('hlIn').value||11);const lam=Math.pow(0.5,1/hl),a=1-lam;$('cLam').textContent=lam.toFixed(3);$('cAlpha').textContent=a.toFixed(3);$('cCom').textContent=(lam/(1-lam)).toFixed(1);$('cSpan').textContent=(2/a-1).toFixed(1);}
 $('hlIn').addEventListener('input',conv);
