@@ -6,7 +6,7 @@ Each note is one self-contained HTML file: no build step, no framework. Charts a
 series inside the page so the "true" answer is known; no market data and no performance claims.
 Every note ends with the books and papers it draws on.
 
-Live site: https://<username>.github.io/quant-notes/
+Live site: https://teejay772.github.io/quant-notes/
 
 ## Notes
 
