@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>EWMA and Volatility · quant-notes</title>
-<meta name="description" content="Interactive note: exponentially weighted moving averages and volatility estimation, with simulated labs and sources.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EWMA and Volatility</title>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: a single reading column (~720px) with wide "lab" panels that break out to ~1040px for the interactive charts. */
@@ -71,7 +71,8 @@ dfn:hover::after,dfn:focus::after{content:attr(title);position:absolute;left:0;t
 .branches{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%}
 .branch{display:flex;flex-direction:column;align-items:center;gap:8px}
 .branch .kids{display:flex;flex-direction:column;gap:8px;width:100%}
-.explain{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;font-size:15px;display:flex;flex-direction:column;gap:6px;min-height:84px}
+.explain{background:var(--warm-soft);border:1px solid var(--warm);border-left:6px solid var(--warm);border-radius:8px;padding:16px 18px;font-size:15.5px;line-height:1.55;display:flex;flex-direction:column;gap:6px;min-height:84px;margin-top:6px}
+.explain::before{content:"Explanation";font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--warm)}
 /* flow */
 .flow{display:flex;flex-direction:column;gap:0;align-items:stretch}
 .step{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:start;padding:12px;border-radius:10px;cursor:pointer;border:1.5px solid transparent;background:none;text-align:left;font-family:var(--body);color:var(--ink);width:100%}
@@ -102,14 +103,8 @@ button.pill:hover{border-color:var(--accent)}
 @media (max-width:560px){.branches{grid-template-columns:1fr}.gloss div{grid-template-columns:1fr;gap:2px}h2{font-size:26px}}
 @media (prefers-reduced-motion:no-preference){.node,.step{transition:background .15s,border-color .15s}}
 </style>
-<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}</style>
 </head>
 <body>
-
-
-
-
-
 <header class="wrap">
   <p class="eyebrow">Quant notes · interactive · EWMA</p>
   <h1>An average that forgets</h1>
@@ -176,6 +171,10 @@ button.pill:hover{border-color:var(--accent)}
   <div class="lab">
     <div class="lab-head"><h3>Lab B · Which estimator tracks a change in volatility faster?</h3><span class="tag">simulated · not market data</span></div>
     <p class="note">The simulated market is calm, then turns wild on day 200, then calms down on day 350. Because it is simulated, the true volatility is known (grey band). Watch how long each estimator takes to catch up, and how noisy each is while it waits.</p>
+    <div class="callout"><b>How to read the two charts</b>
+      <span><strong>Top strip:</strong> the raw returns, one thin line per day. Up = the market rose that day, down = it fell, length = size of the move. Your eye can already see that days 200–350 have longer lines. That impression is what "volatility" measures.</span>
+      <span><strong>Bottom chart:</strong> the estimators' day-by-day answer to "how volatile is it right now?", in % per year. Grey band = the true setting (12%, 45%, 18%). You never see this in real life; it is here only to grade the estimators. Blue = EWMA's guess. Orange = rolling window's guess. Each day's guess uses only the returns already seen.</span>
+      <span><strong>Four things to try:</strong> (1) at day 200 the truth jumps; count the days until each line gets near it. (2) with a 60-day window, orange climbs in a straight ramp because one more wild day enters the window each day. (3) at day 350 blue falls at once, while orange waits until the wild days leave its window and then drops in a cliff around day 410, when nothing happened in the market. (4) set λ = 0.85 and window = 10: both react fast, but now look at days 0–200 where nothing changes. The wiggle you see there is the price of fast reaction.</span></div>
     <div class="controls">
       <div class="ctl"><label for="lamB">EWMA memory λ <output id="lamBOut">0.94</output></label><input type="range" id="lamB" min="0.80" max="0.99" step="0.005" value="0.94"></div>
       <div class="ctl"><label for="winB">Rolling window (days) <output id="winBOut">60</output></label><input type="range" id="winB" min="5" max="250" step="1" value="60"></div>
@@ -185,10 +184,10 @@ button.pill:hover{border-color:var(--accent)}
     <canvas id="cvB2" width="1000" height="300"></canvas>
     <div class="legend"><span><i style="background:#9AA0AA;height:10px;opacity:.5"></i>true vol (known because simulated)</span><span><i style="background:var(--accent)"></i>EWMA vol</span><span><i style="background:var(--warm)"></i>rolling-window vol</span></div>
     <div class="stats">
-      <div class="stat"><b id="errE">–</b><span>EWMA: average error vs truth (vol points)</span></div>
-      <div class="stat"><b id="errR">–</b><span>rolling: average error vs truth (vol points)</span></div>
-      <div class="stat"><b id="lagE">–</b><span>EWMA: days to reach 80% of the jump</span></div>
-      <div class="stat"><b id="lagR">–</b><span>rolling: days to reach 80% of the jump</span></div>
+      <div class="stat"><b id="errE">–</b><span>EWMA: average gap to the grey band, in percentage points</span></div>
+      <div class="stat"><b id="errR">–</b><span>rolling: average gap to the grey band, in percentage points</span></div>
+      <div class="stat"><b id="lagE">–</b><span>EWMA: days after day 200 to get 80% of the way to 45%</span></div>
+      <div class="stat"><b id="lagR">–</b><span>rolling: days after day 200 to get 80% of the way to 45%</span></div>
     </div>
     <div class="callout"><b>What to notice.</b><span>Short memory (low λ, small window) reacts fast but jitters. Long memory is smooth but late. There is no free lunch; you are choosing where on that trade-off to sit. The rolling window also has a second problem: when a wild day finally falls out of the window, the estimate drops suddenly, for no economic reason. EWMA never does that.</span></div>
   </div>
@@ -273,7 +272,6 @@ sigma_roll = (r.rolling(60).std() * 252 ** 0.5).shift(1)</pre>
   <p class="note">Default pandas <code style="font-family:var(--mono)">.ewm().std()</code> applies a small bias correction (<code style="font-family:var(--mono)">bias=False</code>) and centres on the mean, so it will not match the RiskMetrics recursion to the last decimal. For sizing positions the difference is irrelevant; for reproducing a paper, pass <code style="font-family:var(--mono)">bias=True</code> and apply it to <code style="font-family:var(--mono)">r**2</code> instead.</p>
 </section>
 
-
 <section class="wrap">
   <h2>In this project</h2>
   <div class="callout"><b>How the xau-btc-models backtester spells it.</b><span>This page uses λ = 0.94 and √252, the stock-market conventions from the RiskMetrics document. The project's <code style="font-family:var(--mono)">realised_vol</code> uses <code style="font-family:var(--mono)">r.ewm(span=30, adjust=False).std() * sqrt(365)</code>: span 30 is λ ≈ 0.935, almost the same fade, and 365 because the daily table has one row per calendar day (bitcoin trades every day; gold is forward-filled over weekends and frozen by a tradable mask). The lag is applied once to the whole target, <code style="font-family:var(--mono)">pos = target.shift(1)</code>, which includes the volatility inside it, rather than to σ on its own. Same protection, one place.</span></div>
@@ -305,7 +303,6 @@ sigma_roll = (r.rolling(60).std() * 252 ** 0.5).shift(1)</pre>
   </div>
   <p class="note" style="margin-top:12px">Companion to sheet 1 (time-series momentum), where the same EWMA, with a 60-day centre of mass, sizes every position.</p>
 </section>
-
 
 <section class="wrap">
   <h2>Sources</h2>
@@ -424,7 +421,5 @@ if(window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEvent
 new MutationObserver(all).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 })();
 </script>
-
-
 </body>
 </html>
