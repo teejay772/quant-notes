@@ -122,17 +122,22 @@ button.pill:hover{border-color:var(--accent)}
   <h2>1 · Two ways to average</h2>
   <p>A <strong>simple moving average</strong> looks back a fixed number of days and gives each of them the same vote. Day 20 counts as much as yesterday; day 21 counts for nothing. That sharp edge is unnatural: a market does not suddenly forget what happened three weeks ago.</p>
   <p>An <strong>EWMA</strong> gives every past day a vote, but each day's vote shrinks by a fixed factor the further back it is. Yesterday counts most, the day before a bit less, and so on forever. There is no edge, only a smooth fade. One number, <span class="formula" style="display:inline;padding:2px 6px">λ</span> (lambda, "the memory"), sets how fast the fade is.</p>
+  <div class="callout"><b>Worked example, four days of returns: 1%, 2%, 3%, 4% (4% is yesterday).</b>
+    <span><strong>Simple window of 4.</strong> Every day gets a 25% vote. Average = 0.25·4 + 0.25·3 + 0.25·2 + 0.25·1 = <strong>2.5%</strong>.</span>
+    <span><strong>EWMA with λ = 0.5.</strong> Votes shrink by half each day back: 53%, 27%, 13%, 7% (newest first, scaled to add to 100%). Average = 0.53·4 + 0.27·3 + 0.13·2 + 0.07·1 = <strong>3.3%</strong>.</span>
+    <span>The EWMA answer sits closer to yesterday's 4% because yesterday got the biggest vote. The chart below draws exactly these votes, for 120 days instead of four.</span></div>
 </section>
 
 <section class="wide">
   <div class="lab">
     <div class="lab-head"><h3>Lab A · How much does each past day count?</h3><span class="tag">weights · illustrative</span></div>
+    <p class="note">This chart shows no prices or returns. It shows the <strong>recipe</strong>. Each bar is one past day (yesterday on the left, older to the right). Bar height is that day's vote: what share of the final average comes from that day. Each colour's bars add up to 100%.</p>
     <div class="controls">
       <div class="ctl"><label for="lamA">Memory λ <output id="lamAOut">0.94</output></label><input type="range" id="lamA" min="0.70" max="0.99" step="0.005" value="0.94"></div>
       <div class="ctl"><label for="winA">Simple window (days) <output id="winAOut">20</output></label><input type="range" id="winA" min="5" max="120" step="1" value="20"></div>
     </div>
     <canvas id="cvA" width="1000" height="300"></canvas>
-    <div class="legend"><span><i style="background:var(--accent)"></i>EWMA weight per day</span><span><i style="background:var(--warm)"></i>Simple-average weight per day</span></div>
+    <div class="legend"><span><i style="background:var(--accent)"></i>EWMA: each bar is 94% of the one before it (at λ = 0.94), never reaching zero</span><span><i style="background:var(--warm)"></i>Simple average: equal bars inside the window, nothing outside it</span></div>
     <div class="stats">
       <div class="stat"><b id="hlA">11.1</b><span>half-life, days (weight halves)</span></div>
       <div class="stat"><b id="comA">15.7</b><span>centre of mass, days ("average age" of the data)</span></div>
@@ -342,6 +347,8 @@ function drawA(){
   // half-life marker
   const xh=padL+pw*(hl+0.5)/N; ctx.strokeStyle=css('--ink'); ctx.setLineDash([3,3]); ctx.beginPath();ctx.moveTo(xh,padT);ctx.lineTo(xh,padT+ph);ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle=css('--ink'); ctx.textAlign='left'; ctx.fillText('half-life '+hl.toFixed(1)+' d',xh+5,padT+12);
+  ctx.fillStyle=css('--muted'); ctx.textAlign='right'; ctx.fillText('↑ share of the average given to that day',W-padR,padT+12);
+  ctx.textAlign='right'; ctx.fillText('how many days ago →',W-padR,H-8);
 }
 ['lamA','winA'].forEach(id=>$(id).addEventListener('input',drawA));
 // ---------- Lab B ----------
