@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Honest Backtest · quant-notes</title>
 <meta name="description" content="Interactive note: what a backtest is, the one-bar lag, costs, the multiple-testing trap, walk-forward testing, and the seven ways a backtest lies.">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: a single reading column (~720px) with wide "lab" panels that break out to ~1040px for the interactive charts and tables. */
@@ -102,8 +101,15 @@ a{color:var(--accent)}
 @media (max-width:560px){.gloss div{grid-template-columns:1fr;gap:2px}h2{font-size:26px}}
 @media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
 </style>
+<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}</style>
 </head>
 <body>
+
+<meta name="description" content="Interactive note: what a backtest is, the one-bar lag, costs, the multiple-testing trap, walk-forward testing, and the seven ways a backtest lies.">
+
+
+
+
 <header class="wrap">
   <p class="eyebrow">Quant notes · interactive · 03 the honest backtest</p>
   <h1>A backtest can only tell you what would not have worked</h1>
@@ -434,5 +440,7 @@ if(window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEvent
 new MutationObserver(all).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 })();
 </script>
+
+
 </body>
 </html>

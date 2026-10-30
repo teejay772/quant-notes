@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>EWMA and Volatility · quant-notes</title>
 <meta name="description" content="Interactive note: exponentially weighted moving averages and volatility estimation, with simulated labs and sources.">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: a single reading column (~720px) with wide "lab" panels that break out to ~1040px for the interactive charts. */
@@ -57,8 +56,8 @@ canvas{width:100%;height:auto;display:block;max-width:100%}
 .formula .k{color:var(--accent)}.formula .w{color:var(--warm)}
 .formula{display:flex;align-items:center;gap:.35em;flex-wrap:nowrap;line-height:1.4}
 .formula .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 .15em}
-.formula .frac span{padding:0 .3em;white-space:nowrap}
-.formula .frac span:first-child{border-bottom:1.5px solid currentColor}
+.formula .frac > span{padding:0 .3em;white-space:nowrap}
+.formula .frac > span:first-child{border-bottom:1.5px solid currentColor}
 .formula .big{font-size:1.4em;line-height:1}
 .formulas{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
 .formulas .formula{justify-content:center}
@@ -121,8 +120,15 @@ button.pill:hover{border-color:var(--accent)}
 @media (max-width:560px){.branches{grid-template-columns:1fr}.gloss div{grid-template-columns:1fr;gap:2px}h2{font-size:26px}}
 @media (prefers-reduced-motion:no-preference){.node,.step{transition:background .15s,border-color .15s}}
 </style>
+<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}</style>
 </head>
 <body>
+
+<meta name="description" content="Interactive note: exponentially weighted moving averages and volatility estimation, with simulated labs and sources.">
+
+
+
+
 <header class="wrap">
   <p class="eyebrow">Quant notes · interactive · EWMA</p>
   <h1>An average that forgets</h1>
@@ -330,7 +336,7 @@ sigma_roll = (r.rolling(60).std() * 252 ** 0.5).shift(1)</pre>
     <div><b>RiskMetrics</b><span>a 1990s J.P. Morgan risk method that popularised λ = 0.94 for daily EWMA volatility.<span class="plain">a bank's published rule book from the 1990s. Its choice of λ = 0.94 became the default everyone copies.</span></span></div>
     <div><b>GARCH</b><span>an EWMA for variance with one extra term pulling the estimate back toward a long-run level.<span class="plain">an EWMA that also remembers what "normal" looks like, so after a wild patch it expects things to drift back to normal rather than staying wild forever.</span></span></div>
   </div>
-  <p class="note" style="margin-top:12px">Companion to sheet 1 (time-series momentum), where the same EWMA, with a 60-day centre of mass, sizes every position.</p>
+  <p class="note" style="margin-top:12px">Companion to <a href="momentum.html" style="color:var(--accent)">sheet 1 (time-series momentum)</a>, where the same EWMA, with a 60-day centre of mass, sizes every position.</p>
 </section>
 
 <section class="wrap">
@@ -344,7 +350,7 @@ sigma_roll = (r.rolling(60).std() * 252 ** 0.5).shift(1)</pre>
     <div><b>Bollerslev</b><span>T. Bollerslev, "Generalized Autoregressive Conditional Heteroskedasticity", <em>Journal of Econometrics</em> 31 (1986). GARCH(1,1).</span></div>
     <div><b>pandas</b><span><em>pandas.Series.ewm</em> documentation: the four equivalent spellings <code style="font-family:var(--mono)">com, span, halflife, alpha</code>, and the <code style="font-family:var(--mono)">adjust</code> and <code style="font-family:var(--mono)">bias</code> switches.</span></div>
   </div>
-  <p class="note" style="margin-top:12px">All charts on this page are generated from simulated series inside the page; no market data is used. Part of <a href="index.html" style="color:var(--accent)">quant-notes</a>.</p>
+  <p class="note" style="margin-top:12px">All charts on this page are generated from simulated series inside the page; no market data is used. Part of <a href="index.html" style="color:var(--accent)">quant-notes</a>. See also <a href="momentum.html" style="color:var(--accent)">01 · momentum</a>, <a href="backtest.html" style="color:var(--accent)">03 · the honest backtest</a> and <a href="backtester.html" style="color:var(--accent)">04 · the backtester, line by line</a>.</p>
 </section>
 
 <script>
@@ -453,5 +459,7 @@ if(window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEvent
 new MutationObserver(all).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 })();
 </script>
+
+
 </body>
 </html>

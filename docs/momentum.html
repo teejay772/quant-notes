@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Time-series Momentum · quant-notes</title>
 <meta name="description" content="Interactive note: the trend-following rule, why it works, how the lookback changes it, and what a century of evidence says.">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: a single reading column (~720px) with wide "lab" panels that break out to ~1040px for the interactive charts. */
@@ -106,8 +105,15 @@ a{color:var(--accent)}
 @media (max-width:560px){.branches{grid-template-columns:1fr}.gloss div{grid-template-columns:1fr;gap:2px}h2{font-size:26px}.stages{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:no-preference){.node,.stage{transition:background .15s,border-color .15s}}
 </style>
+<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}</style>
 </head>
 <body>
+
+<meta name="description" content="Interactive note: the trend-following rule, why it works, how the lookback changes it, and what a century of evidence says.">
+
+
+
+
 <header class="wrap">
   <p class="eyebrow">Quant notes · interactive · 01 momentum</p>
   <h1>Things that went up keep going up, for a while</h1>
@@ -305,11 +311,11 @@ signal = sum(np.sign(px / px.shift(k) - 1) for k in (63, 126, 252)) / 3</pre>
   <div class="gloss">
     <div><b>Moskowitz et al.</b><span>T. Moskowitz, Y. H. Ooi, L. H. Pedersen, "Time Series Momentum", <em>Journal of Financial Economics</em> 104 (2012), 228–250. Sections 1–4 and 6; the return formula is their eq. 5.</span></div>
     <div><b>Hurst et al.</b><span>B. Hurst, Y. H. Ooi, L. H. Pedersen, "A Century of Evidence on Trend-Following Investing", <em>Journal of Portfolio Management</em> 44:1 (2017). Sample, lookback mix, decade and crisis results.</span></div>
-    <div><b>Carver</b><span>R. Carver, <em>Systematic Trading</em>, Harriman House, 2015. Forecasts and EWMAC (ch. 7), volatility targeting (ch. 9), position sizing (ch. 10), speed and costs (ch. 12).</span></div>
-    <div><b>Jegadeesh &amp; Titman</b><span>N. Jegadeesh, S. Titman, "Returns to Buying Winners and Selling Losers", <em>Journal of Finance</em> 48 (1993). Cross-sectional momentum in US stocks.</span></div>
-    <div><b>López de Prado</b><span>M. López de Prado, <em>Advances in Financial Machine Learning</em>, Wiley, 2018, ch. 11–12; and Bailey &amp; López de Prado, "The Deflated Sharpe Ratio" (2014). Why the best parameter on one history is not a result.</span></div>
+    <div><b>Bailey &amp; López de Prado</b><span>D. Bailey, M. López de Prado, "The Deflated Sharpe Ratio: Correcting for Selection Bias, Backtest Overfitting and Non-Normality" (2014). Why the best lookback on one history is not a result (Lab B).</span></div>
+    <div><b>Bailey, Borwein, López de Prado &amp; Zhu</b><span>"Pseudo-Mathematics and Financial Charlatanism: The Effects of Backtest Overfitting on Out-of-Sample Performance", <em>Notices of the AMS</em> (2014). Same lesson, with the maths.</span></div>
     <div><b>Project notes</b><span>The Quant Notes doc and <code style="font-family:var(--mono)">notes/research_log.md</code> in xau-btc-models: week-1 numbers and the repo rules.</span></div>
   </div>
+  <p class="note" style="margin-top:12px">Named on this page but not in the Literature folder, so quoted from the reading list rather than from the text: R. Carver, <em>Systematic Trading</em> (2015), for EWMAC and the forecast scaling in section 5; N. Jegadeesh and S. Titman, "Returns to Buying Winners and Selling Losers", <em>Journal of Finance</em> 48 (1993), for cross-sectional momentum.</p>
   <p class="note" style="margin-top:12px">All charts on this page are generated from simulated series inside the page; no market data is used. Part of <a href="index.html">quant-notes</a>. Next: the <a href="ewma.html">EWMA page</a>, which supplies the σ that sizes every position here.</p>
 </section>
 
@@ -423,5 +429,7 @@ if(window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEvent
 new MutationObserver(all).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 })();
 </script>
+
+
 </body>
 </html>
