@@ -32,9 +32,10 @@ a.card:hover{border-color:var(--accent)}
   <h1>Notes from building a trading model</h1>
   <p class="lede">One page per concept, written while building a long/short model on gold and bitcoin from scratch. Each page has sliders you can move, every chart is simulated so the true answer is known, and every page ends with the books and papers it came from.</p>
   <div class="list">
+    <a class="card" href="momentum.html"><span class="num">01</span><span><b>Things that went up keep going up, for a while</b><span>Time-series momentum: the trend rule, why it works, the lookback trade-off, and a century of evidence.</span></span></a>
     <a class="card" href="ewma.html"><span class="num">02</span><span><b>An average that forgets</b><span>EWMA and volatility: how to measure how bouncy a market is right now, and why that number sizes every position.</span></span></a>
-    <div class="card soon"><span class="num">01</span><span><b>Time-series momentum</b><span>Coming: the trend rule, its lookbacks, and the 2012 paper that measured it across 58 markets.</span></span></div>
-    <div class="card soon"><span class="num">03</span><span><b>The honest backtest</b><span>Coming: the one-bar lag, costs, and the seven ways a backtest lies.</span></span></div>
+    <a class="card" href="backtest.html"><span class="num">03</span><span><b>A backtest can only tell you what would not have worked</b><span>The honest backtest: six days by hand, the one-bar lag, costs, the best-of-N trap, walk-forward, and the seven ways a backtest lies.</span></span></a>
+    <a class="card" href="backtester.html"><span class="num">04</span><span><b>The backtester, line by line</b><span>backtest.py read function by function: the six-day example computed live, label the lines, the twelve pandas methods, stats, walk-forward, and the seven interview questions.</span></span></a>
   </div>
   <p class="note">Written by a chemistry graduate learning quantitative trading. Nothing here is investment advice or a performance claim; all series are simulated.</p>
 </div>

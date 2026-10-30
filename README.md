@@ -12,7 +12,10 @@ Live site: https://teejay772.github.io/quant-notes/
 
 | # | Page | Topic |
 |---|---|---|
+| 01 | docs/momentum.html | Time-series momentum (trend following) |
 | 02 | docs/ewma.html | EWMA and volatility estimation |
+| 03 | docs/backtest.html | The honest backtest |
+| 04 | docs/backtester.html | The backtester, line by line (backtest.py) |
 
 ## Adding a note
 

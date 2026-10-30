@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Honest Backtest · quant-notes</title>
+<meta name="description" content="Interactive note: what a backtest is, the one-bar lag, costs, the multiple-testing trap, walk-forward testing, and the seven ways a backtest lies.">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column (~720px) with wide "lab" panels that break out to ~1040px for the interactive charts and tables. */
+:root{
+  --bg:#F7F5EF; --panel:#FFFFFF; --ink:#1E2430; --muted:#5C6473; --line:#D9D5CB;
+  --accent:#1F6F8B; --accent-soft:#D8E9EF; --warm:#C2651E; --warm-soft:#F6E2D2;
+  --good:#2E7D4F; --good-soft:#D9EDE0; --bad:#B23A3A; --bad-soft:#F3DADA; --code-bg:#1B222C; --code-fg:#E8EBF0;
+  --display:'Fraunces',Georgia,serif; --body:'Atkinson Hyperlegible',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#12161C; --panel:#1A2029; --ink:#E9E6DF; --muted:#A3AAB6; --line:#2E3540;
+  --accent:#6FB8D1; --accent-soft:#1E3440; --warm:#E5945A; --warm-soft:#3E2A1C;
+  --good:#6DBE8C; --good-soft:#1E3A2A; --bad:#E07A7A; --bad-soft:#3F2323; --code-bg:#0D1116; --code-fg:#E8EBF0; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#12161C; --panel:#1A2029; --ink:#E9E6DF; --muted:#A3AAB6; --line:#2E3540;
+  --accent:#6FB8D1; --accent-soft:#1E3440; --warm:#E5945A; --warm-soft:#3E2A1C;
+  --good:#6DBE8C; --good-soft:#1E3A2A; --bad:#E07A7A; --bad-soft:#3F2323; --code-bg:#0D1116; --code-fg:#E8EBF0; color-scheme:dark }
+
+*{box-sizing:border-box}
+sub,sup{font-size:0.68em;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-0.55em}sub{top:0.3em}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;
+  padding-block:0 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:720px;margin:0 auto}
+.wide{max-width:1040px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);font-weight:600;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(38px,6vw,58px)}
+h2{font-size:30px;margin-top:64px}
+h3{font-size:21px}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+header{padding-block:56px 24px;display:flex;flex-direction:column;gap:16px}
+.lede{font-size:21px;color:var(--muted);max-width:620px}
+section{display:flex;flex-direction:column;gap:18px}
+.lab{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px;margin-top:8px}
+.lab-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.lab-head .tag{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.controls{display:flex;gap:24px;flex-wrap:wrap}
+.ctl{display:flex;flex-direction:column;gap:6px;flex:1 1 200px;min-width:0}
+.ctl label{font-size:14px;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.ctl output{font-family:var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent);height:28px}
+canvas{width:100%;height:auto;display:block;max-width:100%}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{display:flex;flex-direction:column;gap:2px;padding:10px 12px;background:var(--accent-soft);border-radius:8px}
+.stat b{font-family:var(--mono);font-size:20px;font-weight:500;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted)}
+.stat.bad{background:var(--bad-soft)}.stat.good{background:var(--good-soft)}
+.formula{font-family:var(--mono);font-size:16px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;white-space:nowrap;display:flex;align-items:center;gap:.35em;line-height:1.4}
+.formula .k{color:var(--accent)}.formula .w{color:var(--warm)}
+.formula .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 .15em}
+.formula .frac > span{padding:0 .3em;white-space:nowrap}
+.formula .frac > span:first-child{border-bottom:1.5px solid currentColor}
+.reading{font-size:15px;color:var(--muted);padding-left:16px;border-left:3px solid var(--accent-soft)}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+.note{font-size:13px;color:var(--muted)}
+.callout{background:var(--warm-soft);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.callout b{color:var(--warm)}
+dfn{font-style:normal;border-bottom:1px dotted var(--accent);cursor:help;position:relative}
+dfn:hover::after,dfn:focus::after{content:attr(title);position:absolute;left:0;top:1.6em;z-index:5;background:var(--ink);color:var(--bg);font-size:13px;line-height:1.4;padding:8px 10px;border-radius:6px;width:260px;max-width:70vw;font-style:normal}
+/* hand table */
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font-family:var(--mono);font-size:13.5px;font-variant-numeric:tabular-nums;width:100%;min-width:760px}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-weight:500;color:var(--muted);font-size:12px;letter-spacing:.04em;text-transform:uppercase;border-bottom:2px solid var(--line)}
+td:first-child,th:first-child{text-align:left}
+td input{font-family:var(--mono);font-size:13.5px;width:64px;text-align:right;border:1px solid var(--line);border-radius:5px;padding:3px 5px;background:var(--panel);color:var(--ink)}
+td button.sig{font-family:var(--mono);font-size:13.5px;width:44px;border:1.5px solid var(--line);border-radius:5px;padding:3px 0;background:var(--panel);color:var(--ink);cursor:pointer}
+td button.sig.long{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+td button.sig.short{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+td.pos{font-weight:700}
+th.hi,td.hi{background:var(--accent-soft)}
+/* toggle */
+.toggle{display:inline-flex;border:1.5px solid var(--line);border-radius:999px;overflow:hidden}
+.toggle button{font-family:var(--body);font-size:14px;padding:7px 14px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
+.toggle button.on{background:var(--accent);color:#fff}
+/* steps / cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.card{background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;font-size:15px;cursor:pointer;text-align:left;color:var(--ink);font-family:var(--body);display:flex;flex-direction:column;gap:3px;min-width:0}
+.card:hover,.card:focus-visible{border-color:var(--accent);outline:none}
+.card.on{border-color:var(--accent);background:var(--accent-soft)}
+.card small{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.card b{font-size:15.5px}
+.explain{background:var(--warm-soft);border:1px solid var(--warm);border-left:6px solid var(--warm);border-radius:8px;padding:16px 18px;font-size:15.5px;line-height:1.55;display:flex;flex-direction:column;gap:6px;min-height:84px;margin-top:6px}
+.explain::before{content:"Explanation";font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--warm)}
+pre{margin:0;background:var(--code-bg);color:var(--code-fg);font-family:var(--mono);font-size:13.5px;line-height:1.55;padding:16px 18px;border-radius:10px;overflow-x:auto}
+pre .cm{color:#8FA3B8}
+.gloss{display:grid;grid-template-columns:1fr;gap:10px;font-size:15px}
+.gloss div{display:grid;grid-template-columns:150px 1fr;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.gloss b{font-family:var(--mono);font-weight:500;font-size:14px}
+.gloss .plain{display:block;margin-top:4px;padding:6px 10px;background:var(--warm-soft);border-radius:6px;font-size:14px;line-height:1.5}
+a{color:var(--accent)}
+@media (max-width:560px){.gloss div{grid-template-columns:1fr;gap:2px}h2{font-size:26px}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <p class="eyebrow">Quant notes · interactive · 03 the honest backtest</p>
+  <h1>A backtest can only tell you what would not have worked</h1>
+  <p class="lede">A backtest replays a trading rule over past prices as if you had been there, using only what you could have known each day, and subtracts what trading would have cost. Done honestly it is the most useful tool you have. Done carelessly it will show you a fortune that was never available. This page builds one by hand, then shows the four ways it lies and the checks that catch them.</p>
+  <p class="note">All series on this page are simulated so the "true" answer is known. Nothing here is market data or a performance claim.</p>
+</header>
+
+<!-- 1 -->
+<section class="wrap">
+  <h2>1 · A backtest is a table</h2>
+  <p>Each column uses only the columns to its left, and each row is one day. Read left to right: <strong>price → return → signal → position → turnover → cost → gross → net → equity</strong>. Two columns carry all the honesty. <em>Position</em> is <em>yesterday's</em> signal, because you decide at the close and hold from the next day. <em>Cost</em> is charged every time the position changes.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="lab-head"><h3>Lab A · Six days by hand</h3><span class="tag">the project's worked example</span></div>
+    <p class="note">The six prices and the signal are the ones in the project's Code Walkthrough. Change a price, click a signal to cycle it through +1 / −1 / 0, or change the cost, and watch every column to the right recompute. The highlighted column is the one-bar lag.</p>
+    <div class="controls">
+      <div class="ctl"><label for="costT">Cost per unit traded (bps) <output id="costTOut">10</output></label><input type="range" id="costT" min="0" max="50" step="1" value="10"></div>
+      <div class="ctl"><span style="font-size:14px;color:var(--muted)">Reset</span><button class="sig" id="resetT" style="font-family:var(--body);font-size:14px;padding:7px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer">Back to the walkthrough's numbers</button></div>
+    </div>
+    <div class="tbl"><table id="handT">
+      <thead><tr><th>Day</th><th>Price</th><th>Return</th><th>Signal</th><th class="hi">Position</th><th>Turnover</th><th>Cost</th><th>Gross</th><th>Net</th><th>Equity</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="stats">
+      <div class="stat"><b id="eqT">1.0064</b><span>equity after day 6 (growth of $1)</span></div>
+      <div class="stat"><b id="costSumT">0.30%</b><span>total paid in costs</span></div>
+      <div class="stat"><b id="flipT">1</b><span>long-to-short flips (each costs double)</span></div>
+    </div>
+    <div class="callout"><b>Read the table.</b><span>Day 2's signal says +1, but the position on day 2 is still 0: the decision is made at day 2's close and held from day 3. On day 4 the signal flips to −1 while the position is still +1, so the model is long on a day it has decided to go short; the short is held from day 5. A flip from +1 to −1 is a turnover of 2 (close the long, open the short), so it costs twice a plain entry. With 10 bps costs the walkthrough's equity ends at 1.0064; set costs to 0 and it ends at 1.0094.</span></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="formula">position<sub>t</sub> = target<sub>t−1</sub></div>
+  <p class="reading">The one line that makes the backtest honest. The target computed from day t−1's close is the position held during day t. In pandas it is <code style="font-family:var(--mono)">target.shift(1)</code>.</p>
+  <div class="formula">net<sub>t</sub> = position<sub>t</sub> · r<sub>t</sub> − <span class="w">|Δposition<sub>t</sub>| · c</span> − <span class="k">|position<sub>t</sub>| · <span class="frac"><span>carry</span><span>bars per year</span></span></span></div>
+  <p class="reading">Today's profit is the position held times today's return, minus <span style="color:var(--warm)">a cost on every change of position</span>, minus <span style="color:var(--accent)">a daily slice of the financing or funding for holding it</span>. Equity is the running product of (1 + net).</p>
+</section>
+
+<!-- 2 -->
+<section class="wrap">
+  <h2>2 · Lie one: the backtest can see tomorrow</h2>
+  <p><dfn title="Using information in a backtest that was not available at the time the decision was made.">Look-ahead bias</dfn> is the most common and the most flattering error. Delete the lag and the position on day t is computed from day t's own close, so the rule is trading on a price it has not seen yet. The lab below runs the same rule twice on a market that has <strong>no trend at all</strong>, so an honest rule should make nothing.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="lab-head"><h3>Lab B · The same rule, with and without the lag</h3><span class="tag">simulated · no edge in the data</span></div>
+    <div class="controls">
+      <div class="ctl"><label for="lookB">Lookback (days) <output id="lookBOut">5</output></label><input type="range" id="lookB" min="1" max="60" step="1" value="5"></div>
+      <div class="ctl"><label for="seedB">Simulation seed <output id="seedBOut">4</output></label><input type="range" id="seedB" min="1" max="30" step="1" value="4"></div>
+    </div>
+    <canvas id="cvB" width="1000" height="260"></canvas>
+    <div class="legend"><span><i style="background:var(--bad)"></i>cheating: position uses today's close</span><span><i style="background:var(--accent)"></i>honest: position is yesterday's decision</span></div>
+    <div class="stats">
+      <div class="stat bad"><b id="srCheat">–</b><span>cheating Sharpe (annualised)</span></div>
+      <div class="stat good"><b id="srHon">–</b><span>honest Sharpe</span></div>
+      <div class="stat"><b id="pnlCheat">–</b><span>cheating total profit</span></div>
+      <div class="stat"><b id="pnlHon">–</b><span>honest total profit</span></div>
+    </div>
+    <div class="callout"><b>What you are seeing.</b><span>The market here is a pure random walk with the trend dial at zero: there is nothing to find. The honest line wanders around zero, as it should. The cheating line climbs steadily with a Sharpe ratio no real strategy has, because with a one-day lookback it is literally "buy on days the price went up", decided after the price went up. Try lookback 1 for the purest version. This is the bug that every backtest skeleton on the four "Quantitative Finance Essentials" slides had, and why the project's backtester tests that <code style="font-family:var(--mono)">position == signal.shift(1)</code> on every run.</span></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="wrap">
+  <h2>3 · Lie two: trading is free</h2>
+  <p>Every change of position pays the <dfn title="The gap between the price you can buy at and the price you can sell at, plus the price impact of your own order.">spread and slippage</dfn>, and holding a position overnight pays financing (a CFD on gold) or funding (a bitcoin perpetual). A rule that trades often can be profitable before costs and a steady loser after them. The project's starting assumptions are about 5 bps per trade on bitcoin spot and about 3 bps on gold, plus carry.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="lab-head"><h3>Lab C · Gross versus net</h3><span class="tag">simulated · trending market</span></div>
+    <div class="controls">
+      <div class="ctl"><label for="lookC">Lookback (days) <output id="lookCOut">20</output></label><input type="range" id="lookC" min="5" max="200" step="5" value="20"></div>
+      <div class="ctl"><label for="costC">Cost per unit traded (bps) <output id="costCOut">10</output></label><input type="range" id="costC" min="0" max="100" step="5" value="10"></div>
+      <div class="ctl"><label for="carryC">Carry (% per year) <output id="carryCOut">2</output></label><input type="range" id="carryC" min="0" max="15" step="1" value="2"></div>
+      <div class="ctl"><label for="seedC">Simulation seed <output id="seedCOut">3</output></label><input type="range" id="seedC" min="1" max="30" step="1" value="3"></div>
+    </div>
+    <canvas id="cvC" width="1000" height="240"></canvas>
+    <div class="legend"><span><i style="background:var(--muted)"></i>gross: before costs and carry</span><span><i style="background:var(--accent)"></i>net: what you would have kept</span></div>
+    <div class="stats">
+      <div class="stat"><b id="toC">–</b><span>turnover per year (units traded)</span></div>
+      <div class="stat"><b id="dragC">–</b><span>cost drag per year</span></div>
+      <div class="stat"><b id="carryDragC">–</b><span>carry drag per year</span></div>
+      <div class="stat"><b id="srC">–</b><span>net Sharpe</span></div>
+    </div>
+    <div class="callout"><b>What to try.</b><span>Lookback 5 at 10 bps: high turnover, the gap between the lines widens every month. Now set costs to 30 bps, three times the estimate: the repo rules say every robustness check includes double and triple costs, and this is why. A rule that survives 3× costs is slow enough to be real. Then try lookback 100: fewer trades, smaller gap, slower reaction. Cost is the reason the plan's models are daily and not minute-by-minute.</span></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="wrap">
+  <h2>4 · Lie three: the best of many tries</h2>
+  <p>This one is subtler because nothing in the code is wrong. Test twenty variations of a rule on the same data and one of them will look good by luck. Report only that one and you have a backtest that is "worthless, regardless of how excellent the reported performance might be" (Bailey and López de Prado 2014). The question an honest report must answer is: <strong>how many things did you try?</strong></p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="lab-head"><h3>Lab D · The best of N coin tosses</h3><span class="tag">simulated · no edge in the data</span></div>
+    <p class="note">Each trial is a strategy that flips a coin every day to decide long or short, on a market with no trend. Every one of them has a true Sharpe of zero. The chart shows the Sharpe ratio each trial happened to get over about two years; the orange bar is the best one, the one you would be tempted to report.</p>
+    <div class="controls">
+      <div class="ctl"><label for="nD">Number of strategies tried, N <output id="nDOut">20</output></label><input type="range" id="nD" min="1" max="300" step="1" value="20"></div>
+      <div class="ctl"><label for="seedD">Simulation seed <output id="seedDOut">1</output></label><input type="range" id="seedD" min="1" max="30" step="1" value="1"></div>
+    </div>
+    <canvas id="cvD" width="1000" height="240"></canvas>
+    <div class="stats">
+      <div class="stat bad"><b id="bestD">–</b><span>best Sharpe found (pure luck)</span></div>
+      <div class="stat"><b id="expD">–</b><span>expected best, from the formula</span></div>
+      <div class="stat"><b id="sdD">–</b><span>noise in one Sharpe estimate over this sample</span></div>
+      <div class="stat good"><b id="medD">–</b><span>median Sharpe (the truth is 0)</span></div>
+    </div>
+    <div class="formula">E[max SR] ≈ <span class="k">σ<sub>SR</sub></span> · <span style="font-size:1.4em;line-height:1">[</span> (1 − γ) Z<sup>−1</sup><span style="font-size:1.4em;line-height:1">(</span>1 − <span class="frac"><span>1</span><span>N</span></span><span style="font-size:1.4em;line-height:1">)</span> + γ Z<sup>−1</sup><span style="font-size:1.4em;line-height:1">(</span>1 − <span class="frac"><span>1</span><span>N · e</span></span><span style="font-size:1.4em;line-height:1">)</span> <span style="font-size:1.4em;line-height:1">]</span></div>
+    <p class="reading">The expected best Sharpe among N skill-less trials (Bailey and López de Prado 2014, with γ ≈ 0.5772 the Euler–Mascheroni constant and Z<sup>−1</sup> the inverse normal). It grows like √(2 ln N): slowly, but it never stops. <span style="color:var(--accent)">σ<sub>SR</sub></span> is how noisy one Sharpe estimate is on your sample length; over two years of daily data it is about 0.7, so the best of 20 coin tosses is expected to show a Sharpe near 1.3, and the best of 300 near 2.1. The Deflated Sharpe Ratio turns this around: given N, how likely is it that your observed Sharpe beats what luck alone would have produced?</p>
+    <div class="callout"><b>A concrete rule from the sources.</b><span>Pseudo-Mathematics and Financial Charlatanism works out the backtest length you need so that the best of N skill-less trials does not reach a Sharpe of 1 in sample. Their worked figure: with five years of data, try no more than about 45 independent configurations. López de Prado (2018) adds that it typically takes about 20 iterations of the test-and-tweak loop to discover a false strategy at the standard 5% significance level. The project's answer is the research log: every test is one line, kept whether it failed or not, so N is always known.</span></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="wrap">
+  <h2>5 · Lie four: one number for ten years</h2>
+  <p>A full-history Sharpe of 0.8 can hide a rule that made everything in 2020–21 and lost in every other year. The defences are cheap: the <strong>yearly table</strong> (each year's return and worst drawdown), and keeping a period of data the rule never saw while it was designed. The project's <code style="font-family:var(--mono)">walk_forward</code> does the second one mechanically. Click a stage.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="cards">
+      <button class="card on" data-k="w1"><small>step 1</small><b>Train on a window</b><span style="font-size:13px;color:var(--muted)">run every candidate on the first N days</span></button>
+      <button class="card" data-k="w2"><small>step 2</small><b>Pick the best</b><span style="font-size:13px;color:var(--muted)">highest training Sharpe wins</span></button>
+      <button class="card" data-k="w3"><small>step 3</small><b>Test it forward</b><span style="font-size:13px;color:var(--muted)">run only that one on the next M days</span></button>
+      <button class="card" data-k="w4"><small>step 4</small><b>Slide and repeat</b><span style="font-size:13px;color:var(--muted)">stitch the test slices together</span></button>
+    </div>
+    <canvas id="cvW" width="1000" height="150"></canvas>
+    <div class="explain" id="wX"></div>
+    <div class="callout"><b>And the caveat on the caveat.</b><span>Walk-forward is not a licence to iterate. López de Prado (2018), pitfall 9: a walk-forward tests a single historical path, which can still be overfit, and "it does not matter if the backtest is a walk-forward out-of-sample": repeating the test-and-tweak loop on the same data will still produce a false discovery. Walk-forward answers "would this parameter choice have been made in time?". It does not answer "how many rules did you throw away first?". Only the log answers that.</span></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="wrap">
+  <h2>6 · The seven ways a backtest lies</h2>
+  <p>The four above plus three that are specific to this project's data. Click each for the check that catches it.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="cards">
+      <button class="card on" data-k="l1"><small>1</small><b>It saw tomorrow</b></button>
+      <button class="card" data-k="l2"><small>2</small><b>Trading was free</b></button>
+      <button class="card" data-k="l3"><small>3</small><b>It is the best of many</b></button>
+      <button class="card" data-k="l4"><small>4</small><b>One number for ten years</b></button>
+      <button class="card" data-k="l5"><small>5</small><b>It traded on a closed day</b></button>
+      <button class="card" data-k="l6"><small>6</small><b>It used a volatility from the whole history</b></button>
+      <button class="card" data-k="l7"><small>7</small><b>The data itself was wrong</b></button>
+    </div>
+    <div class="explain" id="lX"></div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="wrap">
+  <h2>In this project</h2>
+  <div class="callout"><b>How backtest.py spells each defence.</b><span>The lag: <code style="font-family:var(--mono)">pos = target.shift(1).fillna(0.0)</code>, applied once to the whole target, which already contains the signal and the volatility scaling. Costs: <code style="font-family:var(--mono)">turnover = pos.diff().abs()</code> and <code style="font-family:var(--mono)">cost = turnover * cost_bps / 1e4</code>, so a +1 to −1 flip is charged as 2. Carry: <code style="font-family:var(--mono)">pos.abs() * carry_annual / bars_per_year</code>, with 365 bars because the daily table has one row per calendar day. Closed days: <code style="font-family:var(--mono)">pos.where(tradable).ffill()</code> freezes gold's position over the weekend, the fix for the week-1 bug that had the model paying the spread twice a week. Sizing: <code style="font-family:var(--mono)">vol_target / realised_vol</code>, an EWMA with span 30, clipped at a leverage of 2. Multiple tries: <code style="font-family:var(--mono)">walk_forward()</code> picks parameters on a training window and keeps only the forward slice; <code style="font-family:var(--mono)">notes/research_log.md</code> keeps the count. Two of the twenty tests are the ones to remember: buy-and-hold with zero costs must reproduce the asset's return exactly, and the position column must equal the shifted signal on every day.</span></div>
+</section>
+
+<!-- 8 -->
+<section class="wrap">
+  <h2>7 · In pandas</h2>
+<pre><span class="cm"># the whole backtester in nine lines (no vol sizing, no closed-day mask)</span>
+ret      = px.pct_change().fillna(0.0)
+sig      = signal.reindex(px.index).fillna(0.0)      <span class="cm"># +1, -1, 0 or a fraction</span>
+pos      = sig.shift(1).fillna(0.0)                  <span class="cm"># the lag: held during t = decided at t-1</span>
+turnover = pos.diff().abs().fillna(pos.abs())
+cost     = turnover * cost_bps / 1e4
+carry    = pos.abs() * carry_annual / 365
+net      = pos * ret - cost - carry
+equity   = (1 + net).cumprod()
+sharpe   = net.mean() * 365 / (net.std() * 365 ** 0.5)
+
+<span class="cm"># the two sanity tests that catch most bugs</span>
+assert (pos == sig.shift(1).fillna(0.0)).all()      <span class="cm"># no look-ahead</span>
+<span class="cm"># buy-and-hold with cost_bps=0, carry=0: equity.iloc[-1] == px.iloc[-1] / px.iloc[0]</span></pre>
+</section>
+
+<!-- 9 -->
+<section class="wrap">
+  <h2>8 · Words used here</h2>
+  <p class="note">Each entry: the technical definition first, then the same idea in everyday words in the orange strip.</p>
+  <div class="gloss">
+    <div><b>backtest</b><span>a historical simulation of a rule, using at each step only information available at that step, net of costs.<span class="plain">replaying the past with your rule, honestly, to see what it would have done.</span></span></div>
+    <div><b>in-sample / out-of-sample</b><span>the data used to design the rule / data it never saw during design.<span class="plain">the part of history you studied, and the part you kept hidden from yourself for a fair test.</span></span></div>
+    <div><b>look-ahead bias</b><span>using information that was not yet available at decision time.<span class="plain">letting the test read tomorrow's newspaper.</span></span></div>
+    <div><b>turnover</b><span>the absolute change in position per day; per year, the sum.<span class="plain">how much buying and selling the rule does. Every unit of it costs money.</span></span></div>
+    <div><b>bps</b><span>basis points: 1 bp = 0.01%.<span class="plain">a hundredth of a percent. 10 bps on a $10,000 trade is $10.</span></span></div>
+    <div><b>carry</b><span>the cost (or income) of holding a position overnight: financing on a CFD, funding on a perpetual.<span class="plain">rent for keeping the position open.</span></span></div>
+    <div><b>Sharpe ratio</b><span>mean return over its standard deviation, annualised.<span class="plain">profit per unit of bumpiness. Noisy: over two years of daily data one estimate is easily ±0.7 off.</span></span></div>
+    <div><b>multiple testing</b><span>the inflation of the best result when many hypotheses are tested on the same data.<span class="plain">try enough things and one looks great by accident.</span></span></div>
+    <div><b>Deflated Sharpe Ratio</b><span>the probability that the true Sharpe exceeds the level luck alone would produce, given the number of trials and the non-normality of returns.<span class="plain">your Sharpe, discounted for how many tries it took and how fat-tailed the returns are.</span></span></div>
+    <div><b>walk-forward</b><span>selecting parameters on a training window, testing on the next window, sliding, and keeping only the test slices.<span class="plain">pretend you are at each point in the past, choose with only what you had, then see what happened next.</span></span></div>
+    <div><b>yearly table</b><span>each calendar year's net return and maximum drawdown.<span class="plain">did it work most years, or in one lucky year?</span></span></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>Sources</h2>
+  <div class="gloss">
+    <div><b>Bailey &amp; López de Prado</b><span>D. Bailey, M. López de Prado, "The Deflated Sharpe Ratio: Correcting for Selection Bias, Backtest Overfitting and Non-Normality", <em>Journal of Portfolio Management</em> (2014). The expected-maximum formula in Lab D; "the most important piece of information missing from virtually all backtests … is the number of trials attempted".</span></div>
+    <div><b>Bailey, Borwein, López de Prado &amp; Zhu</b><span>"Pseudo-Mathematics and Financial Charlatanism: The Effects of Backtest Overfitting on Out-of-Sample Performance", <em>Notices of the AMS</em> 61:5 (2014). In-sample versus out-of-sample; Minimum Backtest Length and the five-years / 45-trials figure.</span></div>
+    <div><b>Bailey, Borwein, López de Prado &amp; Zhu</b><span>"The Probability of Backtest Overfitting", <em>Journal of Computational Finance</em> (2015). The combinatorial method for estimating how likely a chosen configuration is to underperform out of sample.</span></div>
+    <div><b>Harvey &amp; Liu</b><span>C. Harvey, Y. Liu, "Backtesting", <em>Journal of Portfolio Management</em> 42:1 (2015). The 50% haircut rule of thumb and why the correct haircut is non-linear: marginal Sharpe ratios are penalised heavily, very high ones only moderately.</span></div>
+    <div><b>López de Prado</b><span>M. López de Prado, "The 10 Reasons Most Machine Learning Funds Fail" (2018). Pitfall 2 (research through backtesting, "about 20 iterations"), pitfall 9 (walk-forward tests a single path) and pitfall 10 (backtest overfitting).</span></div>
+    <div><b>Project notes</b><span>The Code Walkthrough doc (backtest.py, the six-day worked example, the tests) and <code style="font-family:var(--mono)">notes/research_log.md</code> in xau-btc-models.</span></div>
+  </div>
+  <p class="note" style="margin-top:12px">All charts on this page are generated from simulated series inside the page; no market data is used. Part of <a href="index.html">quant-notes</a>. See also <a href="momentum.html">01 · momentum</a> (the rule being tested) and <a href="ewma.html">02 · EWMA</a> (the volatility that sizes it).</p>
+</section>
+
+<script>
+(function(){
+const css=k=>getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+const $=id=>document.getElementById(id);
+function setup(c){const dpr=window.devicePixelRatio||1;const W=c.width,H=c.height;const ctx=c.getContext('2d');c.style.aspectRatio=W+'/'+H;
+  if(c._dpr!==dpr){c.width=W*dpr;c.height=H*dpr;c._dpr=dpr;}ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);return {ctx,W,H};}
+function rng(seed){let s=seed*9301+49297;return()=>{s=(s*1103515245+12345)%2147483648;return s/2147483648;};}
+function gauss(r){let u=0,v=0;while(u===0)u=r();while(v===0)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+const BPY=365, T=730;
+const REG=[[0,200,0.0025],[200,330,0],[330,350,-0.012],[350,520,-0.002],[520,730,0.0025]];
+const cache={};
+function market(seed,strength){const key=seed+'|'+strength; if(cache[key])return cache[key]; const r=rng(seed+100*strength); const ret=[],px=[100];
+  for(let t=0;t<T;t++){let d=0; for(const [a,b,m] of REG) if(t>=a&&t<b) d=m; const vol=(strength>0&&t>=330&&t<350)?0.03:0.010; const x=d*strength+gauss(r)*vol; ret.push(x); px.push(px[px.length-1]*(1+x));}
+  px.shift(); return cache[key]={ret,px};}
+function sharpe(net){const n=net.length; let m=0; for(const v of net)m+=v; m/=n; let s=0; for(const v of net)s+=(v-m)*(v-m); s=Math.sqrt(s/(n-1)); return s>0?m*BPY/(s*Math.sqrt(BPY)):0;}
+function run(ret,sigFn,cost,carry,lag){ // sigFn(t) -> signal decided at close t
+  const sig=[]; for(let t=0;t<T;t++)sig.push(sigFn(t));
+  const net=[],gross=[],eqN=[],eqG=[]; let eN=1,eG=1,to=0,cs=0,cc=0;
+  for(let t=0;t<T;t++){const held=lag?((t>0)?sig[t-1]:0):sig[t]; const prev=lag?((t>1)?sig[t-2]:0):((t>0)?sig[t-1]:0);
+    const tr=Math.abs(held-prev); to+=tr; const c=tr*cost; const k=Math.abs(held)*carry/BPY; cs+=c; cc+=k;
+    const g=held*ret[t]; gross.push(g); net.push(g-c-k); eG*=(1+g); eN*=(1+g-c-k); eqG.push(eG); eqN.push(eN);}
+  const yrs=T/BPY; return {net,gross,eqN,eqG,sr:sharpe(net),srG:sharpe(gross),turnover:to/yrs,costDrag:cs/yrs,carryDrag:cc/yrs,total:eN-1,totalG:eG-1};}
+function axes(ctx,W,H,padL,padR,padT,padB,lo,hi,ticks,fmt){const pw=W-padL-padR,ph=H-padT-padB; const Y=v=>padT+ph-ph*(v-lo)/(hi-lo);
+  ctx.font='11px '+css('--mono'); ctx.fillStyle=css('--muted'); ctx.strokeStyle=css('--line'); ctx.lineWidth=1;
+  for(const g of ticks){ctx.beginPath();ctx.moveTo(padL,Y(g));ctx.lineTo(W-padR,Y(g));ctx.stroke();ctx.textAlign='right';ctx.fillText(fmt(g),padL-6,Y(g)+4);} return {pw,ph,Y};}
+function lineSeries(ctx,X,Y,arr,col,w){ctx.strokeStyle=col;ctx.lineWidth=w;ctx.beginPath();arr.forEach((v,i)=>{const x=X(i),y=Y(v);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();}
+// ---------- Lab A: hand table ----------
+const DEF={px:[100,102,101,104,103,105],sig:[0,1,1,-1,-1,1]};
+let hand={px:[...DEF.px],sig:[...DEF.sig]};
+function drawT(){const bps=+$('costT').value; $('costTOut').value=bps; const c=bps/1e4; const tb=$('handT').querySelector('tbody'); tb.innerHTML='';
+  let eq=1,prev=0,cs=0,flips=0; const f=(v,d=2)=>(v>=0?'+':'−')+Math.abs(v*100).toFixed(d)+'%';
+  for(let i=0;i<6;i++){const ret=i?hand.px[i]/hand.px[i-1]-1:0; const pos=i?hand.sig[i-1]:0; const tr=Math.abs(pos-prev); if(tr===2)flips++; const cost=tr*c; cs+=cost; const g=pos*ret; const n=g-cost; eq*=(1+n); prev=pos;
+    const trow=document.createElement('tr'); trow.innerHTML='<td>'+(i+1)+'</td><td><input type="number" step="1" value="'+hand.px[i]+'" data-i="'+i+'" aria-label="price day '+(i+1)+'"></td><td>'+(i?f(ret):'0')+'</td><td><button class="sig '+(hand.sig[i]>0?'long':hand.sig[i]<0?'short':'')+'" data-i="'+i+'" aria-label="signal day '+(i+1)+'">'+(hand.sig[i]>0?'+1':hand.sig[i]<0?'−1':'0')+'</button></td><td class="pos hi">'+(pos>0?'+1':pos<0?'−1':'0')+'</td><td>'+tr+'</td><td>'+(cost?(cost*100).toFixed(2)+'%':'0')+'</td><td>'+(i?f(g):'0')+'</td><td>'+(i?f(n):'0')+'</td><td>'+eq.toFixed(4)+'</td>'; tb.appendChild(trow);}
+  $('eqT').textContent=eq.toFixed(4); $('costSumT').textContent=(cs*100).toFixed(2)+'%'; $('flipT').textContent=flips;
+  tb.querySelectorAll('input').forEach(inp=>inp.addEventListener('change',e=>{const v=+e.target.value; if(v>0){hand.px[+e.target.dataset.i]=v; drawT();}}));
+  tb.querySelectorAll('button.sig').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.i; hand.sig[i]=hand.sig[i]===1?-1:hand.sig[i]===-1?0:1; drawT();}));}
+$('costT').addEventListener('input',drawT); $('resetT').addEventListener('click',()=>{hand={px:[...DEF.px],sig:[...DEF.sig]}; $('costT').value=10; drawT();});
+// ---------- Lab B: look-ahead ----------
+function drawB(){const L=+$('lookB').value, seed=+$('seedB').value; $('lookBOut').value=L; $('seedBOut').value=seed;
+  const {ret,px}=market(seed,0); const sigFn=t=>(t>=L)?Math.sign(px[t]/px[t-L]-1):0;
+  const hon=run(ret,sigFn,0,0,true), cheat=run(ret,sigFn,0,0,false);
+  $('srCheat').textContent=cheat.sr.toFixed(2); $('srHon').textContent=hon.sr.toFixed(2); $('pnlCheat').textContent=(cheat.total*100).toFixed(0)+'%'; $('pnlHon').textContent=(hon.total*100).toFixed(0)+'%';
+  const c=$('cvB'); const {ctx,W,H}=setup(c); const padL=48,padR=10,padT=14,padB=26; const all=[...hon.eqN,...cheat.eqN]; const lo=Math.min(...all,1)*0.95, hi=Math.max(...all,1)*1.05;
+  const ticks=[]; for(let k=0;k<=3;k++)ticks.push(lo+(hi-lo)*k/3); const {pw,Y}=axes(ctx,W,H,padL,padR,padT,padB,lo,hi,ticks,v=>((v-1)*100).toFixed(0)+'%'); const X=i=>padL+pw*i/T;
+  ctx.strokeStyle=css('--ink'); ctx.setLineDash([3,3]); ctx.beginPath();ctx.moveTo(padL,Y(1));ctx.lineTo(W-padR,Y(1));ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle=css('--muted'); ctx.textAlign='center'; for(const d of [0,180,365,545,730]) ctx.fillText('day '+d,X(Math.min(d,T-1)),H-8);
+  lineSeries(ctx,X,Y,cheat.eqN,css('--bad'),2); lineSeries(ctx,X,Y,hon.eqN,css('--accent'),2.2);
+  ctx.fillStyle=css('--muted'); ctx.textAlign='left'; ctx.fillText('running profit, no trend in the data',padL+6,padT+10);}
+['lookB','seedB'].forEach(id=>$(id).addEventListener('input',drawB));
+// ---------- Lab C: costs ----------
+function drawC(){const L=+$('lookC').value, bps=+$('costC').value, carry=+$('carryC').value/100, seed=+$('seedC').value; $('lookCOut').value=L; $('costCOut').value=bps; $('carryCOut').value=+$('carryC').value; $('seedCOut').value=seed;
+  const {ret,px}=market(seed,1); const sigFn=t=>(t>=L)?Math.sign(px[t]/px[t-L]-1):0; const R=run(ret,sigFn,bps/1e4,carry,true);
+  $('toC').textContent=R.turnover.toFixed(0); $('dragC').textContent=(R.costDrag*100).toFixed(1)+'%'; $('carryDragC').textContent=(R.carryDrag*100).toFixed(1)+'%'; $('srC').textContent=R.sr.toFixed(2);
+  const c=$('cvC'); const {ctx,W,H}=setup(c); const padL=48,padR=10,padT=14,padB=26; const all=[...R.eqN,...R.eqG]; const lo=Math.min(...all,1)*0.95, hi=Math.max(...all,1)*1.05;
+  const ticks=[]; for(let k=0;k<=3;k++)ticks.push(lo+(hi-lo)*k/3); const {pw,Y}=axes(ctx,W,H,padL,padR,padT,padB,lo,hi,ticks,v=>((v-1)*100).toFixed(0)+'%'); const X=i=>padL+pw*i/T;
+  ctx.strokeStyle=css('--ink'); ctx.setLineDash([3,3]); ctx.beginPath();ctx.moveTo(padL,Y(1));ctx.lineTo(W-padR,Y(1));ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle=css('--muted'); ctx.textAlign='center'; for(const d of [0,180,365,545,730]) ctx.fillText('day '+d,X(Math.min(d,T-1)),H-8);
+  lineSeries(ctx,X,Y,R.eqG,css('--muted'),1.6); lineSeries(ctx,X,Y,R.eqN,css('--accent'),2.2);
+  ctx.fillStyle=css('--muted'); ctx.textAlign='left'; ctx.fillText('running profit, gross and net',padL+6,padT+10);}
+['lookC','costC','carryC','seedC'].forEach(id=>$(id).addEventListener('input',drawC));
+// ---------- Lab D: multiple testing ----------
+function invNorm(p){ // Acklam's approximation
+  const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+  const b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01];
+  const c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+  const d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+  const pl=0.02425,ph=1-pl; let q,r;
+  if(p<pl){q=Math.sqrt(-2*Math.log(p));return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  if(p<=ph){q=p-0.5;r=q*q;return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+  q=Math.sqrt(-2*Math.log(1-p));return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+function drawD(){const N=+$('nD').value, seed=+$('seedD').value; $('nDOut').value=N; $('seedDOut').value=seed;
+  const {ret}=market(seed,0); const r=rng(seed*7+1); const srs=[];
+  for(let i=0;i<N;i++){const coin=[]; for(let t=0;t<T;t++)coin.push(r()<0.5?1:-1); srs.push(run(ret,t=>coin[t],0,0,true).sr);}
+  const sd=Math.sqrt(BPY/T); const g=0.5772156649; const expMax=N>1?sd*((1-g)*invNorm(1-1/N)+g*invNorm(1-1/(N*Math.E))):0;
+  let bi=0; srs.forEach((v,i)=>{if(v>srs[bi])bi=i;}); const sorted=[...srs].sort((a,b)=>a-b); const med=sorted[Math.floor(N/2)];
+  $('bestD').textContent=srs[bi].toFixed(2); $('expD').textContent=expMax.toFixed(2); $('sdD').textContent='±'+sd.toFixed(2); $('medD').textContent=med.toFixed(2);
+  const c=$('cvD'); const {ctx,W,H}=setup(c); const padL=48,padR=10,padT=14,padB=26; const lo=-3,hi=3; const {pw,Y}=axes(ctx,W,H,padL,padR,padT,padB,lo,hi,[-2,-1,0,1,2],v=>v.toFixed(0)); const X=i=>padL+pw*(i+0.5)/N;
+  ctx.strokeStyle=css('--ink'); ctx.setLineDash([3,3]); ctx.beginPath();ctx.moveTo(padL,Y(0));ctx.lineTo(W-padR,Y(0));ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle=css('--warm'); ctx.setLineDash([6,4]); ctx.beginPath();ctx.moveTo(padL,Y(expMax));ctx.lineTo(W-padR,Y(expMax));ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle=css('--warm'); ctx.textAlign='right'; ctx.fillText('expected best of '+N+' = '+expMax.toFixed(2),W-padR-4,Y(expMax)-5);
+  const bw=Math.max(1,pw/N-1); srs.forEach((v,i)=>{ctx.fillStyle=i===bi?css('--warm'):(v>=0?css('--accent'):css('--bad')); ctx.globalAlpha=i===bi?1:.7; ctx.fillRect(X(i)-bw/2,Math.min(Y(0),Y(v)),bw,Math.abs(Y(v)-Y(0)));}); ctx.globalAlpha=1;
+  ctx.fillStyle=css('--muted'); ctx.textAlign='left'; ctx.fillText('Sharpe ratio of each coin-toss strategy',padL+6,padT+10);}
+['nD','seedD'].forEach(id=>$(id).addEventListener('input',drawD));
+// ---------- walk-forward diagram ----------
+const WF={
+ w1:'<b>Train on a window.</b> Take the first chunk of history (say two years) and run every candidate through the backtester: lookbacks 63, 126 and 252, or whatever grid you declared in advance. This is the only data the choice is allowed to see.',
+ w2:'<b>Pick the best.</b> Keep the candidate with the highest Sharpe on that training window. This step is where fitting to noise happens, which is fine: the point is that it happens <em>inside</em> the window, with no view of what comes next.',
+ w3:'<b>Test it forward.</b> Run only that one candidate on the next chunk (say six months) and keep that slice of results. Nothing about this slice was used to choose the parameters, so it is honestly out of sample.',
+ w4:'<b>Slide and repeat.</b> Move both windows forward by the test length and do it again. The test slices stitched together are the walk-forward result. The project\'s function also returns a log of what was chosen in each window and how training compared with test: if training Sharpe is 2.0 and test Sharpe is 0.3 every time, the rule is being fitted to noise.'};
+function drawW(){const on=document.querySelector('[data-k^="w"].on').dataset.k; const c=$('cvW'); const {ctx,W,H}=setup(c); const padL=16,padR=16; const pw=W-padL-padR; const X=f=>padL+pw*f;
+  const rows=[[0,0.3,0.3,0.4],[0.1,0.4,0.4,0.5],[0.2,0.5,0.5,0.6],[0.3,0.6,0.6,0.7]]; const rh=22, top=14;
+  ctx.font='11px '+css('--mono');
+  rows.forEach(([a,b,c2,d],i)=>{const y=top+i*(rh+6); const hiRow=(on==='w4')||(i===0);
+    ctx.globalAlpha=hiRow?1:.35; ctx.fillStyle=css('--accent-soft'); ctx.fillRect(X(a),y,X(b)-X(a),rh); ctx.strokeStyle=css('--accent'); ctx.lineWidth=1; ctx.strokeRect(X(a),y,X(b)-X(a),rh);
+    ctx.fillStyle=(on==='w3'||on==='w4')?css('--warm-soft'):css('--panel'); ctx.fillRect(X(c2),y,X(d)-X(c2),rh); ctx.strokeStyle=css('--warm'); ctx.strokeRect(X(c2),y,X(d)-X(c2),rh);
+    ctx.fillStyle=css('--ink'); ctx.textAlign='center'; ctx.fillText(on==='w2'&&i===0?'train: best = L 126':'train',X((a+b)/2),y+15); ctx.fillStyle=css('--warm'); ctx.fillText('test',X((c2+d)/2),y+15); ctx.globalAlpha=1;});
+  ctx.fillStyle=css('--muted'); ctx.textAlign='left'; ctx.fillText('time →',X(0),H-6); ctx.textAlign='right'; ctx.fillText('the orange slices, stitched, are the out-of-sample result',X(1),H-6);
+  $('wX').innerHTML=WF[on];}
+document.querySelectorAll('[data-k^="w"]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-k^="w"]').forEach(n=>n.classList.remove('on'));b.classList.add('on');drawW();}));
+// ---------- seven lies ----------
+const LIES={
+ l1:'<b>It saw tomorrow.</b> Any column that uses today\'s close to set today\'s position. Also: a rolling mean or volatility centred on the day instead of trailing it, a "normal level" computed from the whole history, or a data vendor\'s adjusted prices that bake in later events. <b>Check:</b> <code style="font-family:var(--mono)">position.equals(signal.shift(1))</code> on every run, and the Lab B habit: run the rule on a no-trend series; if it still makes money, it is peeking.',
+ l2:'<b>Trading was free.</b> No spread, no slippage, no carry, or costs that are flat per trade when the real ones scale with size. <b>Check:</b> turnover per year and cost drag are in the stats table; every result is re-run at 2× and 3× costs; a rule whose edge disappears at 3× is too fast to trust.',
+ l3:'<b>It is the best of many.</b> The reported rule is one survivor of a search you did not report. <b>Check:</b> the research log counts the trials; parameters are tested as a range, not crowned; the Deflated Sharpe Ratio or the five-years / 45-trials rule says whether the best one clears luck.',
+ l4:'<b>One number for ten years.</b> A full-history Sharpe that hides one lucky regime. <b>Check:</b> the yearly table (each year\'s return and drawdown), and the walk-forward slices. Judge on those, as the repo rules say, not on the headline.',
+ l5:'<b>It traded on a closed day.</b> Gold has no weekend bars; the clean table carries Friday\'s close across Saturday and Sunday. A rule that reads those days as real can "trade" at a price nobody could trade at, or, as in week 1, close and reopen every weekend and pay the spread twice a week for nothing. <b>Check:</b> the <code style="font-family:var(--mono)">tradable</code> mask freezes the position on closed days; gold\'s turnover should be in the same range as bitcoin\'s.',
+ l6:'<b>It used a volatility from the whole history.</b> Dividing by <code style="font-family:var(--mono)">r.std()</code> over the full sample sizes 2018\'s trades with 2026\'s information. A cousin of lie one. <b>Check:</b> the sizing volatility is the trailing EWMA (span 30) and the lag is applied to the whole target, volatility included. See the <a href="ewma.html">EWMA page</a>, section 7.',
+ l7:'<b>The data itself was wrong.</b> A doubled row makes a fake 0% day and a fake jump; a missing day hides a move; a futures roll shows as a price gap that never happened in spot (the 30 January 2026 gold print of −10.8% is on the research log to check for exactly this). <b>Check:</b> the sanity report before anything else: missing values, days over 15%, largest gap; and the five worst days must be real events you can name.'};
+document.querySelectorAll('[data-k^="l"]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-k^="l"]').forEach(n=>n.classList.remove('on'));b.classList.add('on');$('lX').innerHTML=LIES[b.dataset.k];}));
+$('lX').innerHTML=LIES.l1;
+// ---------- boot ----------
+function all(){drawT();drawB();drawC();drawD();drawW();}
+all();
+window.addEventListener('resize',()=>{drawB();drawC();drawD();drawW();});
+if(window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',all);}
+new MutationObserver(all).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+</script>
+</body>
+</html>

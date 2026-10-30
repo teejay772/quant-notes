@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Time-series Momentum · quant-notes</title>
+<meta name="description" content="Interactive note: the trend-following rule, why it works, how the lookback changes it, and what a century of evidence says.">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column (~720px) with wide "lab" panels that break out to ~1040px for the interactive charts. */
+:root{
+  --bg:#F7F5EF; --panel:#FFFFFF; --ink:#1E2430; --muted:#5C6473; --line:#D9D5CB;
+  --accent:#1F6F8B; --accent-soft:#D8E9EF; --warm:#C2651E; --warm-soft:#F6E2D2;
+  --good:#2E7D4F; --good-soft:#D9EDE0; --bad:#B23A3A; --bad-soft:#F3DADA; --code-bg:#1B222C; --code-fg:#E8EBF0;
+  --display:'Fraunces',Georgia,serif; --body:'Atkinson Hyperlegible',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#12161C; --panel:#1A2029; --ink:#E9E6DF; --muted:#A3AAB6; --line:#2E3540;
+  --accent:#6FB8D1; --accent-soft:#1E3440; --warm:#E5945A; --warm-soft:#3E2A1C;
+  --good:#6DBE8C; --good-soft:#1E3A2A; --bad:#E07A7A; --bad-soft:#3F2323; --code-bg:#0D1116; --code-fg:#E8EBF0; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#12161C; --panel:#1A2029; --ink:#E9E6DF; --muted:#A3AAB6; --line:#2E3540;
+  --accent:#6FB8D1; --accent-soft:#1E3440; --warm:#E5945A; --warm-soft:#3E2A1C;
+  --good:#6DBE8C; --good-soft:#1E3A2A; --bad:#E07A7A; --bad-soft:#3F2323; --code-bg:#0D1116; --code-fg:#E8EBF0; color-scheme:dark }
+
+*{box-sizing:border-box}
+sub,sup{font-size:0.68em;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-0.55em}sub{top:0.3em}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;
+  padding-block:0 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:720px;margin:0 auto}
+.wide{max-width:1040px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);font-weight:600;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(38px,6vw,58px)}
+h2{font-size:30px;margin-top:64px}
+h3{font-size:21px}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+header{padding-block:56px 24px;display:flex;flex-direction:column;gap:16px}
+.lede{font-size:21px;color:var(--muted);max-width:620px}
+section{display:flex;flex-direction:column;gap:18px}
+.lab{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px;margin-top:8px}
+.lab-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.lab-head .tag{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.controls{display:flex;gap:24px;flex-wrap:wrap}
+.ctl{display:flex;flex-direction:column;gap:6px;flex:1 1 200px;min-width:0}
+.ctl label{font-size:14px;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.ctl output{font-family:var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent);height:28px}
+canvas{width:100%;height:auto;display:block;max-width:100%}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{display:flex;flex-direction:column;gap:2px;padding:10px 12px;background:var(--accent-soft);border-radius:8px}
+.stat b{font-family:var(--mono);font-size:20px;font-weight:500;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted)}
+.formula{font-family:var(--mono);font-size:16px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;white-space:nowrap;display:flex;align-items:center;gap:.35em;line-height:1.4}
+.formula .k{color:var(--accent)}.formula .w{color:var(--warm)}
+.formula .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 .15em}
+.formula .frac > span{padding:0 .3em;white-space:nowrap}
+.formula .frac > span:first-child{border-bottom:1.5px solid currentColor}
+.reading{font-size:15px;color:var(--muted);padding-left:16px;border-left:3px solid var(--accent-soft)}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+.legend i.box{height:10px;opacity:.5}
+.note{font-size:13px;color:var(--muted)}
+.callout{background:var(--warm-soft);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.callout b{color:var(--warm)}
+dfn{font-style:normal;border-bottom:1px dotted var(--accent);cursor:help;position:relative}
+dfn:hover::after,dfn:focus::after{content:attr(title);position:absolute;left:0;top:1.6em;z-index:5;background:var(--ink);color:var(--bg);font-size:13px;line-height:1.4;padding:8px 10px;border-radius:6px;width:260px;max-width:70vw;font-style:normal}
+/* clickable stages (why it works) */
+.stages{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stage{background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;cursor:pointer;text-align:left;color:var(--ink);font-family:var(--body);display:flex;flex-direction:column;gap:2px;min-width:0}
+.stage:hover,.stage:focus-visible{border-color:var(--accent);outline:none}
+.stage.on{border-color:var(--accent);background:var(--accent-soft)}
+.stage small{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.explain{background:var(--warm-soft);border:1px solid var(--warm);border-left:6px solid var(--warm);border-radius:8px;padding:16px 18px;font-size:15.5px;line-height:1.55;display:flex;flex-direction:column;gap:6px;min-height:84px;margin-top:6px}
+.explain::before{content:"Explanation";font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--warm)}
+/* tree */
+.tree{display:flex;flex-direction:column;gap:0;align-items:center}
+.node{background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:10px 14px;font-size:15px;cursor:pointer;text-align:left;color:var(--ink);font-family:var(--body);min-width:0;max-width:100%;display:flex;flex-direction:column;gap:2px}
+.node:hover,.node:focus-visible{border-color:var(--accent);outline:none}
+.node.on{border-color:var(--accent);background:var(--accent-soft)}
+.node small{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.root{border-color:var(--accent);font-weight:700}
+.stem{width:2px;height:22px;background:var(--line)}
+.branches{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%}
+.branch{display:flex;flex-direction:column;align-items:center;gap:8px}
+.branch .kids{display:flex;flex-direction:column;gap:8px;width:100%}
+pre{margin:0;background:var(--code-bg);color:var(--code-fg);font-family:var(--mono);font-size:13.5px;line-height:1.55;padding:16px 18px;border-radius:10px;overflow-x:auto}
+pre .cm{color:#8FA3B8}
+.mistakes{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.mk{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;font-size:15px}
+.mk b{color:var(--warm)}
+.mk .plain{margin-top:4px;padding:6px 10px;background:var(--warm-soft);border-radius:6px;font-size:14px;line-height:1.5}
+.gloss{display:grid;grid-template-columns:1fr;gap:10px;font-size:15px}
+.gloss div{display:grid;grid-template-columns:150px 1fr;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.gloss b{font-family:var(--mono);font-weight:500;font-size:14px}
+.gloss .plain{display:block;margin-top:4px;padding:6px 10px;background:var(--warm-soft);border-radius:6px;font-size:14px;line-height:1.5}
+.evid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.ev{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;font-size:15px}
+.ev b{font-family:var(--display);font-size:18px;font-weight:600}
+.ev ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+blockquote{margin:0;padding:12px 16px;background:var(--accent-soft);border-radius:8px;font-family:var(--display);font-size:16px;line-height:1.45}
+a{color:var(--accent)}
+@media (max-width:760px){.stages{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.branches{grid-template-columns:1fr}.gloss div{grid-template-columns:1fr;gap:2px}h2{font-size:26px}.stages{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:no-preference){.node,.stage{transition:background .15s,border-color .15s}}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <p class="eyebrow">Quant notes · interactive · 01 momentum</p>
+  <h1>Things that went up keep going up, for a while</h1>
+  <p class="lede">Time-series momentum, also called trend following, is the simplest trading rule that has worked across markets for over a century: if a market has risen over the past months, be long; if it has fallen, be short. This page shows what the rule is, why it works, what breaks it, and what the evidence says. Move the sliders. Every chart updates.</p>
+  <p class="note">All series on this page are simulated so the "true" answer is known. Nothing here is market data or a performance claim.</p>
+</header>
+
+<!-- 1 -->
+<section class="wrap">
+  <h2>1 · The rule in one sentence</h2>
+  <p>Look at where the price is today compared with where it was L days ago. If it is higher, hold a long position (you profit if it keeps rising). If it is lower, hold a short position (you profit if it keeps falling). Check again tomorrow. That is the whole rule. L is called the <strong>lookback</strong>.</p>
+  <p>Nothing in it predicts <em>how much</em> the market will move, or <em>when</em> it will turn. It only bets that whatever direction the last few months had will, on average, carry on a little longer.</p>
+  <div class="callout"><b>Worked example.</b><span>Gold is at 4,000 today and was at 3,500 twelve months ago. Higher, so be long. Bitcoin is at 80,000 today and was at 95,000 twelve months ago. Lower, so be short. Tomorrow, repeat with tomorrow's prices.</span></div>
+</section>
+
+<section class="wide">
+  <div class="lab">
+    <div class="lab-head"><h3>Lab A · Watch the rule trade a simulated market</h3><span class="tag">simulated · not market data</span></div>
+    <p class="note">The top chart is a made-up price with five periods: a rise, a sideways chop, a sudden crash, a fall, and a recovery. The background colour is what the rule does: <span style="color:var(--good);font-weight:700">green = long</span>, <span style="color:var(--bad);font-weight:700">red = short</span>. The bottom chart is the running profit of following the rule, next to simply buying and holding.</p>
+    <div class="controls">
+      <div class="ctl"><label for="lookA">Lookback L (days) <output id="lookAOut">60</output></label><input type="range" id="lookA" min="5" max="200" step="5" value="60"></div>
+      <div class="ctl"><label for="trendA">How strongly the market trends <output id="trendAOut">1.0</output></label><input type="range" id="trendA" min="0" max="2" step="0.1" value="1.0"></div>
+      <div class="ctl"><label for="costA">Cost per position change (%) <output id="costAOut">0.10</output></label><input type="range" id="costA" min="0" max="0.5" step="0.05" value="0.10"></div>
+      <div class="ctl"><label for="seedA">Simulation seed <output id="seedAOut">3</output></label><input type="range" id="seedA" min="1" max="30" step="1" value="3"></div>
+    </div>
+    <canvas id="cvA1" width="1000" height="260"></canvas>
+    <canvas id="cvA2" width="1000" height="200"></canvas>
+    <div class="legend"><span><i style="background:var(--ink)"></i>simulated price</span><span><i class="box" style="background:var(--good)"></i>rule is long</span><span><i class="box" style="background:var(--bad)"></i>rule is short</span><span><i style="background:var(--accent)"></i>trend rule, running profit</span><span><i style="background:var(--warm)"></i>buy and hold, running profit</span></div>
+    <div class="stats">
+      <div class="stat"><b id="flipsA">–</b><span>times the rule changed its mind</span></div>
+      <div class="stat"><b id="pnlA">–</b><span>trend rule, total profit (% of starting money)</span></div>
+      <div class="stat"><b id="bhA">–</b><span>buy and hold, total profit</span></div>
+      <div class="stat"><b id="ddA">–</b><span>trend rule, worst peak-to-trough fall</span></div>
+    </div>
+    <div class="callout"><b>Four things to try.</b>
+      <span>(1) Set the lookback to 10 days. The rule flips constantly in the sideways patch and pays a cost each time. (2) Set it to 200. It is calm, but it has no opinion for the first 200 days and reacts late: look how long it stays long after the crash begins. (3) Set "how strongly the market trends" to 0. Now the market is a pure coin toss with no trends in it, and the rule has nothing to catch; whatever profit you see is luck of the seed. (4) Move the seed with everything else fixed. The best lookback moves with it. Remember that for section 4.</span></div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="wrap">
+  <h2>2 · Why it works</h2>
+  <p>A market that reacted perfectly to news would jump straight to the new fair price and stop. Trends exist because people do not react like that. Click each stage.</p>
+  <div class="stages">
+    <button class="stage on" data-k="s1">1 · News arrives<small>the fair price moves</small></button>
+    <button class="stage" data-k="s2">2 · Under-reaction<small>price drifts for months</small></button>
+    <button class="stage" data-k="s3">3 · Over-reaction<small>the crowd piles in</small></button>
+    <button class="stage" data-k="s4">4 · Reversal<small>price snaps back</small></button>
+  </div>
+  <canvas id="cvS" width="1000" height="220"></canvas>
+  <p class="note">Schematic, not data: the shape of one trend as the sources describe it, from the news to the reversal.</p>
+  <div class="explain" id="stageX"></div>
+  <p>There is also a second, less behavioural reason in the 2012 paper: using positioning data from the US futures regulator, Moskowitz, Ooi and Pedersen find that speculators (who tend to follow trends) make money from the strategy, and hedgers (producers and consumers who want to offload price risk) pay for it. Part of the trend premium is a fee for providing that insurance.</p>
+</section>
+
+<!-- 3 -->
+<section class="wrap">
+  <h2>3 · The formulas, read aloud</h2>
+  <div class="formula">signal<sub>t</sub> = sign<span style="font-size:1.4em;line-height:1">(</span> <span class="frac"><span>P<sub>t</sub></span><span>P<sub>t−L</sub></span></span> − 1 <span style="font-size:1.4em;line-height:1">)</span></div>
+  <p class="reading">Today's price divided by the price L days ago, minus one, is the return over the lookback. The <strong>sign</strong> function throws away the size and keeps only +1 (it rose) or −1 (it fell). That ±1 is the whole opinion of the rule.</p>
+  <div class="formula">position<sub>t</sub> = signal<sub>t</sub> · <span class="frac"><span><span class="w">σ<sub>target</sub></span></span><span><span class="k">σ<sub>t</sub></span></span></span></div>
+  <p class="reading">The ±1 is then scaled by <span style="color:var(--warm)">the risk you want</span> divided by <span style="color:var(--accent)">the risk the market is currently giving you</span>. σ<sub>t</sub> is the EWMA volatility from the <a href="ewma.html">EWMA page</a>. This is what lets gold at 18% volatility and bitcoin at 64% sit in the same book: bitcoin gets roughly a quarter of the position size, so each contributes the same expected risk.</p>
+  <div class="formula">r<sup>TSMOM</sup><sub>t,t+1</sub> = sign(r<sub>t−12,t</sub>) · <span class="frac"><span><span class="w">40%</span></span><span><span class="k">σ<sub>t−1</sub></span></span></span> · r<sub>t,t+1</sub></div>
+  <p class="reading">The same thing as the paper writes it (Moskowitz, Ooi and Pedersen 2012, eq. 5): next month's strategy return is the sign of the last 12 months' return, scaled to 40% volatility, times next month's market return. Note σ<sub>t−1</sub>: the volatility used for sizing is from before the month being traded. The 40% is a presentational choice; the paper calls it inconsequential.</p>
+</section>
+
+<!-- 4 -->
+<section class="wrap">
+  <h2>4 · The lookback is a dial, not a fact</h2>
+  <p>Short lookbacks catch turns early but flip on every wobble and pay costs each time. Long lookbacks are calm but late. Nobody knows the "right" L; the papers use 1, 3 and 12 months and average them precisely so they do not have to choose.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="lab-head"><h3>Lab B · Every lookback at once, and why you must not pick the winner</h3><span class="tag">simulated · not market data</span></div>
+    <p class="note">This runs the rule for every lookback from 5 to 200 days on the same simulated market as Lab A and plots the total profit of each. The highest point looks like "the best lookback". Then move the seed.</p>
+    <div class="controls">
+      <div class="ctl"><label for="trendB">How strongly the market trends <output id="trendBOut">1.0</output></label><input type="range" id="trendB" min="0" max="2" step="0.1" value="1.0"></div>
+      <div class="ctl"><label for="costB">Cost per position change (%) <output id="costBOut">0.10</output></label><input type="range" id="costB" min="0" max="0.5" step="0.05" value="0.10"></div>
+      <div class="ctl"><label for="seedB">Simulation seed <output id="seedBOut">3</output></label><input type="range" id="seedB" min="1" max="30" step="1" value="3"></div>
+    </div>
+    <canvas id="cvB" width="1000" height="260"></canvas>
+    <div class="stats">
+      <div class="stat"><b id="bestB">–</b><span>"best" lookback for this seed (days)</span></div>
+      <div class="stat"><b id="bestPB">–</b><span>its total profit</span></div>
+      <div class="stat"><b id="medB">–</b><span>profit of the median lookback</span></div>
+      <div class="stat"><b id="shareB">–</b><span>share of lookbacks that made money</span></div>
+    </div>
+    <div class="callout"><b>The lesson.</b><span>Each seed is a different random history with the same underlying trend strength. The peak jumps around from seed to seed: it is the noise of that one history, not a property of the rule. If you pick the best lookback on your real data, you are fitting to noise you will never see again. The honest numbers are the ones that stay true across seeds: with trend strength above zero, most lookbacks make money (the "share" box), and the middle of the curve is stable. That is why the papers average several lookbacks, and why the project plan says to test "nearby parameters" and to blend 63/126/252 days rather than crown one.</span></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="wrap">
+  <h2>5 · The family of trend signals</h2>
+  <p>"Compare today with L days ago" is one way to ask "is it trending?". There are others, and they mostly agree. Click any box. The project's <code style="font-family:var(--mono)">signals.py</code> already has the first four.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="tree">
+      <button class="node root" data-k="root">Trend signals<small>is this market going somewhere?</small></button>
+      <div class="stem"></div>
+      <div class="branches">
+        <div class="branch"><button class="node" data-k="own">Each market against its own past<small>time-series momentum · this page</small></button><div class="stem"></div>
+          <div class="kids">
+            <button class="node on" data-k="tsm">Price now vs L days ago<small>12-month lookback · MOP 2012</small></button>
+            <button class="node" data-k="multi">Several lookbacks blended<small>21 / 63 / 126 / 252 days</small></button>
+            <button class="node" data-k="ma">Moving-average cross<small>50-day vs 200-day</small></button>
+            <button class="node" data-k="ewmac">EWMAC<small>Carver: the gap between two EWMAs</small></button>
+            <button class="node" data-k="don">Breakout (Donchian)<small>new 55-day high or low</small></button>
+          </div></div>
+        <div class="branch"><button class="node" data-k="rel">Markets against each other<small>cross-sectional momentum</small></button><div class="stem"></div>
+          <div class="kids">
+            <button class="node" data-k="cs">Buy the winners, sell the losers<small>Jegadeesh &amp; Titman 1993</small></button>
+          </div></div>
+      </div>
+    </div>
+    <div class="explain" id="treeX"></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="wrap">
+  <h2>6 · What the evidence says</h2>
+  <div class="evid">
+    <div class="ev"><b>Moskowitz, Ooi &amp; Pedersen (2012)</b>
+      <ul>
+        <li>58 futures markets: 24 commodities, 12 currency pairs, 9 equity indices, 13 bond futures.</li>
+        <li>Rule: sign of the past 12-month return, held one month, each position scaled to 40% volatility. Strategy evaluated 1985–2009.</li>
+        <li>A diversified portfolio of these earns <em>"a Sharpe ratio greater than one on an annual basis"</em>, gross of trading costs. Out of sample on 1966–1985: Sharpe 1.1.</li>
+        <li>The effect <em>"persists for about a year and then partially reverses over longer horizons."</em></li>
+        <li>Performs best in extreme markets, both up and down.</li>
+      </ul></div>
+    <div class="ev"><b>Hurst, Ooi &amp; Pedersen (2017)</b>
+      <ul>
+        <li>67 markets, monthly data, January 1880 to December 2016.</li>
+        <li>Rule: an equal-weighted mix of 1-, 3- and 12-month time-series momentum.</li>
+        <li>Trend following <em>"has performed well in each decade for more than a century."</em></li>
+        <li>Performed best in large equity bull and bear markets; positive in 8 of the 10 largest drawdowns of a 60/40 stock–bond portfolio.</li>
+      </ul></div>
+  </div>
+  <div class="callout"><b>What that does not say.</b><span>Neither paper includes bitcoin, which did not exist for most of the sample. Gold futures are in both. The headline Sharpe ratios are for a portfolio of dozens of markets; a single market's trend rule is far weaker (Hurst et al. report an average of roughly 0.4 per market) and far bumpier. Two instruments is closer to the single-market case than to the diversified one. And the 2012 Sharpe is before costs.</span></div>
+</section>
+
+<!-- 7 -->
+<section class="wrap">
+  <h2>In this project</h2>
+  <div class="callout"><b>Week 1's first run, from the research log.</b><span>Rule: 12-month time-series momentum (long if the price is above where it was a year ago, else short), sized to a 10% annual volatility target, with spread costs and carry, on the clean daily table since 2018. Bitcoin: Sharpe 0.59, maximum drawdown −22% against about −77% for buying and holding; that drawdown gap is the main thing trend following buys you. Gold: Sharpe 0.24 after fixing the weekend bug (the first version closed every Friday and reopened every Monday, paying the spread twice a week for nothing). Both numbers are full-history, not yet out-of-sample, so they are a plumbing check, not a result. Next on the log: the 63/126/252-day blend, and checking the 30 January 2026 gold print against a second source.</span></div>
+</section>
+
+<!-- 8 -->
+<section class="wrap">
+  <h2>7 · Three ways this goes wrong</h2>
+  <p>The first is built into the strategy and cannot be removed, only managed. The other two are mistakes.</p>
+  <div class="mistakes">
+    <div class="mk"><b>The turn.</b><span>By construction the rule is fully long at the top and fully short at the bottom, because it only knows the past. In a sharp reversal (2009, March 2020) it holds yesterday's winner on the day it becomes the loser. The crash in Lab A shows it.</span><span class="plain">Manage it: size by volatility so the position is already smaller when markets get wild, and blend lookbacks so some of the book turns early.</span></div>
+    <div class="mk"><b>Crowning a lookback.</b><span>Picking L because it scored best on your history. Lab B shows the best L is mostly the noise of that one history.</span><span class="plain">Fix: test a range, report the range, and use an average of several.</span></div>
+    <div class="mk"><b>Judging on the full-history Sharpe.</b><span>One number over the whole sample hides a rule that made all its money in two years and lost in the other eight.</span><span class="plain">Fix: the yearly table and the out-of-sample period are what count, as the repo rules say.</span></div>
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="wrap">
+  <h2>8 · In pandas</h2>
+<pre><span class="cm"># px: daily closes (one instrument), oldest first; r: daily returns</span>
+<span class="cm"># sigma: the EWMA vol from the EWMA page, already annualised</span>
+L      = 252                                    <span class="cm"># about 12 months of trading days</span>
+signal = np.sign(px / px.shift(L) - 1)          <span class="cm"># +1 rose, -1 fell</span>
+pos    = (signal * 0.10 / sigma).shift(1)       <span class="cm"># 10% vol target; decided at t-1, held over t</span>
+pnl    = pos * r - tc * pos.diff().abs()        <span class="cm"># position x next-bar return, minus cost on changes</span>
+
+<span class="cm"># the blend the plan asks for: average the sign over three lookbacks</span>
+signal = sum(np.sign(px / px.shift(k) - 1) for k in (63, 126, 252)) / 3</pre>
+  <p class="note">The project's backtester does the <code style="font-family:var(--mono)">shift(1)</code>, the volatility scaling, the leverage cap and the costs itself; a signal function only has to return the ±1 (or the blended fraction). Do not add a second shift inside the signal.</p>
+</section>
+
+<!-- 10 -->
+<section class="wrap">
+  <h2>9 · Words used here</h2>
+  <p class="note">Each entry: the technical definition first, then the same idea in everyday words in the orange strip.</p>
+  <div class="gloss">
+    <div><b>time-series momentum</b><span>a rule that trades each market on the sign of its own past return.<span class="plain">if it went up lately, bet on up; if down, bet on down. Each market judged on its own.</span></span></div>
+    <div><b>lookback (L)</b><span>the number of days back used to measure the past return.<span class="plain">how far back you look to decide whether "lately" was up or down.</span></span></div>
+    <div><b>long / short</b><span>a position that profits from a rise / from a fall.<span class="plain">long = you own it and want it to go up. Short = you have bet against it and want it to go down.</span></span></div>
+    <div><b>sign()</b><span>+1 for a positive number, −1 for a negative one, 0 for zero.<span class="plain">keep only the direction, throw away the size.</span></span></div>
+    <div><b>volatility targeting</b><span>scaling the position so its expected risk equals a chosen level: size = target ÷ σ.<span class="plain">bet smaller when the market is jumpy, bigger when it is calm, so every bet risks about the same money.</span></span></div>
+    <div><b>whipsaw</b><span>a sequence of position changes in a sideways market, each losing a little.<span class="plain">the rule keeps changing its mind and paying a fee each time, while the market goes nowhere.</span></span></div>
+    <div><b>drawdown</b><span>the fall from a running peak of the equity curve to the next trough.<span class="plain">how far below your best-ever point you have fallen. The worst one is the number the firm's risk page will ask for.</span></span></div>
+    <div><b>Sharpe ratio</b><span>average return divided by its standard deviation, annualised.<span class="plain">profit per unit of bumpiness. Around 0.7–1.2 after costs is credible for a first model; 3 reads as overfitting.</span></span></div>
+    <div><b>out-of-sample</b><span>a period of data not used while designing the rule.<span class="plain">the part of history you kept hidden from yourself, so the test is fair.</span></span></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>Sources</h2>
+  <div class="gloss">
+    <div><b>Moskowitz et al.</b><span>T. Moskowitz, Y. H. Ooi, L. H. Pedersen, "Time Series Momentum", <em>Journal of Financial Economics</em> 104 (2012), 228–250. Sections 1–4 and 6; the return formula is their eq. 5.</span></div>
+    <div><b>Hurst et al.</b><span>B. Hurst, Y. H. Ooi, L. H. Pedersen, "A Century of Evidence on Trend-Following Investing", <em>Journal of Portfolio Management</em> 44:1 (2017). Sample, lookback mix, decade and crisis results.</span></div>
+    <div><b>Carver</b><span>R. Carver, <em>Systematic Trading</em>, Harriman House, 2015. Forecasts and EWMAC (ch. 7), volatility targeting (ch. 9), position sizing (ch. 10), speed and costs (ch. 12).</span></div>
+    <div><b>Jegadeesh &amp; Titman</b><span>N. Jegadeesh, S. Titman, "Returns to Buying Winners and Selling Losers", <em>Journal of Finance</em> 48 (1993). Cross-sectional momentum in US stocks.</span></div>
+    <div><b>López de Prado</b><span>M. López de Prado, <em>Advances in Financial Machine Learning</em>, Wiley, 2018, ch. 11–12; and Bailey &amp; López de Prado, "The Deflated Sharpe Ratio" (2014). Why the best parameter on one history is not a result.</span></div>
+    <div><b>Project notes</b><span>The Quant Notes doc and <code style="font-family:var(--mono)">notes/research_log.md</code> in xau-btc-models: week-1 numbers and the repo rules.</span></div>
+  </div>
+  <p class="note" style="margin-top:12px">All charts on this page are generated from simulated series inside the page; no market data is used. Part of <a href="index.html">quant-notes</a>. Next: the <a href="ewma.html">EWMA page</a>, which supplies the σ that sizes every position here.</p>
+</section>
+
+<script>
+(function(){
+const css=k=>getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+const $=id=>document.getElementById(id);
+function setup(c){const dpr=window.devicePixelRatio||1;const W=c.width,H=c.height;const ctx=c.getContext('2d');c.style.aspectRatio=W+'/'+H;
+  if(c._dpr!==dpr){c.width=W*dpr;c.height=H*dpr;c._dpr=dpr;}ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);return {ctx,W,H};}
+function rng(seed){let s=seed*9301+49297;return()=>{s=(s*1103515245+12345)%2147483648;return s/2147483648;};}
+function gauss(r){let u=0,v=0;while(u===0)u=r();while(v===0)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+// ---------- simulated market: five regimes ----------
+const T=520;
+const REG=[[0,150,0.0025],[150,250,0],[250,268,-0.012],[268,400,-0.002],[400,520,0.0025]]; // [from,to,drift per day at strength 1]
+const simCache={};
+function market(seed,strength){const key=seed+'|'+strength; if(simCache[key])return simCache[key];
+  const r=rng(seed); const ret=[],px=[100]; for(let t=0;t<T;t++){let d=0; for(const [a,b,m] of REG) if(t>=a&&t<b) d=m; const vol=(t>=250&&t<268)?0.03:0.010; const x=d*strength+gauss(r)*vol; ret.push(x); px.push(px[px.length-1]*(1+x));}
+  px.shift(); return simCache[key]={ret,px};}
+function runRule(ret,px,L,cost){
+  const pos=new Array(T).fill(0);                       // pos[t] = decision at close of day t
+  for(let t=0;t<T;t++) pos[t]=(t>=L)?Math.sign(px[t]/px[t-L]-1):0;
+  let eq=1,peak=1,dd=0,flips=0; const eqs=[];
+  for(let t=0;t<T;t++){
+    const held=(t>0)?pos[t-1]:0;                        // held during day t: yesterday's decision (the one-bar lag)
+    const prevHeld=(t>1)?pos[t-2]:0;
+    const change=Math.abs(held-prevHeld);
+    if(change>0&&prevHeld!==0) flips++;                 // a change of mind, not the first entry
+    const tr=held*ret[t]-cost*change;                   // position x today's return, minus cost on changes
+    eq*=(1+tr); eqs.push(eq); if(eq>peak)peak=eq; dd=Math.max(dd,1-eq/peak);}
+  return {pos,eqs,flips,total:eq-1,dd};}
+// ---------- Lab A ----------
+function drawA(){
+  const L=+$('lookA').value, st=+$('trendA').value, cost=+$('costA').value/100, seed=+$('seedA').value;
+  $('lookAOut').value=L; $('trendAOut').value=st.toFixed(1); $('costAOut').value=(+$('costA').value).toFixed(2); $('seedAOut').value=seed;
+  const {ret,px}=market(seed,st); const R=runRule(ret,px,L,cost);
+  let bh=1; const bhs=[]; for(let t=0;t<T;t++){bh*=(1+ret[t]);bhs.push(bh);}
+  $('flipsA').textContent=R.flips; $('pnlA').textContent=(R.total*100).toFixed(0)+'%'; $('bhA').textContent=((bh-1)*100).toFixed(0)+'%'; $('ddA').textContent='−'+(R.dd*100).toFixed(0)+'%';
+  {const c=$('cvA1'); const {ctx,W,H}=setup(c); const padL=48,padR=10,padT=12,padB=24,pw=W-padL-padR,ph=H-padT-padB;
+   const lo=Math.min(...px)*0.97, hi=Math.max(...px)*1.03; const X=t=>padL+pw*t/T, Y=v=>padT+ph-ph*(v-lo)/(hi-lo);
+   // position bands (held position during t = pos[t-1])
+   for(let t=1;t<T;t++){const h=R.pos[t-1]; if(h===0)continue; ctx.fillStyle=h>0?css('--good'):css('--bad'); ctx.globalAlpha=.16; ctx.fillRect(X(t),padT,pw/T+0.5,ph);} ctx.globalAlpha=1;
+   ctx.font='11px '+css('--mono'); ctx.fillStyle=css('--muted'); ctx.strokeStyle=css('--line'); ctx.lineWidth=1;
+   for(let g=0;g<=3;g++){const v=lo+(hi-lo)*g/3; ctx.beginPath();ctx.moveTo(padL,Y(v));ctx.lineTo(W-padR,Y(v));ctx.stroke(); ctx.textAlign='right'; ctx.fillText(v.toFixed(0),padL-6,Y(v)+4);}
+   ctx.textAlign='center'; for(const d of [0,100,200,300,400,500]) ctx.fillText('day '+d,X(d),H-8);
+   const lab=[[75,'rise'],[200,'sideways'],[259,'crash'],[334,'fall'],[460,'recovery']]; ctx.fillStyle=css('--muted'); for(const [d,s] of lab) ctx.fillText(s,X(d),padT+12);
+   ctx.strokeStyle=css('--ink'); ctx.lineWidth=1.6; ctx.beginPath(); for(let t=0;t<T;t++){const x=X(t),y=Y(px[t]); t?ctx.lineTo(x,y):ctx.moveTo(x,y);} ctx.stroke();}
+  {const c=$('cvA2'); const {ctx,W,H}=setup(c); const padL=48,padR=10,padT=10,padB=24,pw=W-padL-padR,ph=H-padT-padB;
+   const all=[...R.eqs,...bhs]; const lo=Math.min(...all,1)*0.95, hi=Math.max(...all,1)*1.05; const X=t=>padL+pw*t/T, Y=v=>padT+ph-ph*(v-lo)/(hi-lo);
+   ctx.font='11px '+css('--mono'); ctx.fillStyle=css('--muted'); ctx.strokeStyle=css('--line'); ctx.lineWidth=1;
+   for(let g=0;g<=2;g++){const v=lo+(hi-lo)*g/2; ctx.beginPath();ctx.moveTo(padL,Y(v));ctx.lineTo(W-padR,Y(v));ctx.stroke(); ctx.textAlign='right'; ctx.fillText(((v-1)*100).toFixed(0)+'%',padL-6,Y(v)+4);}
+   ctx.strokeStyle=css('--ink'); ctx.setLineDash([3,3]); ctx.beginPath();ctx.moveTo(padL,Y(1));ctx.lineTo(W-padR,Y(1));ctx.stroke(); ctx.setLineDash([]);
+   ctx.textAlign='center'; for(const d of [0,100,200,300,400,500]) ctx.fillText('day '+d,X(d),H-8);
+   const line=(arr,col,w)=>{ctx.strokeStyle=col;ctx.lineWidth=w;ctx.beginPath();for(let t=0;t<T;t++){const x=X(t),y=Y(arr[t]);t?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();};
+   line(bhs,css('--warm'),1.6); line(R.eqs,css('--accent'),2.2);
+   ctx.fillStyle=css('--muted'); ctx.textAlign='left'; ctx.fillText('running profit, % of starting money',padL+6,padT+10);}
+}
+['lookA','trendA','costA','seedA'].forEach(id=>$(id).addEventListener('input',drawA));
+// ---------- Lab B ----------
+function drawB(){
+  const st=+$('trendB').value, cost=+$('costB').value/100, seed=+$('seedB').value;
+  $('trendBOut').value=st.toFixed(1); $('costBOut').value=(+$('costB').value).toFixed(2); $('seedBOut').value=seed;
+  const {ret,px}=market(seed,st); const Ls=[],P=[]; for(let L=5;L<=200;L+=5){Ls.push(L);P.push(runRule(ret,px,L,cost).total);}
+  let bi=0; P.forEach((v,i)=>{if(v>P[bi])bi=i;}); const sorted=[...P].sort((a,b)=>a-b); const med=sorted[Math.floor(sorted.length/2)]; const share=P.filter(v=>v>0).length/P.length;
+  $('bestB').textContent=Ls[bi]; $('bestPB').textContent=(P[bi]*100).toFixed(0)+'%'; $('medB').textContent=(med*100).toFixed(0)+'%'; $('shareB').textContent=(share*100).toFixed(0)+'%';
+  const c=$('cvB'); const {ctx,W,H}=setup(c); const padL=48,padR=10,padT=14,padB=26,pw=W-padL-padR,ph=H-padT-padB;
+  const lo=Math.min(...P,0)-0.1, hi=Math.max(...P,0)+0.1; const X=i=>padL+pw*(i+0.5)/Ls.length, Y=v=>padT+ph-ph*(v-lo)/(hi-lo);
+  ctx.font='11px '+css('--mono'); ctx.fillStyle=css('--muted'); ctx.strokeStyle=css('--line'); ctx.lineWidth=1;
+  for(let g=0;g<=4;g++){const v=lo+(hi-lo)*g/4; ctx.beginPath();ctx.moveTo(padL,Y(v));ctx.lineTo(W-padR,Y(v));ctx.stroke(); ctx.textAlign='right'; ctx.fillText((v*100).toFixed(0)+'%',padL-6,Y(v)+4);}
+  ctx.strokeStyle=css('--ink'); ctx.setLineDash([3,3]); ctx.beginPath();ctx.moveTo(padL,Y(0));ctx.lineTo(W-padR,Y(0));ctx.stroke(); ctx.setLineDash([]);
+  ctx.textAlign='center'; Ls.forEach((L,i)=>{if(L%50===0)ctx.fillText(L+' d',X(i),H-8);});
+  const bw=pw/Ls.length; P.forEach((v,i)=>{ctx.fillStyle=i===bi?css('--warm'):(v>=0?css('--accent'):css('--bad')); ctx.globalAlpha=i===bi?1:.75; const y0=Y(0),y1=Y(v); ctx.fillRect(X(i)-bw/2+1,Math.min(y0,y1),bw-2,Math.abs(y1-y0));}); ctx.globalAlpha=1;
+  ctx.fillStyle=css('--ink'); ctx.textAlign='center'; ctx.fillText('"best" '+Ls[bi]+' d',X(bi),Y(Math.max(P[bi],0))-6);
+  ctx.fillStyle=css('--muted'); ctx.textAlign='left'; ctx.fillText('total profit of the rule, by lookback',padL+6,padT+10);
+}
+['trendB','costB','seedB'].forEach(id=>$(id).addEventListener('input',drawB));
+// ---------- stages schematic ----------
+const STAGE={
+ s1:'<b>News arrives.</b> Something real changes: a central-bank decision, a supply shock, a regulation. The fair price is now higher (or lower) than it was. The dashed line in the sketch is that new fair level.',
+ s2:'<b>Under-reaction.</b> The price does not jump to the new level. Analysts update slowly, investors anchor on the old price, big holders rebalance over weeks. The price drifts toward fair value for months. This drift is what the trend rule catches: it is already moving in the right direction before the move is complete.',
+ s3:'<b>Over-reaction.</b> Once the move is visible, more people pile in because it has been going up, not because of the news. Trend followers themselves are part of this crowd. The price overshoots the fair level.',
+ s4:'<b>Reversal.</b> Too far above fair value, the price snaps back. This is the "partially reverses over longer horizons" in the 2012 paper and the reason lookbacks beyond about a year stop working. It is also where the trend rule is caught long at the top.'};
+function drawS(){const on=document.querySelector('.stage.on').dataset.k; const c=$('cvS'); const {ctx,W,H}=setup(c); const padL=20,padR=20,padT=18,padB=26,pw=W-padL-padR,ph=H-padT-padB;
+  const pts=[]; for(let i=0;i<=300;i++){const x=i/300; let y; if(x<0.12)y=0.25; else if(x<0.55){const u=(x-0.12)/0.43; y=0.25+0.5*(1-Math.pow(1-u,2.2));} else if(x<0.75){const u=(x-0.55)/0.2; y=0.75+0.2*Math.sin(u*Math.PI/2);} else {const u=(x-0.75)/0.25; y=0.95-0.22*u;} pts.push([x,y]);}
+  const X=x=>padL+pw*x, Y=y=>padT+ph-ph*y; const bands={s1:[0,0.12],s2:[0.12,0.55],s3:[0.55,0.75],s4:[0.75,1]};
+  ctx.fillStyle=css('--accent'); ctx.globalAlpha=.14; const b=bands[on]; ctx.fillRect(X(b[0]),padT,X(b[1])-X(b[0]),ph); ctx.globalAlpha=1;
+  ctx.strokeStyle=css('--warm'); ctx.setLineDash([5,4]); ctx.lineWidth=1.5; ctx.beginPath();ctx.moveTo(X(0.12),Y(0.75));ctx.lineTo(X(1),Y(0.75));ctx.stroke(); ctx.setLineDash([]);
+  ctx.font='11px '+css('--mono'); ctx.fillStyle=css('--warm'); ctx.textAlign='right'; ctx.fillText('new fair price',X(1),Y(0.75)-6);
+  ctx.strokeStyle=css('--ink'); ctx.lineWidth=2; ctx.beginPath(); pts.forEach(([x,y],i)=>{i?ctx.lineTo(X(x),Y(y)):ctx.moveTo(X(x),Y(y));}); ctx.stroke();
+  ctx.fillStyle=css('--muted'); ctx.textAlign='center'; const labs=[[0.06,'before'],[0.33,'drift'],[0.65,'overshoot'],[0.87,'snap back']]; labs.forEach(([x,s])=>ctx.fillText(s,X(x),H-8));
+  ctx.fillStyle=css('--warm'); ctx.beginPath(); ctx.arc(X(0.12),Y(0.25),5,0,Math.PI*2); ctx.fill(); ctx.textAlign='left'; ctx.fillText('news',X(0.12)+8,Y(0.25)+4);
+  $('stageX').innerHTML=STAGE[on];}
+document.querySelectorAll('.stage').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.stage').forEach(n=>n.classList.remove('on'));b.classList.add('on');drawS();}));
+// ---------- tree ----------
+const TREE={
+ root:'Every box asks the same question, "is this market going somewhere?", with a different ruler. On a clear trend they all agree; they differ in how fast they notice a turn and how often they flip in a sideways market.',
+ own:'Time-series momentum: each market is compared only with its own history, so a market can be long while every other market is short. This is what the plan builds, and what both papers in section 6 measure.',
+ tsm:'<b>Price now versus L days ago.</b> The rule on this page. One number, one sign. The 2012 paper uses 12 months and holds for one month. Simple to explain to a firm, which is a feature.',
+ multi:'<b>Several lookbacks blended.</b> Compute the sign for 21, 63, 126 and 252 days and average them. The result is a fraction between −1 and +1: fully long only when every horizon agrees. Smoother than any single lookback and no need to crown one. Hurst et al. use 1, 3 and 12 months this way. Already in the project\'s <code style="font-family:var(--mono)">signals.py</code>.',
+ ma:'<b>Moving-average cross.</b> Long when a short average (50 days) is above a long one (200 days), short when below. It is time-series momentum in disguise: the gap between two averages is a weighted sum of past returns. Popular because it is easy to draw on a chart. The 50/200 pair is in <code style="font-family:var(--mono)">signals.py</code>.',
+ ewmac:'<b>EWMAC (Carver).</b> The same cross, built from two EWMAs (see the <a href="ewma.html">EWMA page</a>) and, crucially, using the <em>size</em> of the gap divided by volatility as a continuous forecast, not just its sign. Carver scales forecasts to an average absolute value of 10 and caps them at ±20, then combines several speeds (e.g. 16/64, 32/128, 64/256). A week 3 candidate for the project.',
+ don:'<b>Breakout (Donchian).</b> Go long when the price makes a new 55-day high, short on a new 55-day low. The classic "Turtle" rule. Reacts only at extremes, so it trades less often than a moving-average rule, at the price of entering later. The 55-bar version is in <code style="font-family:var(--mono)">signals.py</code>.',
+ rel:'Cross-sectional momentum compares markets with each other: rank them by past return, buy the top group, sell the bottom group. Always half long and half short, whatever the overall market is doing. It needs a universe of many assets, so it does not fit two instruments.',
+ cs:'<b>Buy the winners, sell the losers.</b> Jegadeesh and Titman (1993): in US stocks, the past 3–12-month winners beat the losers over the next 3–12 months. The paper that started the academic literature on momentum. It is often quoted on time-series momentum slides, which is a misattribution: it is about relative ranking among stocks, not each market against its own past.'};
+document.querySelectorAll('.node').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.node').forEach(n=>n.classList.remove('on'));b.classList.add('on');$('treeX').innerHTML=TREE[b.dataset.k];}));
+$('treeX').innerHTML=TREE.tsm;
+// ---------- boot ----------
+function all(){drawA();drawB();drawS();}
+all();
+window.addEventListener('resize',all);
+if(window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',all);}
+new MutationObserver(all).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+</script>
+</body>
+</html>

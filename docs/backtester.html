@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Backtester, line by line · quant-notes</title>
+<meta name="description" content="Interactive study page: the project's backtest.py read function by function, the six-day worked example computed live, the twelve pandas methods, the formulas, walk-forward, and the seven interview questions.">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column (~720px) with wide "lab" panels that break out to ~1040px for code + table. */
+:root{
+  --bg:#F7F5EF; --panel:#FFFFFF; --ink:#1E2430; --muted:#5C6473; --line:#D9D5CB;
+  --accent:#1F6F8B; --accent-soft:#D8E9EF; --warm:#C2651E; --warm-soft:#F6E2D2;
+  --good:#2E7D4F; --good-soft:#D9EDE0; --bad:#B23A3A; --bad-soft:#F3DADA; --purple:#6B4FA0; --purple-soft:#E6DFF3;
+  --code-bg:#1B222C; --code-fg:#E8EBF0;
+  --f-doc:#6B7280; --f-doc-soft:#E7E8EB; --f-rv:#6B4FA0; --f-rv-soft:#E6DFF3; --f-bt:#1F6F8B; --f-bt-soft:#D8E9EF; --f-st:#2E7D4F; --f-st-soft:#D9EDE0; --f-yr:#9A7B1E; --f-yr-soft:#F3EACB; --f-wf:#B0457A; --f-wf-soft:#F4DCE8;
+  --display:'Fraunces',Georgia,serif; --body:'Atkinson Hyperlegible',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#12161C; --panel:#1A2029; --ink:#E9E6DF; --muted:#A3AAB6; --line:#2E3540;
+  --accent:#6FB8D1; --accent-soft:#1E3440; --warm:#E5945A; --warm-soft:#3E2A1C;
+  --good:#6DBE8C; --good-soft:#1E3A2A; --bad:#E07A7A; --bad-soft:#3F2323; --purple:#B39DDB; --purple-soft:#2E2640;
+  --code-bg:#0D1116; --code-fg:#E8EBF0; --f-doc:#9AA3B2; --f-doc-soft:#262B33; --f-rv:#B39DDB; --f-rv-soft:#2E2640; --f-bt:#6FB8D1; --f-bt-soft:#1E3440; --f-st:#6DBE8C; --f-st-soft:#1E3A2A; --f-yr:#D9B85A; --f-yr-soft:#3A3118; --f-wf:#E58BB8; --f-wf-soft:#3E2230; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#12161C; --panel:#1A2029; --ink:#E9E6DF; --muted:#A3AAB6; --line:#2E3540;
+  --accent:#6FB8D1; --accent-soft:#1E3440; --warm:#E5945A; --warm-soft:#3E2A1C;
+  --good:#6DBE8C; --good-soft:#1E3A2A; --bad:#E07A7A; --bad-soft:#3F2323; --purple:#B39DDB; --purple-soft:#2E2640;
+  --code-bg:#0D1116; --code-fg:#E8EBF0; --f-doc:#9AA3B2; --f-doc-soft:#262B33; --f-rv:#B39DDB; --f-rv-soft:#2E2640; --f-bt:#6FB8D1; --f-bt-soft:#1E3440; --f-st:#6DBE8C; --f-st-soft:#1E3A2A; --f-yr:#D9B85A; --f-yr-soft:#3A3118; --f-wf:#E58BB8; --f-wf-soft:#3E2230; color-scheme:dark }
+
+*{box-sizing:border-box}
+sub,sup{font-size:0.68em;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-0.55em}sub{top:0.3em}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;
+  padding-block:0 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:720px;margin:0 auto}
+.wide{max-width:1040px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);font-weight:600;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(38px,6vw,58px)}
+h2{font-size:30px;margin-top:64px}
+h3{font-size:21px}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+header{padding-block:56px 24px;display:flex;flex-direction:column;gap:16px}
+.lede{font-size:21px;color:var(--muted);max-width:620px}
+section{display:flex;flex-direction:column;gap:18px}
+.lab{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px;margin-top:8px}
+.lab-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.lab-head .tag{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.note{font-size:13px;color:var(--muted)}
+.callout{background:var(--warm-soft);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.callout b{color:var(--warm)}
+.rules{background:var(--accent-soft);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;font-size:15px}
+.rules b{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+dfn{font-style:normal;border-bottom:1px dotted var(--accent);cursor:help;position:relative}
+dfn:hover::after,dfn:focus::after{content:attr(title);position:absolute;left:0;top:1.6em;z-index:5;background:var(--ink);color:var(--bg);font-size:13px;line-height:1.4;padding:8px 10px;border-radius:6px;width:260px;max-width:70vw;font-style:normal}
+.formula{font-family:var(--mono);font-size:16px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;white-space:nowrap;display:flex;align-items:center;gap:.35em;line-height:1.4}
+.formula .k{color:var(--accent)}.formula .w{color:var(--warm)}.formula .g{color:var(--good)}
+.formula .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 .15em}
+.formula .frac > span{padding:0 .3em;white-space:nowrap}
+.formula .frac > span:first-child{border-bottom:1.5px solid currentColor}
+.big{font-size:1.4em;line-height:1}
+.reading{font-size:15px;color:var(--muted);padding-left:16px;border-left:3px solid var(--accent-soft)}
+.k{color:var(--accent)}.w{color:var(--warm)}.g{color:var(--good)}
+.explain{background:var(--warm-soft);border:1px solid var(--warm);border-left:6px solid var(--warm);border-radius:8px;padding:16px 18px;font-size:15.5px;line-height:1.55;display:flex;flex-direction:column;gap:6px;min-height:84px;margin-top:6px}
+.explain::before{content:"Explanation";font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--warm)}
+/* map */
+.map{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:start}
+.map .fn{background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-family:var(--mono);font-size:13.5px;cursor:pointer;text-align:left;color:var(--ink);display:flex;flex-direction:column;gap:2px;min-width:0}
+.map .fn small{font-family:var(--body);font-size:12px;color:var(--muted)}
+.map .fn:hover,.map .fn:focus-visible{border-color:var(--accent);outline:none}
+.map .fn.on{border-color:var(--accent);background:var(--accent-soft)}
+.mapsvg{width:100%;height:auto;display:block}
+.mapsvg .box{cursor:pointer}.mapsvg .box .bg{fill:var(--panel);stroke-width:1.5}.mapsvg .box .strip,.mapsvg .box .strip2{stroke:none}
+.mapsvg .box.f-rv .bg{stroke:var(--f-rv)}.mapsvg .box.f-rv .strip,.mapsvg .box.f-rv .strip2{fill:var(--f-rv)}
+.mapsvg .box.f-bt .bg{stroke:var(--f-bt)}.mapsvg .box.f-bt .strip,.mapsvg .box.f-bt .strip2{fill:var(--f-bt)}
+.mapsvg .box.f-st .bg{stroke:var(--f-st)}.mapsvg .box.f-st .strip,.mapsvg .box.f-st .strip2{fill:var(--f-st)}
+.mapsvg .box.f-yr .bg{stroke:var(--f-yr)}.mapsvg .box.f-yr .strip,.mapsvg .box.f-yr .strip2{fill:var(--f-yr)}
+.mapsvg .box.f-wf .bg{stroke:var(--f-wf)}.mapsvg .box.f-wf .strip,.mapsvg .box.f-wf .strip2{fill:var(--f-wf)}
+.mapsvg .box:hover .bg{stroke-width:2.5}.mapsvg .box.on .bg{stroke-width:3}
+.mapsvg .box.on.f-rv .bg{fill:var(--f-rv-soft)}.mapsvg .box.on.f-bt .bg{fill:var(--f-bt-soft)}.mapsvg .box.on.f-st .bg{fill:var(--f-st-soft)}.mapsvg .box.on.f-yr .bg{fill:var(--f-yr-soft)}.mapsvg .box.on.f-wf .bg{fill:var(--f-wf-soft)}
+.mapsvg .box text{pointer-events:none}.mapsvg .box .nm{font-family:var(--mono);font-size:14px;font-weight:500;fill:#fff}.mapsvg .box .ln{font-family:var(--mono);font-size:11px;fill:rgba(255,255,255,.85)}.mapsvg .box .sub{font-family:var(--body);font-size:13px;fill:var(--ink)}
+.mapsvg .elab.lit{font-weight:700}
+.mapsvg .edge{fill:none;stroke:var(--muted);stroke-width:1.6}.mapsvg .edge.lit{stroke-width:3}.mapsvg .elab{font-family:var(--mono);font-size:11.5px;fill:var(--muted)}
+/* code + table */
+.story{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;align-items:start}
+pre{margin:0;background:var(--code-bg);color:var(--code-fg);font-family:var(--mono);font-size:12.5px;line-height:1.5;padding:12px 0;border-radius:10px;overflow:auto;max-height:640px;position:relative}
+pre .ln{cursor:pointer}pre .ln:hover{background:rgba(255,255,255,.06)}
+pre .fnhead{display:block;padding:6px 14px 2px 8px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#8FA3B8;user-select:none}
+pre .ln{display:block;padding:0 14px 0 8px;white-space:pre}
+pre .ln .n{display:inline-block;width:30px;color:#5F6D80;text-align:right;margin-right:12px;user-select:none}
+pre .ln.hl{background:rgba(31,111,139,.45)}
+pre .ln.danger.hl{background:rgba(194,101,30,.55)}
+pre .ln.dim{opacity:.45}
+pre .cm{color:#8FA3B8}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;width:100%}
+th,td{padding:6px 7px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-weight:500;color:var(--muted);font-size:11px;letter-spacing:.04em;text-transform:uppercase;border-bottom:2px solid var(--line)}
+td:first-child,th:first-child{text-align:left}
+td.empty{color:var(--line)}
+th.on,td.on{background:var(--accent-soft)}
+th.danger.on,td.danger.on{background:var(--warm-soft)}
+tr.r3 td.on{font-weight:700}
+.stepbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button.pill{font-family:var(--body);font-size:14px;padding:7px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button.pill:hover{border-color:var(--accent)}
+button.pill.on{background:var(--accent);border-color:var(--accent);color:#fff}
+button.pill.danger.on{background:var(--warm);border-color:var(--warm)}
+.toggle{display:inline-flex;border:1.5px solid var(--line);border-radius:999px;overflow:hidden}
+.toggle button{font-family:var(--body);font-size:14px;padding:7px 14px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
+.toggle button.on{background:var(--accent);color:#fff}
+.arith{font-family:var(--mono);font-size:13.5px;background:var(--panel);border:1px dashed var(--line);border-radius:8px;padding:10px 12px;white-space:pre-wrap;word-break:break-word}
+
+/* per-function colours */
+button.pill.f-doc{border-color:var(--f-doc);background:var(--f-doc-soft)}button.pill.f-doc.on{background:var(--f-doc);border-color:var(--f-doc);color:#fff}
+button.pill.f-rv{border-color:var(--f-rv);background:var(--f-rv-soft)}button.pill.f-rv.on{background:var(--f-rv);border-color:var(--f-rv);color:#fff}
+button.pill.f-bt{border-color:var(--f-bt);background:var(--f-bt-soft)}button.pill.f-bt.on{background:var(--f-bt);border-color:var(--f-bt);color:#fff}
+button.pill.f-st{border-color:var(--f-st);background:var(--f-st-soft)}button.pill.f-st.on{background:var(--f-st);border-color:var(--f-st);color:#fff}
+button.pill.f-yr{border-color:var(--f-yr);background:var(--f-yr-soft)}button.pill.f-yr.on{background:var(--f-yr);border-color:var(--f-yr);color:#fff}
+button.pill.f-wf{border-color:var(--f-wf);background:var(--f-wf-soft)}button.pill.f-wf.on{background:var(--f-wf);border-color:var(--f-wf);color:#fff}
+button.pill.danger{border-color:var(--warm);background:var(--warm-soft)}button.pill.danger.on{background:var(--warm);border-color:var(--warm);color:#fff}
+pre .ln.hl.f-doc{background:rgba(107,114,128,.45)}pre .ln.hl.f-rv{background:rgba(107,79,160,.5)}pre .ln.hl.f-bt{background:rgba(31,111,139,.5)}pre .ln.hl.f-st{background:rgba(46,125,79,.5)}pre .ln.hl.f-yr{background:rgba(154,123,30,.5)}pre .ln.hl.f-wf{background:rgba(176,69,122,.5)}
+pre .fnhead.f-rv{color:var(--f-rv)}pre .fnhead.f-bt{color:var(--f-bt)}pre .fnhead.f-st{color:var(--f-st)}pre .fnhead.f-yr{color:var(--f-yr)}pre .fnhead.f-wf{color:var(--f-wf)}pre .fnhead.f-doc{color:var(--f-doc)}
+.fkey{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}.fkey i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:middle;margin-right:5px}
+/* labels */
+.labels{display:flex;flex-direction:column;gap:4px}
+.lrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:4px 8px;border-radius:6px;border-left:6px solid transparent}
+.lrow code{font-family:var(--mono);font-size:12.5px;white-space:pre;overflow-x:auto;display:block}
+.lrow .n{color:var(--muted);display:inline-block;width:26px}
+.guess{display:inline-flex;gap:4px}
+.guess button{font-family:var(--mono);font-size:11px;padding:3px 7px;border-radius:5px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.guess button.on{border-color:var(--ink)}
+.lrow.rev.c-in{border-left-color:var(--accent);background:var(--accent-soft)}
+.lrow.rev.c-sig{border-left-color:var(--purple);background:var(--purple-soft)}
+.lrow.rev.c-cost{border-left-color:var(--warm);background:var(--warm-soft)}
+.lrow.rev.c-out{border-left-color:var(--good);background:var(--good-soft)}
+.lrow .verdict{font-family:var(--mono);font-size:11px;min-width:44px;text-align:right}
+.key{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.key i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:middle;margin-right:6px}
+button.small{font-family:var(--body);font-size:12px;padding:4px 10px;border-radius:999px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button.small:hover{border-color:var(--accent)}
+/* methods */
+#methods{display:flex;flex-direction:column;gap:22px}
+.mgroup{display:flex;flex-direction:column;gap:10px}
+.methods{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.m{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--gc);border-radius:10px;padding:0 0 12px;display:flex;flex-direction:column;gap:10px;font-size:14px;min-width:0;overflow:hidden}
+.mhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 16px 0}
+.m h3{font-family:var(--mono);font-size:16px;font-weight:500;color:var(--gc)}
+.m .where{font-size:11px;color:var(--muted);font-family:var(--mono);background:var(--gs);border-radius:999px;padding:2px 9px;white-space:nowrap}
+.m .call{display:block;margin:0 16px;background:var(--code-bg);color:var(--code-fg);font-size:12.5px;padding:8px 10px;border-radius:6px;overflow-x:auto;white-space:nowrap}
+.m table{font-size:12.5px;margin:0 16px;width:calc(100% - 32px)}
+.m th.after,.m td.after{background:var(--gs);color:var(--ink);font-weight:500}
+.m .rvm{margin:0 16px;align-self:flex-start}
+.m .def{display:none;margin:0 16px;background:var(--warm-soft);border-radius:6px;padding:8px 10px;line-height:1.5}
+.m.rev .def{display:block}
+/* stats */
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.sb{background:var(--accent-soft);border:1.5px solid transparent;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;cursor:pointer;text-align:left;font-family:var(--body);color:var(--ink)}
+.sb:hover,.sb:focus-visible{border-color:var(--accent);outline:none}.sb.on{border-color:var(--accent);background:var(--panel)}
+.sb b{font-family:var(--mono);font-size:19px;font-weight:500;font-variant-numeric:tabular-nums}
+.sb span{font-size:12px;color:var(--muted)}
+/* questions */
+.qs{display:flex;flex-direction:column;gap:10px}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;gap:8px;font-size:15px}
+.q .qt{font-weight:700}
+.q .a{display:none;background:var(--warm-soft);border-radius:6px;padding:10px 12px;line-height:1.55}
+.q.rev .a{display:block}
+.gloss{display:grid;grid-template-columns:1fr;gap:10px;font-size:15px}
+.gloss div{display:grid;grid-template-columns:150px 1fr;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.gloss b{font-family:var(--mono);font-weight:500;font-size:14px}
+.gloss .plain{display:block;margin-top:4px;padding:6px 10px;background:var(--warm-soft);border-radius:6px;font-size:14px;line-height:1.5}
+canvas{width:100%;height:auto;display:block;max-width:100%}
+a{color:var(--accent)}
+code{font-family:var(--mono)}
+@media (max-width:860px){.story{grid-template-columns:1fr}.map{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.gloss div{grid-template-columns:1fr;gap:2px}h2{font-size:26px}.lrow{grid-template-columns:1fr;gap:4px}}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <p class="eyebrow">Quant notes · interactive · 04 the backtester, line by line</p>
+  <h1>The backtester, line by line</h1>
+  <p class="lede">The project's <code>backtest.py</code> is 157 lines and five functions. This page reads it the way the study guide says to: map it, trace it on six days of made-up prices, label every line, learn the twelve pandas methods it uses, then explain it back. Every number on the page is computed in the page's own JavaScript from the six closes, so any of them can be checked by hand.</p>
+  <div class="rules"><b>Rules this file enforces, and this page respects</b>
+    <span>1 · Signals use only past data. 2 · The one-bar lag, <code>pos = target.shift(1)</code>, is never removed. 3 · Every result includes costs.</span></div>
+  <p class="note">The six-day example is invented. No market data, no performance claims.</p>
+</header>
+
+<!-- 1 MAP -->
+<section class="wrap">
+  <h2>1 · Map</h2>
+  <p>Five functions. <code>backtest</code> calls <code>realised_vol</code>; <code>stats</code> and <code>yearly</code> take <code>backtest</code>'s output; <code>walk_forward</code> loops over <code>backtest</code> and <code>stats</code>. Click a box for its <code>def</code> line, its docstring, and what goes in and comes out.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <svg class="mapsvg" id="mapSvg" viewBox="0 0 1000 330" role="img" aria-label="Data flow between the five functions: backtest uses realised_vol; stats and yearly take backtest's output; walk_forward loops over backtest and stats"></svg>
+    <p class="note">Boxes are the five functions; arrows show what flows between them. Click a box.</p>
+    <div class="explain" id="mapX"></div>
+  </div>
+</section>
+
+<!-- 2 STORY -->
+<section class="wrap">
+  <h2>2 · The six-day story</h2>
+  <p>The whole file, all 157 lines, on the left; the six-day table on the right. Six closes, a hand-written signal, 5 bps cost, no carry, no volatility target (so the <code>else</code> branch on line 59 runs). Step through from the module docstring to the last line of <code>walk_forward</code>: each step highlights the lines it is about and explains them; the steps inside <code>backtest</code>'s body also fill in one column of the table, with the formula and the arithmetic for <strong>day 3</strong> written out. You can also click any line of code to jump to its step. The table is a spreadsheet where every column uses only columns to its left.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="lab-head"><h3>Lab A · Step through backtest.py</h3><span class="tag">computed in the page · six closes</span></div>
+    <div class="stepbar">
+      <span class="note">Scenario:</span>
+      <div class="toggle" id="scen"><button class="on" data-s="base">cost 5 bps</button><button data-s="zero">cost 0</button><button data-s="mask">tradable mask, days 4–5 closed</button></div>
+    </div>
+    <div class="stepbar" id="steps"></div>
+    <div class="story">
+      <pre id="code"></pre>
+      <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+        <div class="tbl"><table id="six"><thead><tr id="sixHead"></tr></thead><tbody id="sixBody"></tbody></table></div>
+        <div class="explain" id="stepX"></div>
+        <div class="arith" id="arith"></div>
+      </div>
+    </div>
+    <p class="note">Inputs: closes 100, 102, 101, 104, 103, 105; signal 0, +1, +1, −1, −1, +1; <code>cost_bps=5</code>; <code>carry_annual=0</code>; <code>vol_target=None</code>; <code>bars_per_year=365</code>. The mask scenario passes <code>tradable = [True, True, True, False, False, True]</code>.</p>
+  </div>
+</section>
+
+<!-- 3 LABELS -->
+<section class="wrap">
+  <h2>3 · Label every line</h2>
+  <p>Session 1 of the study guide: read the body of <code>backtest</code> (lines 50–80) and label each line as <span class="k">input handling</span>, <span style="color:var(--purple)">signal to position</span>, <span class="w">costs</span> or <span class="g">output</span>. Pick your label with the small buttons, then press reveal to see the answer. Colours stay hidden until you do.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="key"><span><i style="background:var(--accent)"></i>IN · input handling</span><span><i style="background:var(--purple)"></i>SIG · signal to position</span><span><i style="background:var(--warm)"></i>COST · costs</span><span><i style="background:var(--good)"></i>OUT · output</span><button class="small" id="revAll">Reveal all</button><button class="small" id="hideAll">Hide all</button><span id="score" style="font-family:var(--mono)"></span></div>
+    <div class="labels" id="labels"></div>
+  </div>
+</section>
+
+<!-- 4 METHODS -->
+<section class="wrap">
+  <h2>4 · The twelve methods</h2>
+  <p>Every pandas method the file uses, with the line it appears on, a three-row before/after computed from the six-day data, and a one-sentence definition behind reveal. Try to say the definition first.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="key"><button class="small" id="revM">Reveal all definitions</button><button class="small" id="hideM">Hide all</button></div>
+    <div class="methods" id="methods"></div>
+  </div>
+</section>
+
+<!-- 5 FORMULAS -->
+<section class="wrap">
+  <h2>5 · The formulas, read aloud</h2>
+  <div class="formula">vol<sub>t</sub> = ewm_std<sub>span</sub>(r)<sub>t</sub> · √<span style="border-top:1.5px solid currentColor;padding:0 .2em">365</span></div>
+  <p class="reading">Line 23. The exponentially weighted standard deviation of daily returns, using only past bars, times the square root of bars per year to quote it annually. Span 30 means λ ≈ 0.935; the <a href="ewma.html">EWMA note</a> is about this one line.</p>
+  <div class="formula">scale<sub>t</sub> = <span class="frac"><span><span class="w">vol<sub>target</sub></span></span><span><span class="k">vol<sub>t</sub></span></span></span>   target<sub>t</sub> = clip( signal<sub>t</sub> · scale<sub>t</sub>, ±max_leverage )</div>
+  <p class="reading">Lines 56–57. <span class="w">The risk you want</span> divided by <span class="k">the risk the market is giving</span>: at 10% target and 20% vol, half a unit; at 60% vol, a sixth. Then capped at ±2 units of notional. With <code>vol_target=None</code> the signal is just clipped (line 59).</p>
+  <div class="formula"><span class="w">pos<sub>t</sub> = target<sub>t−1</sub></span></div>
+  <p class="reading">Line 62, the danger line. The position held during day t is the target computed at day t−1's close. Decide tonight, trade tomorrow.</p>
+  <div class="formula">turnover<sub>t</sub> = | pos<sub>t</sub> − pos<sub>t−1</sub> |   cost<sub>t</sub> = turnover<sub>t</sub> · <span class="frac"><span>bps</span><span>10<sup>4</sup></span></span>   carry<sub>t</sub> = | pos<sub>t</sub> | · <span class="frac"><span>carry<sub>annual</sub></span><span>365</span></span></div>
+  <p class="reading">Lines 68–70. Turnover is how much the position changed today; a flip from +1 to −1 is 2. Cost is turnover times the per-unit charge (5 bps = 0.0005). Carry is a daily slice of the annual charge for holding any position, long or short.</p>
+  <div class="formula">net<sub>t</sub> = <span class="g">pos<sub>t</sub> · r<sub>t</sub></span> − <span class="w">cost<sub>t</sub></span> − <span class="w">carry<sub>t</sub></span>   equity<sub>t</sub> = ∏<sub>s≤t</sub> (1 + net<sub>s</sub>)</div>
+  <p class="reading">Lines 72–73 and 79. <span class="g">Position times today's return</span> is the gross profit; subtract <span class="w">what trading and holding cost</span>; equity is the running product, the growth of $1.</p>
+  <div class="formula">CAGR = equity<sub>T</sub><sup>365/T</sup> − 1   Vol = std(net) · √<span style="border-top:1.5px solid currentColor;padding:0 .2em">365</span>   Sharpe = <span class="frac"><span>mean(net) · 365</span><span>Vol</span></span></div>
+  <p class="reading">Lines 87–94. CAGR turns the final equity into a per-year growth rate (meaningless on six days; the page shows it anyway because the code does). Vol annualises the daily standard deviation. Sharpe is the annualised mean over the annualised standard deviation.</p>
+  <div class="formula">drawdown<sub>t</sub> = <span class="frac"><span>equity<sub>t</sub></span><span>max<sub>s≤t</sub> equity<sub>s</sub></span></span> − 1   MaxDrawdown = min<sub>t</sub> drawdown<sub>t</sub></div>
+  <p class="reading">Line 86 and 95. How far below its running peak the equity is on each day, and the worst such value. The number a risk page asks for first.</p>
+</section>
+
+<!-- 6 STATS -->
+<section class="wrap">
+  <h2>6 · stats() and yearly() on the six days</h2>
+  <p>The eleven numbers <code>stats</code> returns, computed live from the table above (whichever scenario is selected). Click one to see its line and its arithmetic.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="statgrid" id="statgrid"></div>
+    <div class="explain" id="statX"></div>
+    <div class="tbl"><table id="yearlyT"><thead><tr><th>year</th><th>Return</th><th>MaxDD</th></tr></thead><tbody></tbody></table></div>
+    <p class="note"><code>yearly()</code> groups by calendar year. The six example days all fall in one year, so there is one row; on nine years of real data it is the quickest regime check: a rule that worked in two years out of nine is suspect.</p>
+  </div>
+</section>
+
+<!-- 7 WALK FORWARD -->
+<section class="wrap">
+  <h2>7 · walk_forward() as a picture</h2>
+  <p>Lines 116–157. Choose parameters on a training window, trade only the next test window with that choice, slide, repeat, and stitch the test windows together. Click a stage.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="stepbar" id="wfsteps"></div>
+    <canvas id="cvW" width="1000" height="170"></canvas>
+    <div class="explain" id="wfX"></div>
+    <div class="callout"><b>Why its Sharpe is usually lower, and which to trust.</b><span>A full-history Sharpe lets the parameters see the whole sample, including the years they are then scored on; the best parameter on a history is partly the noise of that history, so the number is inflated. The walk-forward Sharpe only ever uses a choice that was made before the period it is scored on, so it is closer to what paper trading will show. Trust the walk-forward number, and watch the log it returns: if <code>train_sharpe</code> is 2.0 and <code>test_sharpe</code> is 0.3 in every window, the rule is fitting noise. The grid the project plans to walk forward is the lookback blend from the <a href="momentum.html">momentum note</a>.</span></div>
+  </div>
+</section>
+
+<!-- 8 QUESTIONS -->
+<section class="wrap">
+  <h2>8 · The seven interview questions</h2>
+  <p>Session 3 of the study guide: with the file closed, answer these out loud, then reveal. One at a time.</p>
+  <div class="qs" id="qs"></div>
+</section>
+
+<!-- 9 GLOSSARY -->
+<section class="wrap">
+  <h2>9 · Words used here</h2>
+  <p class="note">Each entry: the technical definition first, then the same idea in everyday words in the orange strip.</p>
+  <div class="gloss">
+    <div><b>Series / DataFrame</b><span>pandas' one-column and many-column tables, indexed by date here.<span class="plain">a column of numbers with dates down the side, and a whole spreadsheet of them.</span></span></div>
+    <div><b>vectorised</b><span>operating on whole columns at once instead of looping row by row.<span class="plain">one line does the sum for every day; no "for each day" loop.</span></span></div>
+    <div><b>notional</b><span>the money value of a position; a position of 1 = 100% of the account.<span class="plain">how big the bet is, measured in multiples of your account.</span></span></div>
+    <div><b>bps</b><span>basis points, 1 bp = 0.01%.<span class="plain">a hundredth of a percent. 5 bps on $10,000 is $5.</span></span></div>
+    <div><b>turnover</b><span>the absolute change in position; per year, the sum.<span class="plain">how much buying and selling the rule does.</span></span></div>
+    <div><b>carry</b><span>the cost of holding a position overnight: funding on a perpetual, financing on a CFD.<span class="plain">rent for keeping the position open.</span></span></div>
+    <div><b>leverage</b><span>position size in units of the account; 2 means a position worth twice the account.<span class="plain">borrowing to bet bigger than your money; the cap keeps it to 2×.</span></span></div>
+    <div><b>drawdown</b><span>equity divided by its running maximum, minus one.<span class="plain">how far below your best-ever point you are.</span></span></div>
+    <div><b>CAGR</b><span>compound annual growth rate: the constant yearly rate that would produce the final equity.<span class="plain">the average yearly growth, if it had been smooth.</span></span></div>
+    <div><b>out-of-sample</b><span>data not used when the parameters were chosen.<span class="plain">the part of history the rule never got to peek at.</span></span></div>
+    <div><b>warm-up</b><span>the bars a lookback signal needs before it has a value.<span class="plain">a 252-day rule says nothing for its first 252 days; walk_forward feeds the training history in so the test starts warm.</span></span></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>Sources</h2>
+  <div class="gloss">
+    <div><b>Carver</b><span>R. Carver, <em>Systematic Trading</em>, Harriman House, 2015. Ch. 1–3 (why rules, fitting and overfitting) and ch. 12 (speed and size: turnover, costs as a share of Sharpe). Not in the Literature folder; cited from the reading list.</span></div>
+    <div><b>pandas documentation</b><span><em>pandas.Series</em>: <code>pct_change</code>, <code>reindex</code>, <code>fillna</code>, <code>ewm</code>, <code>clip</code>, <code>shift</code>, <code>where</code>, <code>ffill</code>, <code>diff</code>, <code>cumprod</code>, <code>cummax</code>; <em>pandas.DataFrame.groupby</em>. The definitions in section 4 are paraphrased from these pages.</span></div>
+    <div><b>Code Walkthrough</b><span>The project's Code Walkthrough doc: the six-day worked example, the three study sessions and the seven questions in section 8.</span></div>
+    <div><b>backtest.py</b><span><code>xau-btc-models/src/backtest.py</code>, 157 lines, as read on 30 October 2026. Line numbers on this page refer to that version.</span></div>
+  </div>
+  <p class="note" style="margin-top:12px">All numbers on this page are computed from the six invented closes inside the page. Part of <a href="index.html">quant-notes</a>. See also <a href="momentum.html">01 · momentum</a>, <a href="ewma.html">02 · EWMA</a> and <a href="backtest.html">03 · the honest backtest</a>.</p>
+</section>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const css=k=>getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+// ---------------- the file: lines 50-80 ----------------
+const FILE="\"\"\"\nMinimal vectorised backtester for long/short models on XAU/USD and BTC/USD.\n\nRules it enforces so results are honest:\n  * the signal you compute on day t is only traded from day t+1 (one-bar lag)\n  * every change in position pays a cost (spread + slippage)\n  * holding a position pays a carry (e.g. BTC perpetual funding), pro-rata per bar\n  * position size is scaled by recent volatility so each instrument risks the same\n\nUsage:\n    from backtest import backtest, stats\n    res = backtest(prices, signal, cost_bps=5, carry_annual=0.0, vol_target=0.10)\n    print(stats(res))\n\"\"\"\nimport numpy as np\nimport pandas as pd\n\nBARS_PER_YEAR = {\"1d\": 365, \"1h\": 24 * 365}  # BTC trades every day; gold ~252, see note in README\n\n\ndef realised_vol(returns: pd.Series, span: int = 30, bars_per_year: int = 365) -> pd.Series:\n    \"\"\"Exponentially weighted annualised volatility, using only past bars.\"\"\"\n    return returns.ewm(span=span, adjust=False).std() * np.sqrt(bars_per_year)\n\n\ndef backtest(\n    prices: pd.Series,\n    signal: pd.Series,\n    cost_bps: float = 5.0,\n    carry_annual: float = 0.0,\n    vol_target: float | None = 0.10,\n    vol_span: int = 30,\n    max_leverage: float = 2.0,\n    bars_per_year: int = 365,\n    tradable: pd.Series | None = None,\n) -> pd.DataFrame:\n    \"\"\"\n    prices        close prices, DatetimeIndex\n    signal        +1 long, -1 short, 0 flat (any float works; it is scaled)\n    tradable      optional bool Series: False on bars where the instrument cannot be traded\n                  (gold at weekends). The position is frozen on those bars: no new trades,\n                  no size changes, no cost. Signals and vol still update underneath.\n    cost_bps      round-trip-equivalent cost per unit of turnover, in basis points of notional\n                  (spread + slippage). 5 bps ~ 0.05 %.\n    carry_annual  annual cost of holding one unit of notional (BTC funding, borrow fee).\n                  Positive = you pay. Applied on |position|.\n    vol_target    annualised volatility you want each instrument to contribute; None = no scaling\n    max_leverage  cap on |position| in units of notional\n    \"\"\"\n    prices = prices.dropna()\n    ret = prices.pct_change().fillna(0.0)\n    sig = signal.reindex(prices.index).fillna(0.0)\n\n    if vol_target is not None:\n        vol = realised_vol(ret, span=vol_span, bars_per_year=bars_per_year)\n        scale = (vol_target / vol).replace([np.inf, -np.inf], np.nan).fillna(0.0)\n        target = (sig * scale).clip(-max_leverage, max_leverage)\n    else:\n        target = sig.clip(-max_leverage, max_leverage)\n\n    # trade on the next bar: the only line that prevents look-ahead\n    pos = target.shift(1).fillna(0.0)\n\n    if tradable is not None:\n        ok = tradable.reindex(prices.index).fillna(False).astype(bool)\n        pos = pos.where(ok).ffill().fillna(0.0)   # hold yesterday's position through closed days\n\n    turnover = pos.diff().abs().fillna(pos.abs())\n    cost = turnover * cost_bps / 1e4\n    carry = pos.abs() * carry_annual / bars_per_year\n\n    gross = pos * ret\n    net = gross - cost - carry\n\n    out = pd.DataFrame(\n        {\"price\": prices, \"ret\": ret, \"signal\": sig, \"position\": pos,\n         \"turnover\": turnover, \"gross\": gross, \"cost\": cost, \"carry\": carry, \"net\": net}\n    )\n    out[\"equity\"] = (1 + out[\"net\"]).cumprod()\n    return out\n\n\ndef stats(res: pd.DataFrame, bars_per_year: int = 365) -> pd.Series:\n    net = res[\"net\"]\n    eq = res[\"equity\"]\n    dd = eq / eq.cummax() - 1\n    yrs = len(net) / bars_per_year\n    cagr = eq.iloc[-1] ** (1 / yrs) - 1 if yrs > 0 else np.nan\n    vol = net.std() * np.sqrt(bars_per_year)\n    return pd.Series(\n        {\n            \"CAGR\": cagr,\n            \"Vol\": vol,\n            \"Sharpe\": (net.mean() * bars_per_year) / vol if vol > 0 else np.nan,\n            \"MaxDrawdown\": dd.min(),\n            \"WorstBar\": net.min(),\n            \"BestBar\": net.max(),\n            \"TurnoverPerYear\": res[\"turnover\"].sum() / yrs,\n            \"CostDrag\": res[\"cost\"].sum() / yrs,\n            \"CarryDrag\": res[\"carry\"].sum() / yrs,\n            \"TimeInMarket\": (res[\"position\"] != 0).mean(),\n            \"Bars\": len(net),\n        }\n    )\n\n\ndef yearly(res: pd.DataFrame) -> pd.DataFrame:\n    \"\"\"Net return and max drawdown per calendar year: a quick regime check.\"\"\"\n    g = res.groupby(res.index.year)\n    ret = g[\"net\"].apply(lambda x: (1 + x).prod() - 1)\n    mdd = g[\"equity\"].apply(lambda e: (e / e.cummax() - 1).min())\n    return pd.DataFrame({\"Return\": ret, \"MaxDD\": mdd})\n\n\n# ---------------------------------------------------------------- walk-forward\ndef walk_forward(\n    prices: pd.Series,\n    rule,\n    grid: list[dict],\n    train_bars: int = 365 * 3,\n    test_bars: int = 365,\n    bars_per_year: int = 365,\n    **bt_kwargs,\n) -> tuple[pd.DataFrame, pd.DataFrame]:\n    \"\"\"\n    Honest parameter selection. For each window: fit on `train_bars` (pick the grid\n    entry with the best Sharpe), then trade the NEXT `test_bars` with that choice.\n    Stitch the test periods together: that stitched series is the out-of-sample result.\n\n    rule(prices, **params) -> signal Series.\n    Returns (oos results DataFrame as from backtest(), selection log).\n    \"\"\"\n    prices = prices.dropna()\n    oos_parts, log = [], []\n    start = 0\n    while start + train_bars + test_bars <= len(prices):\n        train = prices.iloc[start:start + train_bars]\n        # include the training history so lookback signals are warm at the start of the test\n        full = prices.iloc[start:start + train_bars + test_bars]\n        best, best_sharpe = None, -np.inf\n        for params in grid:\n            res = backtest(train, rule(train, **params), bars_per_year=bars_per_year, **bt_kwargs)\n            s = stats(res, bars_per_year)[\"Sharpe\"]\n            if np.isfinite(s) and s > best_sharpe:\n                best, best_sharpe = params, s\n        res_full = backtest(full, rule(full, **best), bars_per_year=bars_per_year, **bt_kwargs)\n        test_part = res_full.iloc[train_bars:]\n        oos_parts.append(test_part)\n        log.append({\"train_start\": train.index[0], \"test_start\": test_part.index[0],\n                    \"test_end\": test_part.index[-1], \"chosen\": best, \"train_sharpe\": best_sharpe,\n                    \"test_sharpe\": stats(test_part, bars_per_year)[\"Sharpe\"]})\n        start += test_bars\n    if not oos_parts:\n        raise ValueError(\"not enough data for one train+test window\")\n    oos = pd.concat(oos_parts)\n    oos[\"equity\"] = (1 + oos[\"net\"]).cumprod()\n    return oos, pd.DataFrame(log)";
+const CAT={50:'in',51:'in',52:'in',54:'sig',55:'sig',56:'sig',57:'sig',58:'sig',59:'sig',61:'sig',62:'sig',64:'sig',65:'sig',66:'sig',68:'cost',69:'cost',70:'cost',72:'out',73:'out',75:'out',76:'out',77:'out',78:'out',79:'out',80:'out'};
+const CODE=FILE.split('\n').map((t,i)=>[i+1,t,CAT[i+1]||null]);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+// ---------------- the six-day data and the computation ----------------
+const PX=[100,102,101,104,103,105], SIG=[0,1,1,-1,-1,1], BPY=365, MAXLEV=2;
+function compute(scen){const bps=scen==='zero'?0:5; const carryA=0; const ok=scen==='mask'?[true,true,true,false,false,true]:null; const n=6;
+  const ret=PX.map((p,i)=>i?p/PX[i-1]-1:0);
+  const sig=SIG.slice();
+  const target=sig.map(s=>Math.max(-MAXLEV,Math.min(MAXLEV,s)));
+  let pos=target.map((_,i)=>i?target[i-1]:0);
+  if(ok){const held=[]; let last=0; for(let i=0;i<n;i++){if(ok[i]){last=pos[i];} held.push(last);} pos=held;}
+  const turnover=pos.map((p,i)=>i?Math.abs(p-pos[i-1]):Math.abs(p));
+  const cost=turnover.map(t=>t*bps/1e4);
+  const carry=pos.map(p=>Math.abs(p)*carryA/BPY);
+  const gross=pos.map((p,i)=>p*ret[i]);
+  const net=gross.map((g,i)=>g-cost[i]-carry[i]);
+  const equity=[]; let e=1; for(const v of net){e*=(1+v); equity.push(e);}
+  return {bps,ok,ret,sig,target,pos,turnover,cost,carry,gross,net,equity};}
+const COLS=[['day','day'],['price','price'],['ret','ret'],['signal','sig'],['target','target'],['position','pos'],['turnover','turnover'],['cost','cost'],['carry','carry'],['gross','gross'],['net','net'],['equity','equity']];
+const pct=v=>(v<0?'−':v>0?'+':'')+Math.abs(v*100).toFixed(2)+'%';
+const fmt={day:(v,i)=>i+1,price:v=>v,ret:v=>pct(v),sig:v=>v>0?'+1':v<0?'−1':'0',target:v=>v>0?'+1':v<0?'−1':'0',pos:v=>v>0?'+1':v<0?'−1':'0',turnover:v=>v,cost:v=>v?(v*100).toFixed(2)+'%':'0',carry:v=>'0',gross:v=>pct(v),net:v=>pct(v),equity:v=>v.toFixed(4)};
+// steps: which line(s), which column, formula, arithmetic for day 3 (index 2)
+const STEPS=[
+ {k:'doc',kind:'doc',lines:[1,2,3,4,5,6,7,8,9,10,11,12,13,14],label:'module docstring',fn:'file',text:'<b>Lines 1–14.</b> The file opens with the four rules it enforces: the one-bar lag, a cost on every change of position, a pro-rata carry on every held position, and volatility scaling. Then the two-line usage. Everything below is the implementation of those four sentences.',
+  arith:R=>'Note: nothing runs yet. The docstring is the contract the rest of the file keeps.'},
+ {k:'imports',lines:[15,16,17,18],label:'imports',fn:'file',text:'<b>Lines 15–18.</b> numpy for sqrt, sign and inf; pandas for the Series and DataFrame everything is built on. <code>BARS_PER_YEAR</code> maps a bar size to bars per year: 365 for daily because the clean table has one row per calendar day, 24 × 365 for hourly.',
+  arith:R=>'Note: the six-day example is daily, so bars_per_year = 365 everywhere below.'},
+ {k:'rv',lines:[21,22,23],label:'realised_vol',fn:'realised_vol',text:'<b>Lines 21–23.</b> One line of work: the exponentially weighted standard deviation of returns, annualised. <code>adjust=False</code> is the plain recursion (today = α · new + (1 − α) · yesterday), <code>span=30</code> sets α = 2/31. It uses only past bars, so it can be used for sizing without look-ahead. The EWMA note is about this line.',
+  arith:R=>'Note: in the six-day example vol_target is None, so this function is never called. With vol_target=0.10 it would be called on line 55.'},
+ {k:'sigdef',lines:[26,27,28,29,30,31,32,33,34,35,36],label:'backtest signature',fn:'backtest',text:'<b>Lines 26–36.</b> The inputs and their defaults: 5 bps cost, no carry, a 10% volatility target with a 30-bar span, a leverage cap of 2, 365 bars a year, no tradable mask. The type hints say what each thing is: a Series of prices, a Series of signals, numbers, and an optional bool Series. It returns a DataFrame.',
+  arith:R=>'This example overrides two defaults: vol_target=None and cost_bps='+R.bps+(R.ok?', and passes tradable=[T, T, T, F, F, T]':'')+'.'},
+ {k:'docbt',kind:'doc',lines:[37,38,39,40,41,42,43,44,45,46,47,48,49],label:'backtest docstring',fn:'backtest',text:'<b>Lines 37–49.</b> What each input means in words. Two are easy to misread: <code>cost_bps</code> is per unit of <em>turnover</em>, not per trade, so a flip costs double; and <code>tradable</code> freezes the position on closed bars (no trades, no size changes, no cost) while signals and vol keep updating underneath.',
+  arith:R=>'Note: "5 bps ~ 0.05 %" means 5 / 10,000 = 0.0005 of notional per unit traded.'},
+ {k:'dropna',lines:[50],label:'dropna',fn:'backtest',text:'<b>Line 50.</b> Drop any day with a missing price before anything else, so there are no holes for the returns to trip over. The six example closes have none.',
+  arith:R=>'Note: six rows in, six rows out.'},
+ {k:'ret',lines:[51],col:'ret',label:'ret',text:'<b>Line 51.</b> Returns: today\'s close divided by yesterday\'s, minus one. The first day has no yesterday, so <code>pct_change</code> gives NaN and <code>fillna(0.0)</code> makes it 0. Everything downstream is built on returns, not prices.',
+  arith:R=>`ret[3] = 101 / 102 − 1 = ${pct(R.ret[2])}`},
+ {k:'sig',lines:[52],col:'sig',label:'signal',text:'<b>Line 52.</b> The signal is lined up with the price dates (<code>reindex</code>); any date it does not cover becomes NaN and then 0, meaning flat. Here it covers all six days, so nothing changes.',
+  arith:R=>`sig[3] = +1   (given; reindex finds every date, nothing to fill)`},
+ {k:'target',lines:[54,58,59],col:'target',label:'target',text:'<b>Lines 54–59.</b> With <code>vol_target=None</code> the <code>if</code> is false and line 59 runs: the signal is just capped at ±max_leverage (2). A ±1 signal is unchanged. With a volatility target, lines 55–57 would first scale it by target ÷ vol.',
+  arith:R=>`target[3] = clip(+1, −2, +2) = +1`},
+ {k:'pos',lines:[61,62],col:'pos',label:'position',danger:true,text:'<b>Line 62, the danger line.</b> <code>shift(1)</code> moves every value down one row: the position held during day t is the target decided at day t−1\'s close. Day 1 gets NaN, filled with 0. Remove this line and the rule trades on prices it has not seen yet; the honest backtest note shows what that does.',
+  arith:R=>`pos[3] = target[2] = +1\npos[1] = NaN → 0   (no yesterday)`},
+ {k:'mask',lines:[64,65,66],col:'pos',label:'tradable',danger:true,maskOnly:true,text:'<b>Lines 64–66.</b> Only when a <code>tradable</code> mask is given. <code>where(ok)</code> blanks the position on closed days; <code>ffill()</code> copies the last open day\'s position forward. Days 4 and 5 keep day 3\'s +1; the flip to −1 that line 62 had scheduled for day 5 happens on day 6 instead. No trades, no cost, no size change on a closed day.',
+  arith:R=>`pos after where(ok): [0, 0, +1, NaN, NaN, −1]\nafter ffill():       [0, 0, +1, +1, +1, −1]`},
+ {k:'turnover',lines:[68],col:'turnover',label:'turnover',text:'<b>Line 68.</b> How much the position changed today, as an absolute value. The first row has no previous position, so <code>fillna(pos.abs())</code> charges the full size of the first position. A flip from +1 to −1 is |−1 − (+1)| = 2: close the long and open the short.',
+  arith:R=>`turnover[3] = |pos[3] − pos[2]| = |${R.pos[2]} − ${R.pos[1]}| = ${R.turnover[2]}`},
+ {k:'cost',lines:[69],col:'cost',label:'cost',text:'<b>Line 69.</b> Turnover times the per-unit charge. 5 bps is 5 ÷ 10,000 = 0.0005 of notional per unit traded. In the zero-cost scenario this column is all zeros and equity ends higher; that difference is what trading costs.',
+  arith:R=>`cost[3] = ${R.turnover[2]} × ${R.bps} / 1e4 = ${(R.cost[2]*100).toFixed(2)}%`},
+ {k:'carry',lines:[70],col:'carry',label:'carry',text:'<b>Line 70.</b> The daily slice of the annual holding cost, charged on the absolute position (long or short). With <code>carry_annual=0</code> it is zero here. At 0.365 a year it would be 0.1% on every day with a position.',
+  arith:R=>`carry[3] = |${R.pos[2]}| × 0 / 365 = 0`},
+ {k:'gross',lines:[72],col:'gross',label:'gross',text:'<b>Line 72.</b> Profit before costs: the position held times today\'s return. Long on an up day earns; short on a down day earns too (minus times minus).',
+  arith:R=>`gross[3] = pos[3] × ret[3] = ${R.pos[2]} × ${pct(R.ret[2])} = ${pct(R.gross[2])}`},
+ {k:'net',lines:[73],col:'net',label:'net',text:'<b>Line 73.</b> What you keep: gross minus cost minus carry. Rule 3 of the file: every result includes costs.',
+  arith:R=>`net[3] = ${pct(R.gross[2])} − ${(R.cost[2]*100).toFixed(2)}% − 0 = ${pct(R.net[2])}`},
+ {k:'equity',lines:[75,76,77,78,79,80],col:'equity',label:'equity',text:'<b>Lines 75–80.</b> Everything is packed into one DataFrame, one row per day, and equity is the running product of (1 + net): the growth of $1. The function returns the whole table so any column can be inspected or plotted.',
+  arith:R=>`equity[3] = equity[2] × (1 + net[3]) = ${R.equity[1].toFixed(4)} × (1 ${R.net[2]<0?'−':'+'} ${Math.abs(R.net[2]).toFixed(4)}) = ${R.equity[2].toFixed(4)}\nequity[6] = ${R.equity[5].toFixed(4)}`},
+ {k:'stats1',lines:[83,84,85,86,87,88,89],label:'stats: setup',fn:'stats',text:'<b>Lines 83–89.</b> <code>stats</code> takes the DataFrame and pulls out net and equity. Drawdown is equity over its running maximum minus one. Years is rows divided by bars per year. CAGR compounds the final equity to a yearly rate. Vol annualises the daily standard deviation. Section 6 shows every one of these computed on this table.',
+  arith:R=>'yrs = 6 / 365 = '+(6/365).toFixed(4)+'\ndd[6] = equity[6] / max(equity[1..6]) − 1 = '+R.equity[5].toFixed(4)+' / '+Math.max(...R.equity).toFixed(4)+' − 1 = '+((R.equity[5]/Math.max(...R.equity)-1)*100).toFixed(2)+'%'},
+ {k:'stats2',lines:[90,91,92,93,94,95,96,97,98,99,100,101,102,103,104],label:'stats: the eleven numbers',fn:'stats',text:'<b>Lines 90–104.</b> The Series that comes back: CAGR, Vol, Sharpe (annualised mean over annualised vol, NaN if vol is zero), MaxDrawdown (the minimum of dd), the worst and best single bar, turnover per year, how much costs and carry ate per year, the share of days with a position, and the row count.',
+  arith:R=>'Sharpe = mean(net) × 365 / Vol   (see section 6 for the numbers on this table)'},
+ {k:'yearly',lines:[107,108,109,110,111,112],label:'yearly',fn:'yearly',text:'<b>Lines 107–112.</b> Group the rows by calendar year and, for each year, compound the net returns into one return and take the worst drawdown. The quickest regime check: a rule that only worked in two years out of nine is suspect. The six example days are all one year, so one row.',
+  arith:R=>'this year: Return = ∏(1 + net) − 1 = '+((R.equity[5]-1)*100).toFixed(2)+'%'},
+ {k:'wfsig',lines:[115,116,117,118,119,120,121,122,123,124],label:'walk_forward signature',fn:'walk_forward',text:'<b>Lines 116–124.</b> Inputs: prices, a <code>rule</code> function that turns prices and parameters into a signal, a <code>grid</code> of parameter dicts to choose from, a training length (default three years) and a test length (default one year). Anything else (<code>**bt_kwargs</code>) is passed straight to <code>backtest</code>: costs, carry, the vol target.',
+  arith:R=>'Example grid: [{"lookback": 63}, {"lookback": 126}, {"lookback": 252}]'},
+ {k:'wfdoc',kind:'doc',lines:[125,126,127,128,129,130,131,132],label:'walk_forward docstring',fn:'walk_forward',text:'<b>Lines 125–132.</b> The promise: for each window, fit on the training bars (pick the grid entry with the best Sharpe), then trade the NEXT test bars with that choice, and stitch the test periods together. That stitched series is the out-of-sample result. It returns that series and a log of what was chosen.',
+  arith:R=>'Note: "honest parameter selection" means the choice is always made before the period it is scored on.'},
+ {k:'wfloop',lines:[133,134,135,136,137,138,139],label:'walk_forward: windows',fn:'walk_forward',text:'<b>Lines 133–139.</b> Clean the prices, start two empty lists, and loop while a full train + test window still fits. <code>train</code> is the training slice. <code>full</code> is train + test together: the comment on line 139 explains why, a lookback signal needs history behind it, so the test is run on the longer slice and only the tail is kept.',
+  arith:R=>'window 1: train = prices[0 : 1095], full = prices[0 : 1460]   (defaults, daily bars)'},
+ {k:'wfgrid',lines:[140,141,142,143,144,145],label:'walk_forward: pick the best',fn:'walk_forward',text:'<b>Lines 140–145.</b> For every parameter set in the grid: build the signal on the training prices, run <code>backtest</code>, read the Sharpe from <code>stats</code>, and keep the best finite one. This is the only place where fitting happens, and it sees training data only.',
+  arith:R=>'best, best_sharpe = the grid entry with the highest training Sharpe'},
+ {k:'wftest',lines:[146,147,148,149,150,151],label:'walk_forward: test and log',fn:'walk_forward',text:'<b>Lines 146–151.</b> Run the chosen parameters on the full slice, keep only the rows after the training bars (the test year), append them to the out-of-sample parts, and log the window: dates, the chosen parameters, the training Sharpe and the test Sharpe side by side.',
+  arith:R=>'test_part = res_full.iloc[1095:]   (the last 365 rows of the 1460)'},
+ {k:'wfend',lines:[152,153,154,155,156,157],label:'walk_forward: slide and stitch',fn:'walk_forward',text:'<b>Lines 152–157.</b> Move the start forward by the test length and repeat. If no window fitted at all, raise an error rather than return nothing. Finally concatenate the test parts, recompute equity over the stitched series (a fresh cumprod, so it starts at $1), and return it with the log.',
+  arith:R=>'start += 365; …; oos = concat(test parts); oos["equity"] = cumprod(1 + oos["net"])'}];
+let scen='base', stepIdx=0, R=compute(scen);
+const FKEY={file:'doc',realised_vol:'rv',backtest:'bt',stats:'st',yearly:'yr',walk_forward:'wf'};
+const fclass=s=>s.kind==='doc'?'f-doc':'f-'+(FKEY[s.fn||'backtest']);
+function activeSteps(){return STEPS.filter(s=>!s.maskOnly||scen==='mask');}
+function renderCode(hlLines,cls){const pre=$('code'); const heads={1:['module','f-doc'],21:['realised_vol','f-rv'],26:['backtest','f-bt'],83:['stats','f-st'],107:['yearly','f-yr'],115:['walk_forward','f-wf']};
+  pre.innerHTML=CODE.map(([n,t,c])=>{const hl=hlLines.includes(n); const isCm=t.trim().startsWith('#'); return (heads[n]?`<span class="fnhead ${heads[n][1]}">${heads[n][0]}</span>`:'')+`<span class="ln${hl?' hl '+cls:''}${n===62||n===66?' danger':''}${hlLines.length&&!hl?' dim':''}" data-n="${n}"><span class="n">${n}</span>${isCm?'<span class="cm">'+esc(t)+'</span>':esc(t)}</span>`;}).join('');
+  pre.querySelectorAll('.ln').forEach(el=>el.addEventListener('click',()=>{const n=+el.dataset.n; const st=activeSteps(); const i=st.findIndex(x=>x.lines.includes(n)); if(i>=0){stepIdx=i; showStep();}}));
+  const first=pre.querySelector('.ln.hl'); if(first){const top=first.offsetTop-pre.clientHeight/2+first.offsetHeight*(hlLines.length/2); pre.scrollTop=Math.max(0,top);}}
+function renderTable(filled,onCol,danger){const head=$('sixHead'); head.innerHTML=COLS.map(([h,k])=>`<th class="${k===onCol?'on':''}${danger&&k===onCol?' danger':''}">${h}</th>`).join('');
+  const body=$('sixBody'); body.innerHTML=''; for(let i=0;i<6;i++){const tr=document.createElement('tr'); if(i===2)tr.className='r3';
+    tr.innerHTML=COLS.map(([h,k])=>{const on=k===onCol; const show=k==='day'||k==='price'||filled.has(k); const v=k==='day'?i:k==='price'?PX[i]:R[k][i]; const closed=scen==='mask'&&R.ok&&!R.ok[i]&&k==='pos';
+      return `<td class="${on?'on':''}${danger&&on?' danger':''}${show?'':' empty'}">${show?fmt[k](v,i):'·'}${closed&&show?' <span style="color:var(--muted)">(closed)</span>':''}</td>`;}).join(''); body.appendChild(tr);}}
+function renderSteps(){const st=activeSteps(); $('steps').innerHTML='<span class="fkey" style="width:100%"><span><i style="background:var(--f-doc)"></i>docstrings</span><span><i style="background:var(--f-rv)"></i>realised_vol</span><span><i style="background:var(--f-bt)"></i>backtest</span><span><i style="background:var(--warm)"></i>the lag (danger)</span><span><i style="background:var(--f-st)"></i>stats</span><span><i style="background:var(--f-yr)"></i>yearly</span><span><i style="background:var(--f-wf)"></i>walk_forward</span></span><span class="note">Step (or click any line of code):</span>'+st.map((s,i)=>`<button class="pill ${s.danger?'danger':fclass(s)}${i===stepIdx?' on':''}" data-i="${i}" title="${s.fn||'backtest'}">${i+1} · ${s.label}</button>`).join('')+`<button class="pill" id="prevStep">← prev</button><button class="pill" id="nextStep">next →</button>`;
+  $('steps').querySelectorAll('button[data-i]').forEach(b=>b.addEventListener('click',()=>{stepIdx=+b.dataset.i; showStep();})); $('nextStep').addEventListener('click',()=>{stepIdx=(stepIdx+1)%activeSteps().length; showStep();}); $('prevStep').addEventListener('click',()=>{const n=activeSteps().length; stepIdx=(stepIdx-1+n)%n; showStep();});}
+function showStep(){R=compute(scen); const st=activeSteps(); if(stepIdx>=st.length)stepIdx=0; const s=st[stepIdx]; const filled=new Set(st.slice(0,stepIdx+1).map(x=>x.col).filter(Boolean));
+  renderCode(s.lines,s.danger?'danger':fclass(s)); renderTable(filled,s.col,!!s.danger); renderSteps(); $('stepX').innerHTML=s.text; $('arith').textContent=(s.col?'Day 3 by hand:\n':'')+s.arith(R); renderStats();}
+$('scen').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{$('scen').querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); scen=b.dataset.s; stepIdx=Math.min(stepIdx,activeSteps().length-1); showStep();}));
+// ---------------- map ----------------
+const MAP={
+ rv:'<code>def realised_vol(returns: pd.Series, span: int = 30, bars_per_year: int = 365) -&gt; pd.Series</code><br><em>"Exponentially weighted annualised volatility, using only past bars."</em><br><b>In:</b> a Series of daily returns. <b>Out:</b> a Series of the same length, the annualised volatility estimate on each day. One line: <code>returns.ewm(span=span, adjust=False).std() * np.sqrt(bars_per_year)</code>.',
+ bt:'<code>def backtest(prices, signal, cost_bps=5.0, carry_annual=0.0, vol_target=0.10, vol_span=30, max_leverage=2.0, bars_per_year=365, tradable=None) -&gt; pd.DataFrame</code><br><em>Docstring: prices are closes on a DatetimeIndex; signal is +1 long, −1 short, 0 flat (any float works, it is scaled); tradable is an optional bool Series, False where the instrument cannot be traded, on which the position is frozen; cost_bps is the round-trip-equivalent cost per unit of turnover in basis points of notional; carry_annual the annual cost of holding one unit, applied on |position|; vol_target the annualised volatility each instrument should contribute, None for no scaling; max_leverage the cap on |position|.</em><br><b>In:</b> prices and a signal. <b>Out:</b> a DataFrame with one row per day and columns price, ret, signal, position, turnover, gross, cost, carry, net, equity.',
+ st:'<code>def stats(res: pd.DataFrame, bars_per_year: int = 365) -&gt; pd.Series</code><br>No docstring. <b>In:</b> the DataFrame from backtest. <b>Out:</b> a Series of eleven numbers: CAGR, Vol, Sharpe, MaxDrawdown, WorstBar, BestBar, TurnoverPerYear, CostDrag, CarryDrag, TimeInMarket, Bars. Section 6 computes them live.',
+ yr:'<code>def yearly(res: pd.DataFrame) -&gt; pd.DataFrame</code><br><em>"Net return and max drawdown per calendar year: a quick regime check."</em><br><b>In:</b> the DataFrame from backtest. <b>Out:</b> one row per calendar year with Return and MaxDD. Uses <code>groupby(res.index.year)</code>.',
+ wf:'<code>def walk_forward(prices, rule, grid: list[dict], train_bars=365*3, test_bars=365, bars_per_year=365, **bt_kwargs) -&gt; tuple[pd.DataFrame, pd.DataFrame]</code><br><em>"Honest parameter selection. For each window: fit on train_bars (pick the grid entry with the best Sharpe), then trade the NEXT test_bars with that choice. Stitch the test periods together: that stitched series is the out-of-sample result."</em><br><b>In:</b> prices, a rule function <code>rule(prices, **params) -&gt; signal</code>, and a grid of parameter dicts. <b>Out:</b> the stitched out-of-sample DataFrame (with its own equity column) and a log DataFrame with one row per window: train_start, test_start, test_end, chosen, train_sharpe, test_sharpe.'};
+(function buildMap(){const svg=$('mapSvg'); 
+  const boxes=[['rv','realised_vol','returns → vol','line 21',40,50,210,70,'rv'],['bt','backtest','prices, signal → res','line 26',395,50,230,70,'bt'],['yr','yearly','res → per-year table','line 107',760,20,210,62,'yr'],['st','stats','res → 11 numbers','line 83',760,250,210,62,'st'],['wf','walk_forward','prices, rule, grid → oos, log','line 116',395,236,230,70,'wf']];
+  const edges=[['rv','bt','M250,85 L395,85','ret → vol',290,75],['bt','yr','M625,72 C690,72 700,51 760,51','res',690,49],['bt','st','M625,98 C690,98 700,268 760,268','res',690,160],['wf','bt','M510,236 L510,120','calls backtest\nfor each window',520,185],['wf','st','M625,292 L760,292','calls stats',655,284]];
+  let h='<defs>'; for(const k of ['rv','bt','st','yr','wf','muted']) h+=`<marker id="mArr-${k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(${k==='muted'?'--muted':'--f-'+k})"/></marker>`; h+='</defs>';
+  edges.forEach(([f,t,d,lab,x,y],i)=>{h+=`<path class="edge" data-f="${f}" data-t="${t}" d="${d}" marker-end="url(#mArr-muted)"/>`; lab.split('\n').forEach((l,j)=>{h+=`<text class="elab" data-f="${f}" data-t="${t}" x="${x}" y="${y+j*14}">${l}</text>`;});});
+  for(const [k,name,io,line,x,y,w,hh,col] of boxes){h+=`<g class="box f-${col}${k==='bt'?' on':''}" data-k="${k}" tabindex="0" role="button" aria-label="${name}"><rect class="bg" x="${x}" y="${y}" width="${w}" height="${hh}" rx="10"/><rect class="strip" x="${x}" y="${y}" width="${w}" height="24" rx="10"/><rect class="strip2" x="${x}" y="${y+12}" width="${w}" height="12"/><text class="nm" x="${x+14}" y="${y+17}">${name}</text><text class="ln" x="${x+w-12}" y="${y+17}" text-anchor="end">${line}</text><text class="sub" x="${x+14}" y="${y+hh-16}">${io}</text></g>`;}
+  svg.innerHTML=h;
+  function light(k){svg.querySelectorAll('.edge,.elab').forEach(e=>{const on=e.dataset.f===k||e.dataset.t===k; e.classList.toggle('lit',on); if(e.classList.contains('edge')) e.setAttribute('marker-end',`url(#mArr-${on?k:'muted'})`); if(on) e.style.stroke=e.classList.contains('edge')?`var(--f-${k})`:''; else e.style.stroke=''; if(on&&!e.classList.contains('edge')) e.style.fill=`var(--f-${k})`; else if(!e.classList.contains('edge')) e.style.fill='';});}
+  svg.querySelectorAll('.box').forEach(g=>{const act=()=>{svg.querySelectorAll('.box').forEach(n=>n.classList.remove('on')); g.classList.add('on'); $('mapX').innerHTML=MAP[g.dataset.k]; light(g.dataset.k);}; g.addEventListener('click',act); g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();act();}});});
+  $('mapX').innerHTML=MAP.bt; light('bt');})();
+// ---------------- labels ----------------
+const CATS={in:'IN',sig:'SIG',cost:'COST',out:'OUT'}; const guesses={};
+function renderLabels(){const box=$('labels'); box.innerHTML=''; CODE.forEach(([n,t,c])=>{if(!c)return; const row=document.createElement('div'); row.className='lrow'; row.dataset.n=n;
+  row.innerHTML=`<code><span class="n">${n}</span>${esc(t.trim())}</code><span class="guess">${Object.keys(CATS).map(k=>`<button data-g="${k}">${CATS[k]}</button>`).join('')}</span><span style="display:flex;gap:6px;align-items:center"><button class="small rv">reveal</button><span class="verdict"></span></span>`;
+  row.querySelectorAll('.guess button').forEach(b=>b.addEventListener('click',()=>{row.querySelectorAll('.guess button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); guesses[n]=b.dataset.g;}));
+  row.querySelector('.rv').addEventListener('click',()=>reveal(row,c)); box.appendChild(row);});}
+function reveal(row,c){row.classList.add('rev','c-'+c); const g=guesses[row.dataset.n]; row.querySelector('.verdict').textContent=g?(g===c?'✓ '+CATS[c]:'✗ '+CATS[c]):CATS[c]; score();}
+function score(){let n=0,ok=0; document.querySelectorAll('.lrow.rev').forEach(r=>{const g=guesses[r.dataset.n]; if(g){n++; if(r.classList.contains('c-'+g))ok++;}}); $('score').textContent=n?`${ok}/${n} labelled right`:'';}
+$('revAll').addEventListener('click',()=>document.querySelectorAll('.lrow').forEach(r=>{const c=CODE.find(x=>x[0]==+r.dataset.n)[2]; reveal(r,c);}));
+$('hideAll').addEventListener('click',()=>{document.querySelectorAll('.lrow').forEach(r=>{r.className='lrow'; r.querySelector('.verdict').textContent='';}); score();});
+renderLabels();
+// ---------------- methods ----------------
+function mini(rows,cols){return `<table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((v,i)=>`<td>${v}</td>`).join('')}</tr>`).join('')}</tbody></table>`;}
+const B=compute('base'), M=compute('mask');
+const alpha=2/31; const ewm=[]; let v=B.ret[0]; B.ret.forEach((r,i)=>{v=i?alpha*r+(1-alpha)*v:r; ewm.push(v);});
+const f4=x=>(x>=0?'':'−')+Math.abs(x).toFixed(4);
+const METHODS=[
+ ['pct_change','line 51','prices.pct_change()',mini([[1,100,'NaN'],[2,102,f4(B.ret[1])],[3,101,f4(B.ret[2])]],['day','price','pct_change']),'Each value divided by the previous one, minus one: the percentage change from row to row. The first row has nothing before it and becomes NaN.'],
+ ['reindex','line 52 (and 65)','signal.reindex(prices.index)',mini([['day 1','0','0'],['day 2','+1','+1'],['day 7','—','NaN']],['date','signal','reindexed to price dates']),'Rebuild the Series on a given set of labels, keeping values whose label exists and inserting NaN where it does not. Here it forces the signal onto exactly the price dates.'],
+ ['fillna','7 uses, lines 51–68','x.fillna(0.0)',mini([[1,'NaN','0.0000'],[2,f4(B.ret[1]),f4(B.ret[1])],[3,f4(B.ret[2]),f4(B.ret[2])]],['day','before','fillna(0.0)']),'Replace every missing value (NaN) with the value given. The backtester uses 0 so that "no data" means "no return, no position, no trade".'],
+ ['ewm','line 23, inside realised_vol','ret.ewm(span=30, adjust=False).mean()',mini([[1,f4(B.ret[0]),f4(ewm[0])],[2,f4(B.ret[1]),f4(ewm[1])],[3,f4(B.ret[2]),f4(ewm[2])]],['day','ret','ewm mean (span 30)']),'An exponentially weighted window: recent values count most and older ones fade by a constant factor. span=30 sets α = 2/31. Shown here as the mean; the file takes .std(). The whole <a href="ewma.html">EWMA note</a> is about this method.'],
+ ['clip','lines 57, 59','sig.clip(-2, 2)',mini([['a','+2.5','+2.0'],['b','−3.0','−2.0'],['c','+0.5','+0.5']],['','before','clip(−2, 2)']),'Cap every value to a range: anything above the upper bound becomes the bound, anything below the lower bound likewise. The leverage cap.'],
+ ['shift','line 62','target.shift(1)',mini([[1,fmt.target(B.target[0]),'NaN'],[2,fmt.target(B.target[1]),fmt.pos(B.pos[1])],[3,fmt.target(B.target[2]),fmt.pos(B.pos[2])]],['day','target','shift(1)']),'Move every value down by one row (the first row becomes NaN). Row t now holds what row t−1 had. This is the one-bar lag.'],
+ ['where','line 66','pos.where(ok)',mini([[3,'+1','True','+1'],[4,'+1','False','NaN'],[5,'−1','False','NaN']],['day','pos','ok','where(ok)']),'Keep values where the condition is True and replace the rest with NaN. On closed days the position is blanked, ready to be filled from the day before.'],
+ ['ffill','line 66','pos.where(ok).ffill()',mini([[3,'+1','+1'],[4,'NaN','+1'],[5,'NaN','+1']],['day','after where','ffill()']),'Forward-fill: replace each NaN with the last non-missing value above it. The position is carried through the weekend unchanged.'],
+ ['diff','line 68','pos.diff()',mini([[2,fmt.pos(B.pos[1]),(B.pos[1]-B.pos[0]).toString()],[3,fmt.pos(B.pos[2]),(B.pos[2]-B.pos[1]).toString()],[5,fmt.pos(B.pos[4]),(B.pos[4]-B.pos[3]).toString()]],['day','pos','diff()']),'Each value minus the previous one. Its absolute value is turnover. A flip from +1 to −1 gives −2, so turnover 2.'],
+ ['cumprod','line 79 (and 156)','(1 + net).cumprod()',mini([[1,'1 + 0 = 1.0000',B.equity[0].toFixed(4)],[2,'1 + 0 = 1.0000',B.equity[1].toFixed(4)],[3,'1 '+(B.net[2]<0?'−':'+')+' '+Math.abs(B.net[2]).toFixed(4),B.equity[2].toFixed(4)]],['day','1 + net','cumprod()']),'Running product: each row is the product of all rows up to and including it. Compounding daily net returns into the growth of $1.'],
+ ['cummax','line 86 (and 111)','equity.cummax()',mini([[4,B.equity[3].toFixed(4),Math.max(...B.equity.slice(0,4)).toFixed(4)],[5,B.equity[4].toFixed(4),Math.max(...B.equity.slice(0,5)).toFixed(4)],[6,B.equity[5].toFixed(4),Math.max(...B.equity.slice(0,6)).toFixed(4)]],['day','equity','cummax()']),'Running maximum: the highest value seen so far. Equity divided by it, minus one, is the drawdown.'],
+ ['groupby','line 109, inside yearly','res.groupby(res.index.year)',mini([['2025-12-30','+0.5%','2025'],['2025-12-31','−0.2%','2025'],['2026-01-01','+0.1%','2026']],['date','net','group']),'Split the rows into groups by a key (here the calendar year) so a function can be applied to each group separately: one return and one drawdown per year.']];
+const GROUPS=[['Clean the inputs','in',['pct_change','reindex','fillna']],['Size and lag','sig',['ewm','clip','shift']],['Closed days','sig2',['where','ffill']],['Costs and results','cost',['diff','cumprod','cummax','groupby']]];
+const GCOL={in:'--accent',sig:'--purple',sig2:'--purple',cost:'--warm'}, GSOFT={in:'--accent-soft',sig:'--purple-soft',sig2:'--purple-soft',cost:'--warm-soft'};
+function renderMethods(){let h=''; for(const [gname,gk,names] of GROUPS){h+=`<div class="mgroup" style="--gc:var(${GCOL[gk]});--gs:var(${GSOFT[gk]})"><p class="eyebrow" style="color:var(--gc)">${gname}</p><div class="methods">`;
+  for(const name of names){const i=METHODS.findIndex(m=>m[0]===name); const m=METHODS[i]; const tbl=m[3].replace(/<th>([^<]*)<\/th>(?=<\/tr>)/,'<th class="after">$1</th>').replace(/<td>([^<]*)<\/td>(?=<\/tr>)/g,'<td class="after">$1</td>');
+    h+=`<div class="m" data-i="${i}"><div class="mhead"><h3>.${m[0]}()</h3><span class="where">${m[1]}</span></div><code class="call">${esc(m[2])}</code>${tbl}<button class="small rvm">reveal definition</button><div class="def">${m[4]}</div></div>`;}
+  h+='</div></div>';}
+  $('methods').innerHTML=h; document.querySelectorAll('.m .rvm').forEach(b=>b.addEventListener('click',()=>b.closest('.m').classList.toggle('rev')));}
+renderMethods(); $('revM').addEventListener('click',()=>document.querySelectorAll('.m').forEach(m=>m.classList.add('rev'))); $('hideM').addEventListener('click',()=>document.querySelectorAll('.m').forEach(m=>m.classList.remove('rev')));
+// ---------------- stats ----------------
+function statsOf(R){const net=R.net, eq=R.equity, n=net.length; const mean=net.reduce((a,b)=>a+b,0)/n; const sd=Math.sqrt(net.reduce((a,b)=>a+(b-mean)*(b-mean),0)/(n-1)); const yrs=n/BPY;
+  let peak=-Infinity; const dd=eq.map(e=>{peak=Math.max(peak,e); return e/peak-1;}); const vol=sd*Math.sqrt(BPY);
+  return [['CAGR',Math.pow(eq[n-1],1/yrs)-1,'line 88 · equity[6]^(365/6) − 1 = '+eq[n-1].toFixed(4)+'^'+(BPY/n).toFixed(2)+' − 1','A six-day equity compounded as if it ran for a year. Absurd on six days, exactly as the code computes it; meaningful on nine years.',v=>(v*100).toFixed(0)+'%'],
+   ['Vol',vol,'line 89 · std(net) × √365 = '+sd.toFixed(4)+' × 19.105','Annualised standard deviation of daily net returns.',v=>(v*100).toFixed(1)+'%'],
+   ['Sharpe',vol>0?mean*BPY/vol:NaN,'line 94 · mean(net) × 365 / Vol = '+mean.toFixed(5)+' × 365 / '+vol.toFixed(4),'Annualised mean over annualised volatility.',v=>v.toFixed(2)],
+   ['MaxDrawdown',Math.min(...dd),'lines 86, 95 · min(equity / cummax(equity) − 1)','Worst fall from a running peak. Here: '+dd.map(d=>(d*100).toFixed(2)+'%').join(', ')+'.',v=>(v*100).toFixed(2)+'%'],
+   ['WorstBar',Math.min(...net),'line 96 · min(net)','The single worst day\'s net return.',v=>pct(v)],
+   ['BestBar',Math.max(...net),'line 97 · max(net)','The single best day\'s net return.',v=>pct(v)],
+   ['TurnoverPerYear',R.turnover.reduce((a,b)=>a+b,0)/yrs,'line 98 · sum(turnover) / yrs = '+R.turnover.reduce((a,b)=>a+b,0)+' / '+yrs.toFixed(4),'Units traded per year. Six days of a toy signal, annualised, is a huge number; on real data week 1 saw 19 for gold after the weekend fix (82 before).',v=>v.toFixed(0)],
+   ['CostDrag',R.cost.reduce((a,b)=>a+b,0)/yrs,'line 99 · sum(cost) / yrs','How much per year costs ate.',v=>(v*100).toFixed(1)+'%'],
+   ['CarryDrag',R.carry.reduce((a,b)=>a+b,0)/yrs,'line 100 · sum(carry) / yrs','How much per year carry ate (zero here).',v=>(v*100).toFixed(1)+'%'],
+   ['TimeInMarket',R.pos.filter(p=>p!==0).length/n,'line 101 · mean(position != 0) = '+R.pos.filter(p=>p!==0).length+' / 6','Share of days with any position.',v=>(v*100).toFixed(0)+'%'],
+   ['Bars',n,'line 102 · len(net)','Number of rows.',v=>v]];}
+let statOn=2;
+function renderStats(){const S=statsOf(R); $('statgrid').innerHTML=S.map((s,i)=>`<button class="sb${i===statOn?' on':''}" data-i="${i}"><b>${isFinite(s[1])?s[4](s[1]):'nan'}</b><span>${s[0]}</span></button>`).join('');
+  $('statgrid').querySelectorAll('.sb').forEach(b=>b.addEventListener('click',()=>{statOn=+b.dataset.i; renderStats();}));
+  const s=S[statOn]; $('statX').innerHTML=`<b>${s[0]}</b> = ${isFinite(s[1])?s[4](s[1]):'nan'}<br><code>${s[2]}</code><br>${s[3]}`;
+  const yr=(1+R.net.reduce((a,b)=>a*(1+b),1)-1)-1; let peak=-Infinity; const mdd=Math.min(...R.equity.map(e=>{peak=Math.max(peak,e);return e/peak-1;}));
+  $('yearlyT').querySelector('tbody').innerHTML=`<tr><td>this year</td><td>${pct(R.equity[5]-1)}</td><td>${(mdd*100).toFixed(2)}%</td></tr>`;}
+// ---------------- walk-forward ----------------
+const WF=[['train','<b>Lines 136–137.</b> While a full train+test window still fits in the data: take <code>train_bars</code> of prices (default three years) as the training window.'],
+ ['grid','<b>Lines 140–145.</b> For every parameter set in <code>grid</code>: build the signal on the training prices, run <code>backtest</code>, take <code>stats()["Sharpe"]</code>, and keep the best. Only training data is seen.'],
+ ['test','<b>Lines 139, 146–148.</b> Run the chosen parameters on train + test together (line 139: so a lookback signal is already "warm" when the test starts), then keep only the test slice, <code>res_full.iloc[train_bars:]</code>.'],
+ ['log','<b>Lines 149–151.</b> Record the window: when training and testing started and ended, which parameters were chosen, the training Sharpe and the test Sharpe. This log is where overfitting shows: a big gap between the two, every window.'],
+ ['slide','<b>Line 152.</b> Move the start forward by <code>test_bars</code> and repeat. Windows overlap in training, never in testing.'],
+ ['stitch','<b>Lines 155–157.</b> Concatenate the test slices, recompute equity over the stitched series, return it with the log. That stitched series is the out-of-sample result.']];
+let wfOn=0;
+function drawW(){const c=$('cvW'); const dpr=window.devicePixelRatio||1; const W=c.width,H=c.height; const ctx=c.getContext('2d'); c.style.aspectRatio=W+'/'+H; if(c._dpr!==dpr){c.width=W*dpr;c.height=H*dpr;c._dpr=dpr;} ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  const padL=16,padR=16,pw=W-padL-padR,X=f=>padL+pw*f; const rows=[[0,0.3,0.4],[0.1,0.4,0.5],[0.2,0.5,0.6],[0.3,0.6,0.7]]; const rh=20,top=12; const k=WF[wfOn][0];
+  ctx.font='11px '+css('--mono');
+  rows.forEach(([a,b,d],i)=>{const y=top+i*(rh+6); const dim=(k==='train'||k==='grid'||k==='test'||k==='log')&&i!==0; ctx.globalAlpha=dim?.3:1;
+    ctx.fillStyle=css('--accent-soft'); ctx.fillRect(X(a),y,X(b)-X(a),rh); ctx.strokeStyle=css('--accent'); ctx.lineWidth=1; ctx.strokeRect(X(a),y,X(b)-X(a),rh);
+    ctx.fillStyle=(k==='test'||k==='stitch'||k==='slide'||k==='log')?css('--warm-soft'):css('--panel'); ctx.fillRect(X(b),y,X(d)-X(b),rh); ctx.strokeStyle=css('--warm'); ctx.strokeRect(X(b),y,X(d)-X(b),rh);
+    ctx.fillStyle=css('--ink'); ctx.textAlign='center'; ctx.fillText(k==='grid'&&i===0?'train: try every grid entry':'train (3 y)',X((a+b)/2),y+14); ctx.fillStyle=css('--warm'); ctx.fillText('test (1 y)',X((b+d)/2),y+14); ctx.globalAlpha=1;});
+  if(k==='stitch'){const y=top+4*(rh+6)+4; ctx.fillStyle=css('--warm'); ctx.globalAlpha=.6; rows.forEach(([a,b,d])=>ctx.fillRect(X(b),y,X(d)-X(b),10)); ctx.globalAlpha=1; ctx.textAlign='left'; ctx.fillStyle=css('--muted'); ctx.fillText('stitched out-of-sample series',X(0.72),y+9);}
+  if(k==='slide'){ctx.strokeStyle=css('--muted'); ctx.setLineDash([3,3]); for(let i=0;i<3;i++){const y=top+i*(rh+6)+rh+3; ctx.beginPath(); ctx.moveTo(X(rows[i][0]),y); ctx.lineTo(X(rows[i+1][0]),y); ctx.stroke();} ctx.setLineDash([]); ctx.fillStyle=css('--muted'); ctx.textAlign='left'; ctx.fillText('start += test_bars',X(0.42),top+rh+2);}
+  ctx.fillStyle=css('--muted'); ctx.textAlign='left'; ctx.fillText('time →',X(0),H-6);
+  $('wfX').innerHTML=WF[wfOn][1];}
+$('wfsteps').innerHTML='<span class="note">Stage:</span>'+WF.map((w,i)=>`<button class="pill${i===0?' on':''}" data-i="${i}">${i+1} · ${w[0]}</button>`).join('');
+$('wfsteps').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{$('wfsteps').querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); wfOn=+b.dataset.i; drawW();}));
+// ---------------- questions ----------------
+const QS=[['Why is the position yesterday\'s signal?','Because the signal for day t is computed from day t\'s close, and you cannot trade at a close you have not seen. <code>pos = target.shift(1)</code> makes the position held during day t the one decided at the end of day t−1. Without it the backtest uses tomorrow\'s information; the honest backtest note shows a no-edge market turning into a Sharpe of 7.'],
+ ['What is turnover, and why does a long-to-short flip cost double?','Turnover is |pos<sub>t</sub> − pos<sub>t−1</sub>|, how much the position changed. Going from +1 to −1 is a change of 2: you close one unit of long and open one unit of short, two trades\' worth of spread. The cost line multiplies turnover by the per-unit charge, so the flip pays twice.'],
+ ['What does vol_target / vol do when volatility doubles overnight?','The scale halves, so the target position halves: at a 10% target, 20% vol gives 0.5 units, 40% gives 0.25. The position shrinks automatically as markets get wilder, which keeps each instrument\'s expected risk near the target. Because of the lag, the smaller position is held from the next day. This is the mechanism to describe on the risk page.'],
+ ['Why 365 bars a year here, not 252?','The clean daily table has one row per calendar day, because bitcoin trades every day and gold is forward-filled over weekends onto the same calendar. Annualising with the number of rows per year (365) keeps Sharpe and volatility consistent for both instruments on one calendar. Gold on its own trading days would use about 252; mixing the two conventions would scale every position by the wrong factor.'],
+ ['What happens to gold on a weekend, and why did the first version inflate turnover twenty-fold?','The clean table carries Friday\'s close across Saturday and Sunday and marks <code>xau_tradable = False</code>. The first script set gold\'s signal to zero on those days, so the model closed every Friday and reopened every Monday, paying the spread twice a week for nothing: turnover 82 a year, cost drag 2.5%. The fix is lines 64–66: <code>pos.where(ok).ffill()</code> freezes the position on closed days. After it: turnover 19, cost drag 0.6%.'],
+ ['With zero costs and an always-long signal, what must equity equal, and why is that a useful test?','Exactly the asset\'s own growth, last price divided by first price, because the position is 1 on every day after the first and nothing is subtracted. It is the plumbing test: if that number is off, the returns, the lag or the compounding is wrong, independent of any strategy idea. The project\'s tests check it on synthetic data and the week-1 script checked it on real data (6.091× bitcoin, 3.114× gold since 2018).'],
+ ['Why might a walk-forward Sharpe be lower than a full-history one, and which would you trust?','The full-history number lets the parameters see the years they are scored on, so it includes the luck of that one history. The walk-forward number only ever uses a choice made before each test window, which is the situation you are actually in when you trade. Trust the walk-forward Sharpe, and read the log: a large, repeated gap between train_sharpe and test_sharpe means the grid is being fitted to noise.']];
+$('qs').innerHTML=QS.map((q,i)=>`<div class="q"><span class="qt">${i+1}. ${q[0]}</span><button class="small rvq" style="align-self:flex-start">reveal answer</button><div class="a">${q[1]}</div></div>`).join('');
+document.querySelectorAll('.rvq').forEach(b=>b.addEventListener('click',()=>b.closest('.q').classList.toggle('rev')));
+// ---------------- boot ----------------
+showStep(); drawW();
+window.addEventListener('resize',drawW);
+if(window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{showStep();drawW();});}
+new MutationObserver(()=>{showStep();drawW();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+</script>
+</body>
+</html>
