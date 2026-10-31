@@ -11,17 +11,17 @@
 :root{
   --bg:#F7F5EF; --panel:#FFFFFF; --ink:#1E2430; --muted:#5C6473; --line:#D9D5CB;
   --accent:#1F6F8B; --accent-soft:#D8E9EF; --warm:#C2651E; --warm-soft:#F6E2D2;
-  --good:#2E7D4F; --good-soft:#D9EDE0; --purple:#6B4FA0; --purple-soft:#E6DFF3; --code-bg:#1B222C; --code-fg:#E8EBF0;
+  --good:#2E7D4F; --good-soft:#D9EDE0; --purple:#6B4FA0; --purple-soft:#E6DFF3; --prog:#8A6D00; --prog-soft:#FBF1CC; --code-bg:#1B222C; --code-fg:#E8EBF0;
   --display:'Fraunces',Georgia,serif; --body:'Atkinson Hyperlegible',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#12161C; --panel:#1A2029; --ink:#E9E6DF; --muted:#A3AAB6; --line:#2E3540;
   --accent:#6FB8D1; --accent-soft:#1E3440; --warm:#E5945A; --warm-soft:#3E2A1C;
-  --good:#6DBE8C; --good-soft:#1E3A2A; --purple:#B39DDB; --purple-soft:#2E2640; --code-bg:#0D1116; --code-fg:#E8EBF0; color-scheme:dark } }
+  --good:#6DBE8C; --good-soft:#1E3A2A; --purple:#B39DDB; --purple-soft:#2E2640; --prog:#E9D27A; --prog-soft:#3B3414; --code-bg:#0D1116; --code-fg:#E8EBF0; color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#12161C; --panel:#1A2029; --ink:#E9E6DF; --muted:#A3AAB6; --line:#2E3540;
   --accent:#6FB8D1; --accent-soft:#1E3440; --warm:#E5945A; --warm-soft:#3E2A1C;
-  --good:#6DBE8C; --good-soft:#1E3A2A; --purple:#B39DDB; --purple-soft:#2E2640; --code-bg:#0D1116; --code-fg:#E8EBF0; color-scheme:dark }
+  --good:#6DBE8C; --good-soft:#1E3A2A; --purple:#B39DDB; --purple-soft:#2E2640; --prog:#E9D27A; --prog-soft:#3B3414; --code-bg:#0D1116; --code-fg:#E8EBF0; color-scheme:dark }
 
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;
@@ -89,6 +89,9 @@ details.week summary::-webkit-details-marker{display:none}
 .wbody .out{grid-column:1/-1;background:var(--accent-soft);border-radius:8px;padding:12px 14px;font-size:15px}
 .wbody .out h4{color:var(--accent)}
 .pill{font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:999px;background:var(--purple-soft);color:var(--purple);margin-left:4px;white-space:nowrap}
+.stag{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;padding:1px 7px;border-radius:999px;margin-right:6px;white-space:nowrap;vertical-align:1px}
+.stag.fin{color:var(--purple);background:var(--purple-soft)}.stag.stat{color:var(--good);background:var(--good-soft)}.stag.math{color:var(--warm);background:var(--warm-soft)}.stag.prog{color:var(--prog);background:var(--prog-soft)}
+.skey{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);align-items:center}
 @media (max-width:640px){.wbody{grid-template-columns:1fr}details.week summary{grid-template-columns:52px 1fr}.status{display:none}}
 /* map */
 .map{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
@@ -136,7 +139,8 @@ details.week summary::-webkit-details-marker{display:none}
 <!-- 2 weeks -->
 <section class="wrap">
   <h2>2 · Weekly scope</h2>
-  <p>Each week specifies the <strong>work</strong> (what is built or tested), the <strong>reading</strong> (the sources consulted before the work, so that methods are taken from the literature rather than improvised) and the <strong>deliverable</strong> (the file that records the week's result). Where a note on this site covers the week's method, it is linked.</p>
+  <p>Each week specifies the <strong>work</strong> (what is built or tested), the <strong>reading</strong> (the sources consulted before the work, so that methods are taken from the literature rather than improvised) and the <strong>deliverable</strong> (the file that records the week's result). Where a note on this site covers the week's method, it is linked. Reading items are labelled by subject. The mathematics lane (Shreve, <em>Stochastic Calculus for Finance</em>) runs in parallel and does not block the model work; it is first required in week 11, where an Ornstein–Uhlenbeck process is fitted.</p>
+  <div class="skey"><span>Subject:</span><span class="stag fin">finance</span><span class="stag stat">statistics</span><span class="stag math">mathematics</span><span class="stag prog">programming</span></div>
 </section>
 <section class="wide">
   <div class="weeks" id="weeks"></div>
@@ -205,9 +209,10 @@ details.week summary::-webkit-details-marker{display:none}
     <div><b>Politis &amp; Romano</b><span>D. Politis, J. Romano, "The Stationary Bootstrap", <em>Journal of the American Statistical Association</em> 89 (1994). Week 7.</span></div>
     <div><b>Lo &amp; MacKinlay</b><span>A. Lo, A. C. MacKinlay, "Stock Market Prices Do Not Follow Random Walks", <em>Review of Financial Studies</em> 1 (1988). Week 9.</span></div>
     <div><b>Halls-Moore</b><span>M. Halls-Moore, <em>Successful Algorithmic Trading</em>, QuantStart, 2015, the cointegration chapter. Week 10.</span></div>
+    <div><b>Shreve</b><span>S. Shreve, <em>Stochastic Calculus for Finance I: The Binomial Asset Pricing Model</em>, Springer, 2004. Weeks 1–3 of the mathematics lane.</span></div>
     <div><b>Avellaneda &amp; Lee</b><span>M. Avellaneda, J.-H. Lee, "Statistical Arbitrage in the US Equities Market", <em>Quantitative Finance</em> 10 (2010), section 2 and appendix. Week 11.</span></div>
   </div>
-  <p class="note" style="margin-top:12px">Carver's <em>Systematic Trading</em> (2015), its companion spreadsheets, Chan's <em>Algorithmic Trading</em> (2013) and the pysystemtrade documentation are quoted from the reading list, not from the text. Part of <a href="index.html">quant-notes</a>. See also <a href="momentum.html">01 · momentum</a>, <a href="ewma.html">02 · EWMA</a>, <a href="backtest.html">03 · the honest backtest</a> and <a href="backtester.html">04 · the backtester, line by line</a>.</p>
+  <p class="note" style="margin-top:12px">Carver's <em>Systematic Trading</em> (2015), its companion spreadsheets, Chan's <em>Algorithmic Trading</em> (2013), Shreve's <em>Stochastic Calculus for Finance II</em> (2004) and the pysystemtrade documentation are quoted from the reading list, not from the text. Part of <a href="index.html">quant-notes</a>. See also <a href="momentum.html">01 · momentum</a>, <a href="ewma.html">02 · EWMA</a>, <a href="backtest.html">03 · the honest backtest</a> and <a href="backtester.html">04 · the backtester, line by line</a>.</p>
 </section>
 
 <script>
@@ -225,72 +230,92 @@ const W=[
  {n:1,p:"p1",t:"Data: gold and bitcoin",brief:"Download the full daily and hourly history for both instruments, check gaps, weekends and time zones, and save the raw files untouched.",
   work:["BTC/USD: full daily and 1-hour history from an exchange API (Binance via ccxt)","XAU/USD: daily from Yahoo (GC=F, cross-checked against XAUUSD=X); hourly from Dukascopy when Yahoo's 730-day limit bites","Gaps, weekends (gold closes, bitcoin does not), alignment to UTC; raw files never edited by hand"],
   read:["The ccxt manual's fetch_ohlcv section and the yfinance download() docs: how each API pages through history","README.md, Data notes: why UTC, why gold is forward-filled, why 365 bars a year"],
+  math:["Shreve I §1.1, the one-period binomial model: pricing by replication; the worked example (S0 = 4, u = 2, d = 1/2, r = 1/4, K = 5) by hand and in a notebook cell; optional §1.2"],
   out:"data/raw/ with the four downloads; data/clean/daily.csv, one row per calendar day since 2017-08-17 with btc, xau, xau_tradable; the sanity report (missing values, moves over 15%, largest gap) in the research log."},
  {n:2,p:"p1",t:"Backtester with real costs",brief:"A vectorised backtester with the one-bar lag, a cost model and a tradable mask, studied line by line; the cost assumptions replaced by measured broker numbers.",
   work:["Vectorised backtester: signal → position → P&L, every signal lagged one bar","Cost model: spread plus slippage per unit of turnover; carry (funding) per day held; gold frozen on closed days","Metrics: Sharpe, max drawdown, worst day, turnover, time in market, cost drag","Cost sensitivity: the trend rule at 0×, 1×, 2×, 3× spread crossed with 0 / 5 / 10% carry","Real costs from the brokers' own pages, with date and source, into the README cost table"],
   read:["Carver, Systematic Trading, ch. 1–3 and ch. 12, with his ch. 2 Sharpe-across-periods and ch. 12 cost-template sheets","López de Prado 2018: one line per reason on how the repo handles it","RiskMetrics 1996 ch. 5: the EWMA recursion, against realised_vol","Bailey et al. 2014, Pseudo-Mathematics: why repeated backtesting produces fake results"],
+  math:["Shreve I ch. 2: probability on coin-toss space, conditional expectation, the martingale property; exercises 2.1–2.4 and a 10,000-path simulation checking that the discounted price does not drift"],
   links:[["backtest.html","03 · the honest backtest"],["backtester.html","04 · the backtester, line by line"],["ewma.html","02 · EWMA"]],
   out:"src/backtest.py annotated; the tradable mask and its test; results/02_cost_sensitivity.csv; the README cost table with measured numbers; the 2026-01-30 gold print checked against a second source with a verdict in the log; one commit."},
  {n:3,p:"p2",t:"Trend signals on two instruments",brief:"Time-series momentum at several horizons, moving-average crossover, Donchian breakout and EWMAC, on gold and bitcoin separately.",
   work:["Time-series momentum at 1, 3, 6 and 12 months for XAU and BTC separately","Moving-average crossover and Donchian breakout as alternative trend signals","Carver's EWMAC(16,64) with forecast scaling, compared with tsmom and ma_cross"],
   read:["Moskowitz, Ooi & Pedersen 2012: the rule, the 12-month lookback, the vol-scaled position formula","Hurst, Ooi & Pedersen 2017: a century of evidence and the drawdown years; the regime list for week 7 comes from here","Liu & Tsyvinski 2021: momentum in bitcoin at one week and one month; what it implies for the BTC lookback grid","Carver ch. 7 and the EWMAC sheet: forecast scaling cell by cell"],
+  math:["Shreve I ch. 3 (state prices, Radon–Nikodym derivative) and ch. 5 (random walk, first passage times)"],
   links:[["momentum.html","01 · momentum"]],
   out:"Signal research notebook: which horizons work on which instrument, with costs."},
  {n:4,p:"p2",t:"Volatility sizing and risk",brief:"EWMA realised volatility per instrument, a 10% annual risk target each, a hard leverage cap, and a rule for going flat.",
   work:["EWMA realised volatility per instrument; target 10% annual risk each","Position shrinks as volatility rises; hard cap on leverage","Rule for flat positions when signals disagree or volatility explodes","Gold and bitcoin checked against Carver's instrument criteria, answer in the log"],
   read:["Carver ch. 6, 9 and 10: instruments, volatility targeting, position sizing; his formulas against realised_vol and scale = vol_target / vol","Tsay ch. 1 and 3.1–3.5: fat tails, the stylised facts, GARCH(1,1) against the EWMA estimate on BTC","Wasserman ch. 2–3 only if the distribution material needs backing up"],
+  math:["Shreve II ch. 1: general probability, measures, expectation; exercises on change of measure"],
   links:[["ewma.html","02 · EWMA"]],
   out:"Model 1 v1 with a full-history backtest, costs included."},
  {n:5,p:"p2",t:"Walk-forward testing",brief:"Parameters chosen on training windows and scored strictly out of sample; in-sample and out-of-sample Sharpe compared honestly.",
   work:["Split the history: fit in sample, evaluate strictly out of sample","Walk-forward re-estimation of every parameter in the grid","In-sample vs out-of-sample Sharpe, per instrument and combined","Instrument weights handcrafted 50/50 by risk; the optimiser read, not run"],
   read:["Carver ch. 4–5: handcrafting versus fitting weights; the system diagram","Bailey et al. 2015, Probability of Backtest Overfitting, sections 1–4"],
+  math:["Shreve II ch. 2: information, conditioning, filtrations; exercises on conditional expectation"],
   links:[["backtest.html","03 · the honest backtest"]],
   out:"Out-of-sample results table and the walk-forward selection log."},
  {n:6,p:"p2",t:"Robustness I",brief:"Does the result survive nearby parameters, double and triple costs, and each instrument on its own? The Sharpe haircut for the number of variants tried.",
   work:["Parameter sensitivity: do nearby lookbacks give similar results?","Cost sensitivity at 2× and 3× assumed spread and funding","Gold-only and bitcoin-only versus the combination","A no-edge baseline: the rule on random prices, the Sharpe you get by luck","Forecast weights and the diversification multiplier for the tsmom + EWMAC + Donchian blend"],
   read:["Bailey & López de Prado 2014, Deflated Sharpe Ratio: computed for the variants tried so far","Harvey & Liu 2015, Backtesting: the haircut after N trials, cross-checked","Carver ch. 8 and its two sheets; the pysystemtrade system-design docs"],
+  math:["Shreve II ch. 3.1–3.4: Brownian motion, quadratic variation; simulate paths and check quadratic variation numerically"],
   out:"Robustness report in the research log."},
  {n:7,p:"p2",t:"Robustness II and freeze Model 1",brief:"Regimes, event days, a bootstrap stress test, then the exact rule written down and frozen before any live order.",
   work:["Regime analysis: 2020 crash, 2021 bitcoin bull run, 2022 bear, 2024–25 gold rally","Behaviour on Fed decision days and large USD moves","Stationary-bootstrap Monte Carlo: distribution of max drawdown and worst year; how often a no-skill strategy matches the backtest Sharpe","Freeze: the exact rules written in notes/ before going live, with the diary columns the live log will use"],
   read:["Efron & Tibshirani ch. 1–6 and Politis & Romano 1994: the bootstrap and block resampling for autocorrelated returns","Carver ch. 13–14 (skim) and the ch. 13 trading-diary sheet"],
+  math:["Shreve II ch. 3.5–3.7: reflection principle, Markov property; first-passage exercises"],
   out:"Model 1 frozen spec and a research-note draft."},
  {n:8,p:"p3",t:"Model 1 on the simulated account",brief:"A scheduled daily script converts the frozen rule into orders on the simulated account; the live log begins.",
   work:["Simulated accounts: Alpaca paper for BTC/USD; a gold broker (OANDA or IG) for XAU/USD and for short positions","Daily script: signals → target positions → orders, run on a schedule","Live log: date, signal, fill, slippage, P&L against the backtest's expectation"],
   read:["The Alpaca trading API docs, side by side with live/live_alpaca.py until each function can be explained"],
+  math:["Shreve II ch. 4.1–4.3: the Itô integral; exercises on simple integrands"],
   out:"Model 1 trading on the simulated account; results/live_log.csv started fresh."},
  {n:9,p:"p3",t:"Intraday behaviour of gold and bitcoin",brief:"Hourly returns: autocorrelation, volatility by hour and weekday, sessions, and which short horizons revert.",
   work:["Autocorrelation and volatility by hour of day and day of week","Sessions: the London/New York overlap for gold; weekend behaviour for bitcoin","Short-horizon mean reversion versus continuation; the variance-ratio test on both instruments"],
   read:["Lo & MacKinlay 1988: the variance-ratio test","Tsay ch. 2.1–2.6: stationarity, ACF, AR models, the ADF test"],
+  math:["Shreve II ch. 4.4: Itô's lemma, applied to geometric Brownian motion and to log prices"],
   out:"Intraday research notebook."},
  {n:10,p:"p3",t:"Model 2 design: short-term model",brief:"One model chosen, intraday mean reversion or volatility breakout, with bar size, entry, exit, stop and an explicit cost check.",
   work:["Choose one: intraday mean reversion (z-score of price vs rolling mean) or volatility breakout","Bar size (1h or 4h), entry, exit and stop rules","Explicit cost check: can the edge survive the spread at this frequency?"],
   read:["Chan, Algorithmic Trading ch. 2–3: mean reversion, half-life, Bollinger-style entries","Tsay ch. 8.5–8.6 and Halls-Moore's cointegration chapter"],
+  math:["Shreve II ch. 4.5–4.6: the Black–Scholes–Merton equation and multivariable Itô; derive the BSM PDE"],
   out:"Model 2 written spec."},
  {n:11,p:"p3",t:"Ornstein-Uhlenbeck on price deviations",brief:"An OU process fitted to short-term deviations from a rolling mean; only horizons whose half-life fits the holding period are kept.",
   work:["Fit an OU process to deviations: speed, mean, half-life, by AR(1) regression","Keep only horizons where the half-life sits well inside bar size × holding period","Backtest Model 2 with costs and funding"],
   read:["Avellaneda & Lee 2010, section 2 and the appendix: the OU model for residuals and how to fit it"],
+  math:["Shreve II ch. 4 exercises: solve the Ornstein–Uhlenbeck SDE and derive its mean, variance and half-life, the process fitted this week"],
   out:"Model 2 v1 backtest."},
  {n:12,p:"p3",t:"Model 2 testing",brief:"Walk-forward, cost and slippage sensitivity at intraday frequency, and whether Model 2 is really different from Model 1.",
   work:["Walk-forward evaluation of Model 2 parameters","Cost and slippage sensitivity at intraday frequency","Correlation of Model 2 returns with Model 1"],
   read:["Carver ch. 8 again, with Model 2 in hand: what weight does it earn next to Model 1?"],
+  math:["Shreve II ch. 5.1–5.2: risk-neutral measure, Girsanov's theorem; exercises with constant drift"],
   out:"Model 2 out-of-sample report."},
  {n:13,p:"p3",t:"Freeze Model 2",brief:"Final checks, the exact rules written down, the execution script for the simulated accounts, and a first comparison of Model 1's live log against its backtest.",
   work:["Final robustness checks; the frozen rules written out","Model 1 live log versus backtest: any drift?","Execution script for Model 2 on the simulated accounts"],
   read:["Carver ch. 12 again for the intraday model: is it fast enough to be hurt by its own costs?"],
+  math:["Shreve II ch. 5.3–5.4: martingale representation, the fundamental theorems of asset pricing; price a European call by risk-neutral expectation"],
   out:"Model 2 frozen spec."},
  {n:14,p:"p4",t:"Model 2 on the simulated account; combined book",brief:"Both models trade on the simulated account under a shared risk budget and a total leverage cap.",
   work:["Start Model 2 on the simulated accounts","Combined book: risk budget across both models, total leverage cap","Weekly check: live vs expected P&L, slippage, errors"],
   read:["Carver ch. 11 and 15: the instrument diversification multiplier for two instruments; the full worked system"],
+  math:["Shreve II ch. 6.1–6.4: SDEs, Markov property, Feynman–Kac; connect a PDE to an expectation"],
   out:"Both models trading on the simulated account."},
  {n:15,p:"p4",t:"Research notes and risk page",brief:"A research note per model, tearsheets, and a risk page in the language a firm's risk desk uses.",
   work:["Research note per model: hypothesis, data, method, results, what did not work","Tearsheet per model and combined: equity curve, drawdown, rolling Sharpe, costs and funding","Risk page: max drawdown, worst day, leverage, how size shrinks with volatility"],
   read:["Carver ch. 9 again: his drawdown and leverage tables as the template","The quantstats docs for one-line tearsheets"],
+  math:["Shreve II ch. 6.5–6.6: interest-rate models, multidimensional Feynman–Kac; optional ch. 11 on jump processes"],
   out:"Draft research package."},
  {n:16,p:"p4",t:"Final package; simulated trading continues",brief:"Final review of code, notes and tearsheets; the repository cleaned; simulated trading continues to accumulate the live record.",
   work:["Final review of code, notes, tearsheets and risk page; clean repository","Simulated trading continues; results are presented only with three to four months of live record"],
   read:["The research log from start to finish, and the README, read as a reviewer would: anything unexplained receives a line"],
+  math:["Review: rework the hardest exercises of ch. 3–6; a one-page summary of Itô, Girsanov and Feynman–Kac"],
   out:"Research package complete."}];
 const byN=n=>W.find(w=>w.n===n);
+const SUBJ=[[/quantstats|Alpaca|ccxt|yfinance|README\.md, Data notes|pysystemtrade/i,'prog'],[/Avellaneda/i,'math'],[/López de Prado|RiskMetrics|Bailey|Harvey|Efron|Politis|Tsay|Wasserman|Lo & MacKinlay|Deflated|random prices|Carver ch\. 8/i,'stat'],[/./,'fin']];
+const subj=t=>SUBJ.find(([re])=>re.test(t))[1];
+const SLAB={fin:'finance',stat:'statistics',math:'mathematics',prog:'programming'};
+const tagLi=(t,k)=>`<li><span class="stag ${k}">${SLAB[k]}</span>${t}</li>`;
 // timeline
 function renderTL(on){
   $('tl').innerHTML=PHASES.map(p=>`<div class="phase"><div class="pn"><b>${p.name}</b>${p.span}</div><div class="cells">${p.weeks.map(n=>`<button class="cell ${p.id}${STATUS[n]?' '+STATUS[n]:''}${LIVE.includes(n)?' live':''}${n===on?' on':''}" data-n="${n}" aria-label="week ${n}">${n}</button>`).join('')}</div></div>`).join('');
@@ -300,12 +325,12 @@ function renderTL(on){
 }
 renderTL(2);
 // stats computed from the plan
-const nWork=W.reduce((a,w)=>a+w.work.length,0), nRead=W.reduce((a,w)=>a+w.read.length,0), nDone=Object.values(STATUS).filter(s=>s==='done').length;
+const nWork=W.reduce((a,w)=>a+w.work.length,0), nRead=W.reduce((a,w)=>a+w.read.length+(w.math||[]).length,0), nDone=Object.values(STATUS).filter(s=>s==='done').length;
 $('stats').innerHTML=`<div class="stat"><b>${W.length}</b><span>weeks</span></div><div class="stat"><b>${nWork}</b><span>work items</span></div><div class="stat"><b>${nRead}</b><span>reading items</span></div><div class="stat"><b>${nDone}</b><span>weeks complete (from the research log)</span></div>`;
 // weeks
 $('weeks').innerHTML=W.map(w=>{const st=STATUS[w.n]||'next'; const lab={done:'complete',now:'in progress',next:'not started'}[st];
   return `<details class="week" data-n="${w.n}"${st==='now'?' open':''}><summary><span class="wk">Week<b>${w.n}</b></span><span class="wt"><strong>${w.t}</strong><span>${w.brief}</span></span><span class="status ${st}">${lab}</span></summary>
-  <div class="wbody"><div><h4>Work</h4><ul>${w.work.map(x=>`<li>${x}</li>`).join('')}</ul></div><div><h4>Reading</h4><ul>${w.read.map(x=>`<li>${x}</li>`).join('')}</ul>${w.links?`<p class="note" style="margin-top:8px">Related notes: ${w.links.map(([h,l])=>`<a href="${h}">${l}</a>`).join(' · ')}</p>`:''}</div><div class="out"><h4>Deliverable</h4>${w.out}</div></div></details>`;}).join('');
+  <div class="wbody"><div><h4>Work</h4><ul>${w.work.map(x=>`<li>${x}</li>`).join('')}</ul></div><div><h4>Reading</h4><ul>${w.read.map(x=>tagLi(x,subj(x))).join('')}${(w.math||[]).map(x=>tagLi(x,'math')).join('')}</ul>${w.links?`<p class="note" style="margin-top:8px">Related notes: ${w.links.map(([h,l])=>`<a href="${h}">${l}</a>`).join(' · ')}</p>`:''}</div><div class="out"><h4>Deliverable</h4>${w.out}</div></div></details>`;}).join('');
 document.querySelectorAll('details.week').forEach(d=>d.addEventListener('toggle',()=>{if(d.open) renderTL(+d.dataset.n);}));
 })();
 </script>
