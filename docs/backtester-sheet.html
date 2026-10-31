@@ -76,5 +76,100 @@ tr.danger td{background:var(--warm-soft)}
 </style>
 </head>
 <body>
+
+<header>
+  <p class="eyebrow">Quant notes · private sheet · backtest.py</p>
+  <h1>Backtester structure sheet</h1>
+  <p class="note">The five functions in the positions of the structure diagram, each with its code and the output it produces on the six-day example (closes 100, 102, 101, 104, 103, 105; signal 0, +1, +1, −1, −1, +1; no carry; no volatility target). Dashed arrows: a function call, caller to callee. Solid arrows: data passed. The backtest column shows the results table built line by line. All numbers are computed in the page from the six closes.</p>
+  <div class="toggle" id="scen"><button class="on" data-s="base">cost 5 bps</button><button data-s="zero">cost 0</button><button data-s="mask">tradable mask, days 4–5 closed</button></div>
+</header>
+
+<div class="frame"><div class="sheet" id="sheet">
+
+  <!-- row 1: realised_vol | arrow | backtest | arrow | yearly -->
+  <div class="cell" style="--c:var(--f-rv);grid-row:1;grid-column:1">
+    <div class="fn"><div class="head"><span>realised_vol</span><small>lines 21–23</small></div><div class="io"><span>in: daily returns</span><span>out: volatility, per day</span></div><pre id="c-rv"></pre></div>
+    <div class="out"><h2>output on the six days</h2><p class="note">Not called in this example: <code>vol_target=None</code>, so line 55 does not run. With a target it would return one annualised volatility per day, computed from returns up to that day.</p></div>
+  </div>
+  <div class="arrow" style="grid-row:1;grid-column:2"><svg viewBox="0 0 110 120"><defs><marker id="a1" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs><g stroke="currentColor" fill="none" stroke-width="1.6" style="color:var(--muted)"><path d="M110,40 L0,40" stroke-dasharray="5 4" marker-end="url(#a1)"/><path d="M0,80 L110,80" marker-end="url(#a1)"/></g></svg><span class="lab" style="top:calc(50% - 36px)">calls</span><span class="lab" style="top:calc(50% + 26px)">volatility</span></div>
+
+  <div class="cell" style="--c:var(--f-bt);grid-row:1 / span 2;grid-column:3">
+    <div class="fn"><div class="head"><span>backtest</span><small>lines 26–80</small></div><div class="io"><span>in: prices, signal</span><span>out: results table, one row per day</span></div><pre id="c-bt"></pre></div>
+    <div class="out"><h2>results table, built line by line</h2><p class="note">Each row is one column of the table as the line that creates it leaves it. Read top to bottom: every row uses only rows above it. Line 62 (orange) is the one-bar lag.</p>
+      <table id="steps"><thead><tr><th>line</th><th>column</th><th>day 1</th><th>day 2</th><th>day 3</th><th>day 4</th><th>day 5</th><th>day 6</th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="arrow" style="grid-row:1;grid-column:4"><svg viewBox="0 0 110 120"><g stroke="currentColor" fill="none" stroke-width="1.6" style="color:var(--muted)"><path d="M0,60 L110,60" marker-end="url(#a1)"/></g></svg><span class="lab" style="top:calc(50% - 16px)">results table</span></div>
+  <div class="cell" style="--c:var(--f-yr);grid-row:1;grid-column:5">
+    <div class="fn"><div class="head"><span>yearly</span><small>lines 107–112</small></div><div class="io"><span>in: results table</span><span>out: return and drawdown per calendar year</span></div><pre id="c-yr"></pre></div>
+    <div class="out"><h2>output on the six days</h2><table id="yearlyT"><thead><tr><th>year</th><th>Return</th><th>MaxDD</th></tr></thead><tbody></tbody></table><p class="note">The six days fall in one calendar year, so one row.</p></div>
+  </div>
+
+  <!-- row 2: stats on the right -->
+  <div class="arrow" style="grid-row:2;grid-column:4"><svg viewBox="0 0 110 120"><g stroke="currentColor" fill="none" stroke-width="1.6" style="color:var(--muted)"><path d="M0,60 L110,60" marker-end="url(#a1)"/></g></svg><span class="lab" style="top:calc(50% - 16px)">results table</span></div>
+  <div class="cell" style="--c:var(--f-st);grid-row:2;grid-column:5">
+    <div class="fn"><div class="head"><span>stats</span><small>lines 83–104</small></div><div class="io"><span>in: results table</span><span>out: eleven summary statistics</span></div><pre id="c-st"></pre></div>
+    <div class="out"><h2>output on the six days</h2><div class="kv" id="statsKV"></div><p class="note">CAGR and TurnoverPerYear annualise six days by 365/6; they are shown as the code computes them.</p></div>
+  </div>
+
+  <!-- row 3: vertical arrows from backtest down to walk_forward -->
+  <div class="varrow" style="grid-row:3;grid-column:3"><svg viewBox="0 0 40 56"><g stroke="currentColor" fill="none" stroke-width="1.6" style="color:var(--muted)"><path d="M12,56 L12,0" stroke-dasharray="5 4" marker-end="url(#a1)"/><path d="M28,0 L28,56" marker-end="url(#a1)"/></g></svg><span class="lab">↑ calls, once per setting and window · ↓ results table</span></div>
+  <div class="varrow" style="grid-row:3;grid-column:5"><svg viewBox="0 0 40 56"><g stroke="currentColor" fill="none" stroke-width="1.6" style="color:var(--muted)"><path d="M20,56 L20,0" stroke-dasharray="5 4" marker-end="url(#a1)"/></g></svg><span class="lab">calls stats</span></div>
+
+  <!-- row 4: walk_forward across -->
+  <div class="cell" style="--c:var(--f-wf);grid-row:4;grid-column:3 / span 3">
+    <div class="fn"><div class="head"><span>walk_forward</span><small>lines 116–157</small></div><div class="io"><span>in: prices, rule, parameter grid</span><span>out: out-of-sample results (concatenated test windows), selection log</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px"><pre id="c-wf1"></pre><pre id="c-wf2"></pre></div></div>
+    <div class="out"><h2>what it produces</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="wf"><p class="note">Windows with the defaults, train 3 years, test 1 year, on 7 years of daily data (illustrative layout, not a computed result):</p>
+          <div class="win"><span>window 1</span><div class="bar"><i class="tr" style="width:42.8%"></i><i class="te" style="width:14.3%"></i></div></div>
+          <div class="win"><span>window 2</span><div class="bar"><i style="width:14.3%"></i><i class="tr" style="width:42.8%"></i><i class="te" style="width:14.3%"></i></div></div>
+          <div class="win"><span>window 3</span><div class="bar"><i style="width:28.6%"></i><i class="tr" style="width:42.8%"></i><i class="te" style="width:14.3%"></i></div></div>
+          <div class="win"><span>window 4</span><div class="bar"><i style="width:42.9%"></i><i class="tr" style="width:42.8%"></i><i class="te" style="width:14.3%"></i></div></div>
+          <div class="win"><span>oos</span><div class="bar"><i style="width:42.9%"></i><i class="te" style="width:57.1%"></i></div></div>
+          <p class="note">Pink: training window (every grid entry is run; best Sharpe wins). Orange: test window (the chosen entry only). The orange windows, concatenated, are the out-of-sample results.</p></div>
+        <div><p class="note">Selection log, one row per window (structure; values come from a real run):</p>
+          <table><thead><tr><th>train_start</th><th>test_start</th><th>test_end</th><th>chosen</th><th>train_sharpe</th><th>test_sharpe</th></tr></thead>
+          <tbody><tr><td>date</td><td>date</td><td>date</td><td>{"lookback": …}</td><td>number</td><td>number</td></tr><tr><td colspan="6" class="lnk">A large and repeated gap between train_sharpe and test_sharpe indicates parameters fitted to noise.</td></tr></tbody></table></div>
+      </div></div>
+  </div>
+</div></div>
+
+<p class="note" style="margin-top:14px;max-width:1100px"><b>Sources.</b> <code>xau-btc-models/src/backtest.py</code>, 157 lines, as read on 30 October 2026; the six-day example and the selection-log layout follow the project's Code Walkthrough doc. All numbers are computed in the page from the six invented closes; no market data is used. Companion to <a href="backtester.html" style="color:var(--accent)">04 · Backtester implementation</a>; part of <a href="index.html" style="color:var(--accent)">quant-notes</a>.</p>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const FILE="\"\"\"\nMinimal vectorised backtester for long/short models on XAU/USD and BTC/USD.\n\nRules it enforces so results are honest:\n  * the signal you compute on day t is only traded from day t+1 (one-bar lag)\n  * every change in position pays a cost (spread + slippage)\n  * holding a position pays a carry (e.g. BTC perpetual funding), pro-rata per bar\n  * position size is scaled by recent volatility so each instrument risks the same\n\nUsage:\n    from backtest import backtest, stats\n    res = backtest(prices, signal, cost_bps=5, carry_annual=0.0, vol_target=0.10)\n    print(stats(res))\n\"\"\"\nimport numpy as np\nimport pandas as pd\n\nBARS_PER_YEAR = {\"1d\": 365, \"1h\": 24 * 365}  # BTC trades every day; gold ~252, see note in README\n\n\ndef realised_vol(returns: pd.Series, span: int = 30, bars_per_year: int = 365) -> pd.Series:\n    \"\"\"Exponentially weighted annualised volatility, using only past bars.\"\"\"\n    return returns.ewm(span=span, adjust=False).std() * np.sqrt(bars_per_year)\n\n\ndef backtest(\n    prices: pd.Series,\n    signal: pd.Series,\n    cost_bps: float = 5.0,\n    carry_annual: float = 0.0,\n    vol_target: float | None = 0.10,\n    vol_span: int = 30,\n    max_leverage: float = 2.0,\n    bars_per_year: int = 365,\n    tradable: pd.Series | None = None,\n) -> pd.DataFrame:\n    \"\"\"\n    prices        close prices, DatetimeIndex\n    signal        +1 long, -1 short, 0 flat (any float works; it is scaled)\n    tradable      optional bool Series: False on bars where the instrument cannot be traded\n                  (gold at weekends). The position is frozen on those bars: no new trades,\n                  no size changes, no cost. Signals and vol still update underneath.\n    cost_bps      round-trip-equivalent cost per unit of turnover, in basis points of notional\n                  (spread + slippage). 5 bps ~ 0.05 %.\n    carry_annual  annual cost of holding one unit of notional (BTC funding, borrow fee).\n                  Positive = you pay. Applied on |position|.\n    vol_target    annualised volatility you want each instrument to contribute; None = no scaling\n    max_leverage  cap on |position| in units of notional\n    \"\"\"\n    prices = prices.dropna()\n    ret = prices.pct_change().fillna(0.0)\n    sig = signal.reindex(prices.index).fillna(0.0)\n\n    if vol_target is not None:\n        vol = realised_vol(ret, span=vol_span, bars_per_year=bars_per_year)\n        scale = (vol_target / vol).replace([np.inf, -np.inf], np.nan).fillna(0.0)\n        target = (sig * scale).clip(-max_leverage, max_leverage)\n    else:\n        target = sig.clip(-max_leverage, max_leverage)\n\n    # trade on the next bar: the only line that prevents look-ahead\n    pos = target.shift(1).fillna(0.0)\n\n    if tradable is not None:\n        ok = tradable.reindex(prices.index).fillna(False).astype(bool)\n        pos = pos.where(ok).ffill().fillna(0.0)   # hold yesterday's position through closed days\n\n    turnover = pos.diff().abs().fillna(pos.abs())\n    cost = turnover * cost_bps / 1e4\n    carry = pos.abs() * carry_annual / bars_per_year\n\n    gross = pos * ret\n    net = gross - cost - carry\n\n    out = pd.DataFrame(\n        {\"price\": prices, \"ret\": ret, \"signal\": sig, \"position\": pos,\n         \"turnover\": turnover, \"gross\": gross, \"cost\": cost, \"carry\": carry, \"net\": net}\n    )\n    out[\"equity\"] = (1 + out[\"net\"]).cumprod()\n    return out\n\n\ndef stats(res: pd.DataFrame, bars_per_year: int = 365) -> pd.Series:\n    net = res[\"net\"]\n    eq = res[\"equity\"]\n    dd = eq / eq.cummax() - 1\n    yrs = len(net) / bars_per_year\n    cagr = eq.iloc[-1] ** (1 / yrs) - 1 if yrs > 0 else np.nan\n    vol = net.std() * np.sqrt(bars_per_year)\n    return pd.Series(\n        {\n            \"CAGR\": cagr,\n            \"Vol\": vol,\n            \"Sharpe\": (net.mean() * bars_per_year) / vol if vol > 0 else np.nan,\n            \"MaxDrawdown\": dd.min(),\n            \"WorstBar\": net.min(),\n            \"BestBar\": net.max(),\n            \"TurnoverPerYear\": res[\"turnover\"].sum() / yrs,\n            \"CostDrag\": res[\"cost\"].sum() / yrs,\n            \"CarryDrag\": res[\"carry\"].sum() / yrs,\n            \"TimeInMarket\": (res[\"position\"] != 0).mean(),\n            \"Bars\": len(net),\n        }\n    )\n\n\ndef yearly(res: pd.DataFrame) -> pd.DataFrame:\n    \"\"\"Net return and max drawdown per calendar year: a quick regime check.\"\"\"\n    g = res.groupby(res.index.year)\n    ret = g[\"net\"].apply(lambda x: (1 + x).prod() - 1)\n    mdd = g[\"equity\"].apply(lambda e: (e / e.cummax() - 1).min())\n    return pd.DataFrame({\"Return\": ret, \"MaxDD\": mdd})\n\n\n# ---------------------------------------------------------------- walk-forward\ndef walk_forward(\n    prices: pd.Series,\n    rule,\n    grid: list[dict],\n    train_bars: int = 365 * 3,\n    test_bars: int = 365,\n    bars_per_year: int = 365,\n    **bt_kwargs,\n) -> tuple[pd.DataFrame, pd.DataFrame]:\n    \"\"\"\n    Honest parameter selection. For each window: fit on `train_bars` (pick the grid\n    entry with the best Sharpe), then trade the NEXT `test_bars` with that choice.\n    Stitch the test periods together: that stitched series is the out-of-sample result.\n\n    rule(prices, **params) -> signal Series.\n    Returns (oos results DataFrame as from backtest(), selection log).\n    \"\"\"\n    prices = prices.dropna()\n    oos_parts, log = [], []\n    start = 0\n    while start + train_bars + test_bars <= len(prices):\n        train = prices.iloc[start:start + train_bars]\n        # include the training history so lookback signals are warm at the start of the test\n        full = prices.iloc[start:start + train_bars + test_bars]\n        best, best_sharpe = None, -np.inf\n        for params in grid:\n            res = backtest(train, rule(train, **params), bars_per_year=bars_per_year, **bt_kwargs)\n            s = stats(res, bars_per_year)[\"Sharpe\"]\n            if np.isfinite(s) and s > best_sharpe:\n                best, best_sharpe = params, s\n        res_full = backtest(full, rule(full, **best), bars_per_year=bars_per_year, **bt_kwargs)\n        test_part = res_full.iloc[train_bars:]\n        oos_parts.append(test_part)\n        log.append({\"train_start\": train.index[0], \"test_start\": test_part.index[0],\n                    \"test_end\": test_part.index[-1], \"chosen\": best, \"train_sharpe\": best_sharpe,\n                    \"test_sharpe\": stats(test_part, bars_per_year)[\"Sharpe\"]})\n        start += test_bars\n    if not oos_parts:\n        raise ValueError(\"not enough data for one train+test window\")\n    oos = pd.concat(oos_parts)\n    oos[\"equity\"] = (1 + oos[\"net\"]).cumprod()\n    return oos, pd.DataFrame(log)";
+const L=FILE.split('\n');
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function code(id,from,to,marks){const el=$(id); let h=''; for(let n=from;n<=to;n++){const t=L[n-1]??''; const cls=n===62?' danger':(marks&&marks.includes(n)?' mk':''); h+=`<span class="ln${cls}"><span class="n">${n}</span>${t.trim().startsWith('#')?'<span class="cm">'+esc(t)+'</span>':esc(t)}</span>`;} el.innerHTML=h;}
+code('c-rv',21,23); code('c-bt',26,80); code('c-yr',107,112); code('c-st',83,104); code('c-wf1',116,136); code('c-wf2',137,157);
+// six-day computation
+const PX=[100,102,101,104,103,105], SIG=[0,1,1,-1,-1,1], BPY=365, MAXLEV=2;
+function compute(scen){const bps=scen==='zero'?0:5; const ok=scen==='mask'?[true,true,true,false,false,true]:null;
+  const ret=PX.map((p,i)=>i?p/PX[i-1]-1:0); const sig=SIG.slice(); const target=sig.map(s=>Math.max(-MAXLEV,Math.min(MAXLEV,s)));
+  let pos=target.map((_,i)=>i?target[i-1]:0); if(ok){const held=[]; let last=0; for(let i=0;i<6;i++){if(ok[i])last=pos[i]; held.push(last);} pos=held;}
+  const turnover=pos.map((p,i)=>i?Math.abs(p-pos[i-1]):Math.abs(p)); const cost=turnover.map(t=>t*bps/1e4); const carry=pos.map(()=>0);
+  const gross=pos.map((p,i)=>p*ret[i]); const net=gross.map((g,i)=>g-cost[i]-carry[i]); const equity=[]; let e=1; for(const v of net){e*=(1+v); equity.push(e);}
+  return {bps,ok,ret,sig,target,pos,turnover,cost,carry,gross,net,equity};}
+const pct=v=>(v<0?'−':v>0?'+':'')+Math.abs(v*100).toFixed(2)+'%'; const sgn=v=>v>0?'+1':v<0?'−1':'0';
+function render(scen){const R=compute(scen);
+  const rows=[['51','ret',R.ret.map(pct)],['52','signal',R.sig.map(sgn)],['59','target',R.target.map(sgn)],['62','position',R.pos.map(sgn),true]];
+  if(R.ok) rows.push(['64–66','position, closed days frozen',R.pos.map((p,i)=>sgn(p)+(R.ok[i]?'':' (closed)')),true]);
+  rows.push(['68','turnover',R.turnover.map(String)],['69','cost',R.cost.map(c=>c?(c*100).toFixed(2)+'%':'0')],['70','carry',R.carry.map(()=>'0')],['72','gross',R.gross.map(pct)],['73','net',R.net.map(pct)],['79','equity',R.equity.map(v=>v.toFixed(4))]);
+  $('steps').querySelector('tbody').innerHTML=rows.map(r=>`<tr${r[3]?' class="danger"':''}><td class="lnk">${r[0]}</td><td style="text-align:left">${r[1]}</td>${r[2].map(v=>`<td>${v}</td>`).join('')}</tr>`).join('');
+  // stats
+  const net=R.net, eq=R.equity, n=6, mean=net.reduce((a,b)=>a+b,0)/n, sd=Math.sqrt(net.reduce((a,b)=>a+(b-mean)*(b-mean),0)/(n-1)), yrs=n/BPY, vol=sd*Math.sqrt(BPY);
+  let peak=-Infinity; const dd=eq.map(e=>{peak=Math.max(peak,e); return e/peak-1;});
+  const S=[['CAGR',((Math.pow(eq[5],1/yrs)-1)*100).toFixed(0)+'%'],['Vol',(vol*100).toFixed(1)+'%'],['Sharpe',vol>0?(mean*BPY/vol).toFixed(2):'nan'],['MaxDrawdown',(Math.min(...dd)*100).toFixed(2)+'%'],['WorstBar',pct(Math.min(...net))],['BestBar',pct(Math.max(...net))],['TurnoverPerYear',(R.turnover.reduce((a,b)=>a+b,0)/yrs).toFixed(0)],['CostDrag',(R.cost.reduce((a,b)=>a+b,0)/yrs*100).toFixed(1)+'%'],['CarryDrag','0.0%'],['TimeInMarket',(R.pos.filter(p=>p!==0).length/n*100).toFixed(0)+'%'],['Bars','6']];
+  $('statsKV').innerHTML=S.map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('');
+  $('yearlyT').querySelector('tbody').innerHTML=`<tr><td>this year</td><td>${pct(eq[5]-1)}</td><td>${(Math.min(...dd)*100).toFixed(2)}%</td></tr>`;}
+$('scen').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{$('scen').querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); render(b.dataset.s);}));
+render('base');
+})();
+</script>
+
 </body>
 </html>
