@@ -83,15 +83,16 @@ details.week summary::-webkit-details-marker{display:none}
 .wt span{font-size:14px;color:var(--muted)}
 .status{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px;white-space:nowrap}
 .status.done{color:var(--good);background:var(--good-soft)}.status.now{color:var(--warm);background:var(--warm-soft)}.status.next{color:var(--muted);background:var(--accent-soft)}
-.wbody{padding:0 18px 18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.wbody{padding:0 18px 18px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.3fr) minmax(0,.9fr);gap:18px;border-top:1px solid var(--line);padding-top:14px}
 .wbody h4{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;font-weight:500}
 .wbody ul{margin:0;padding-left:18px;font-size:15px;display:flex;flex-direction:column;gap:5px}
-.wbody .out{grid-column:1/-1;background:var(--accent-soft);border-radius:8px;padding:12px 14px;font-size:15px}
+.wbody .out{background:var(--accent-soft);border-radius:8px;padding:12px 14px;font-size:15px;align-self:start}
 .wbody .out h4{color:var(--accent)}
 .pill{font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:999px;background:var(--purple-soft);color:var(--purple);margin-left:4px;white-space:nowrap}
 .stag{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;padding:1px 7px;border-radius:999px;margin-right:6px;white-space:nowrap;vertical-align:1px}
 .stag.fin{color:var(--purple);background:var(--purple-soft)}.stag.stat{color:var(--good);background:var(--good-soft)}.stag.math{color:var(--warm);background:var(--warm-soft)}.stag.prog{color:var(--prog);background:var(--prog-soft)}
 .skey{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);align-items:center}
+@media (max-width:900px){.wbody{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.wbody .out{grid-column:1/-1}}
 @media (max-width:640px){.wbody{grid-template-columns:1fr}details.week summary{grid-template-columns:52px 1fr}.status{display:none}}
 /* map */
 .map{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
