@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>The Backtester, line by line · quant-notes</title>
-<meta name="description" content="Interactive study page: the project's backtest.py read function by function, the six-day worked example computed live, the twelve pandas methods, the formulas, walk-forward, and the seven interview questions.">
+<title>Backtester Implementation · quant-notes</title>
+<meta name="description" content="Documentation of backtest.py: structure, a six-day worked example computed in the page, line classification, pandas methods, formulas, summary statistics, walk-forward selection and review questions.">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
@@ -79,9 +79,9 @@ dfn:hover::after,dfn:focus::after{content:attr(title);position:absolute;left:0;t
 .mapsvg .box.f-wf .bg{stroke:var(--f-wf)}.mapsvg .box.f-wf .strip,.mapsvg .box.f-wf .strip2{fill:var(--f-wf)}
 .mapsvg .box:hover .bg{stroke-width:2.5}.mapsvg .box.on .bg{stroke-width:3}
 .mapsvg .box.on.f-rv .bg{fill:var(--f-rv-soft)}.mapsvg .box.on.f-bt .bg{fill:var(--f-bt-soft)}.mapsvg .box.on.f-st .bg{fill:var(--f-st-soft)}.mapsvg .box.on.f-yr .bg{fill:var(--f-yr-soft)}.mapsvg .box.on.f-wf .bg{fill:var(--f-wf-soft)}
-.mapsvg .box text{pointer-events:none}.mapsvg .box .nm{font-family:var(--mono);font-size:14px;font-weight:500;fill:#fff}.mapsvg .box .ln{font-family:var(--mono);font-size:11px;fill:rgba(255,255,255,.85)}.mapsvg .box .sub{font-family:var(--body);font-size:13px;fill:var(--ink)}
+.mapsvg .box text{pointer-events:none}.mapsvg .box .nm{font-family:var(--mono);font-size:14px;font-weight:500;fill:#fff}.mapsvg .box .ln{font-family:var(--mono);font-size:11px;fill:rgba(255,255,255,.85)}.mapsvg .box .sub{font-family:var(--body);font-size:12.5px;fill:var(--ink)}
 .mapsvg .elab.lit{font-weight:700}
-.mapsvg .edge{fill:none;stroke:var(--muted);stroke-width:1.6}.mapsvg .edge.lit{stroke-width:3}.mapsvg .elab{font-family:var(--mono);font-size:11.5px;fill:var(--muted)}
+.mapsvg .edge{fill:none;stroke:var(--muted);stroke-width:1.6}.mapsvg .edge.call{stroke-dasharray:5 4}.mapsvg .edge.lit{stroke-width:3}.mapsvg .elab{font-family:var(--mono);font-size:11.5px;fill:var(--muted);paint-order:stroke;stroke:var(--panel);stroke-width:5px;stroke-linejoin:round}
 /* code + table */
 .story{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;align-items:start}
 pre{margin:0;background:var(--code-bg);color:var(--code-fg);font-family:var(--mono);font-size:12.5px;line-height:1.5;padding:12px 0;border-radius:10px;overflow:auto;max-height:640px;position:relative}
@@ -123,6 +123,11 @@ button.pill.danger{border-color:var(--warm);background:var(--warm-soft)}button.p
 pre .ln.hl.f-doc{background:rgba(107,114,128,.45)}pre .ln.hl.f-rv{background:rgba(107,79,160,.5)}pre .ln.hl.f-bt{background:rgba(31,111,139,.5)}pre .ln.hl.f-st{background:rgba(46,125,79,.5)}pre .ln.hl.f-yr{background:rgba(154,123,30,.5)}pre .ln.hl.f-wf{background:rgba(176,69,122,.5)}
 pre .fnhead.f-rv{color:var(--f-rv)}pre .fnhead.f-bt{color:var(--f-bt)}pre .fnhead.f-st{color:var(--f-st)}pre .fnhead.f-yr{color:var(--f-yr)}pre .fnhead.f-wf{color:var(--f-wf)}pre .fnhead.f-doc{color:var(--f-doc)}
 .fkey{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}.fkey i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:middle;margin-right:5px}
+.gloss.cols{grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px 28px}
+.gloss.cols div{grid-template-columns:1fr;gap:4px;align-content:start}
+.xa{display:grid;grid-template-columns:1fr;gap:10px}
+.xa .explain{margin-top:0}
+#steps{gap:6px}#steps button.pill{font-size:13px;padding:4px 10px}
 /* labels */
 .labels{display:flex;flex-direction:column;gap:4px}
 .lrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:4px 8px;border-radius:6px;border-left:6px solid transparent}
@@ -179,31 +184,39 @@ code{font-family:var(--mono)}
 </head>
 <body>
 <header class="wrap">
-  <p class="eyebrow">Quant notes · interactive · 04 the backtester, line by line</p>
-  <h1>The backtester, line by line</h1>
-  <p class="lede">The project's <code>backtest.py</code> is 157 lines and five functions. This page reads it the way the study guide says to: map it, trace it on six days of made-up prices, label every line, learn the twelve pandas methods it uses, then explain it back. Every number on the page is computed in the page's own JavaScript from the six closes, so any of them can be checked by hand.</p>
-  <div class="rules"><b>Rules this file enforces, and this page respects</b>
+  <p class="eyebrow">Quant notes · 04 · interactive</p>
+  <h1>Backtester implementation</h1>
+  <p class="lede">This page documents <code>backtest.py</code> in the xau-btc-models repository: 157 lines, five functions. Each function is described and then traced on a six-day example with invented closing prices. The page also classifies each line of <code>backtest</code>, defines the twelve pandas methods the file uses, states the formulas, and lists review questions. All numbers are computed by the page's JavaScript from the six closes and can be checked by hand.</p>
+  <div class="rules"><b>Constraints</b>
     <span>1 · Signals use only past data. 2 · The one-bar lag, <code>pos = target.shift(1)</code>, is never removed. 3 · Every result includes costs.</span></div>
-  <p class="note">The six-day example is invented. No market data, no performance claims.</p>
+  <p class="note">The six-day example uses invented prices. No market data is used and no performance is reported.</p>
 </header>
 
 <!-- 1 MAP -->
 <section class="wrap">
-  <h2>1 · Map</h2>
-  <p>Five functions. <code>backtest</code> calls <code>realised_vol</code>; <code>stats</code> and <code>yearly</code> take <code>backtest</code>'s output; <code>walk_forward</code> loops over <code>backtest</code> and <code>stats</code>. Click a box for its <code>def</code> line, its docstring, and what goes in and comes out.</p>
+  <h2>1 · Structure</h2>
+  <p>The file contains five functions. <code>backtest</code> calls <code>realised_vol</code>; <code>stats</code> and <code>yearly</code> take the table that <code>backtest</code> returns; <code>walk_forward</code> calls <code>backtest</code> and <code>stats</code> in a loop. Selecting a box shows the function's signature, docstring, inputs and outputs.</p>
 </section>
 <section class="wide">
   <div class="lab">
     <svg class="mapsvg" id="mapSvg" viewBox="0 0 1000 330" role="img" aria-label="Data flow between the five functions: backtest uses realised_vol; stats and yearly take backtest's output; walk_forward loops over backtest and stats"></svg>
-    <p class="note">Boxes are the five functions; arrows show what flows between them. Click a box.</p>
+    <p class="note">Boxes: the five functions in backtest.py. Dashed arrows: a function call, pointing from the caller to the function called. Solid arrows: data returned or passed on. Select a box for its description. The same diagram with each function's code and output in place is on the <a href="backtester-sheet.html">structure sheet</a>.</p>
+    <div class="gloss cols" style="font-size:14px">
+      <div><b>returns</b><span>Daily simple return: today's close ÷ yesterday's close − 1. Variable <code>ret</code>, line 51. RiskMetrics (1996, ch. 5) defines returns as continuously compounded, i.e. ln(today ÷ yesterday); at a daily horizon the two differ by less than the rounding shown on this page.</span></div>
+      <div><b>volatility</b><span>Standard deviation of daily returns, scaled by √365 to an annual figure, estimated with exponentially decaying weights. Variable <code>vol</code>, line 55. RiskMetrics (1996, ch. 5) uses "volatility to mean the standard deviation of … returns" and forecasts it with the exponentially weighted moving average model, with a decay factor of 0.94 for a one-day horizon; <code>span=30</code> corresponds to a decay factor of 0.935.</span></div>
+      <div><b>results table</b><span>The DataFrame returned by <code>backtest</code>, lines 75–80: one row per day; columns price, ret, signal, position, turnover, gross, cost, carry, net, equity. Variable <code>res</code>. This is the "historical simulation" of Bailey, Borwein, López de Prado and Zhu (2014).</span></div>
+      <div><b>parameter grid</b><span>The list of candidate settings that <code>walk_forward</code> evaluates, e.g. lookbacks of 63, 126 and 252 days. Variable <code>grid</code>. Each entry is one of the "trials" whose number Bailey and López de Prado (2014) require to be reported with any backtest.</span></div>
+      <div><b>out-of-sample results</b><span>The test windows of <code>walk_forward</code>, concatenated. Variable <code>oos</code>, line 155. Bailey et al. (2014): "The OOS performance is simulated over a sample not used in the design of the strategy"; here, not used to select the parameters.</span></div>
+      <div><b>selection log</b><span>One row per window: dates, parameters selected, Sharpe ratio on the training window, Sharpe ratio on the test window. Variable <code>log</code>, lines 149–151. López de Prado (2018, pitfall 9) notes that a walk-forward test covers a single historical path; the log records how the selection behaved along that path.</span></div>
+    </div>
     <div class="explain" id="mapX"></div>
   </div>
 </section>
 
 <!-- 2 STORY -->
-<section class="wrap">
-  <h2>2 · The six-day story</h2>
-  <p>The whole file, all 157 lines, on the left; the six-day table on the right. Six closes, a hand-written signal, 5 bps cost, no carry, no volatility target (so the <code>else</code> branch on line 59 runs). Step through from the module docstring to the last line of <code>walk_forward</code>: each step highlights the lines it is about and explains them; the steps inside <code>backtest</code>'s body also fill in one column of the table, with the formula and the arithmetic for <strong>day 3</strong> written out. You can also click any line of code to jump to its step. The table is a spreadsheet where every column uses only columns to its left.</p>
+<section class="wide">
+  <h2>2 · Worked example</h2>
+  <p>Left: the complete file, lines 1–157. Right: the six-day table. Inputs: six closing prices, a hand-written signal, a cost of 5 bps, no carry and no volatility target, so the <code>else</code> branch on line 59 executes. Each step highlights the lines it describes. Steps within the body of <code>backtest</code> also fill one column of the table and show the formula with the arithmetic for day 3. Selecting a line of code moves to its step. Each column depends only on the columns to its left.</p>
 </section>
 <section class="wide">
   <div class="lab">
@@ -217,8 +230,8 @@ code{font-family:var(--mono)}
       <pre id="code"></pre>
       <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
         <div class="tbl"><table id="six"><thead><tr id="sixHead"></tr></thead><tbody id="sixBody"></tbody></table></div>
-        <div class="explain" id="stepX"></div>
-        <div class="arith" id="arith"></div>
+        <div class="xa"><div class="explain" id="stepX"></div>
+        <div class="arith" id="arith"></div></div>
       </div>
     </div>
     <p class="note">Inputs: closes 100, 102, 101, 104, 103, 105; signal 0, +1, +1, −1, −1, +1; <code>cost_bps=5</code>; <code>carry_annual=0</code>; <code>vol_target=None</code>; <code>bars_per_year=365</code>. The mask scenario passes <code>tradable = [True, True, True, False, False, True]</code>.</p>
@@ -227,8 +240,8 @@ code{font-family:var(--mono)}
 
 <!-- 3 LABELS -->
 <section class="wrap">
-  <h2>3 · Label every line</h2>
-  <p>Session 1 of the study guide: read the body of <code>backtest</code> (lines 50–80) and label each line as <span class="k">input handling</span>, <span style="color:var(--purple)">signal to position</span>, <span class="w">costs</span> or <span class="g">output</span>. Pick your label with the small buttons, then press reveal to see the answer. Colours stay hidden until you do.</p>
+  <h2>3 · Line classification</h2>
+  <p>Lines 50–80, the body of <code>backtest</code>, are classified in four categories: <span class="k">input handling</span>, <span style="color:var(--purple)">signal to position</span>, <span class="w">costs</span> and <span class="g">output</span>. Select a category for each line, then reveal the classification. Colours are hidden until revealed.</p>
 </section>
 <section class="wide">
   <div class="lab">
@@ -239,8 +252,8 @@ code{font-family:var(--mono)}
 
 <!-- 4 METHODS -->
 <section class="wrap">
-  <h2>4 · The twelve methods</h2>
-  <p>Every pandas method the file uses, with the line it appears on, a three-row before/after computed from the six-day data, and a one-sentence definition behind reveal. Try to say the definition first.</p>
+  <h2>4 · pandas methods</h2>
+  <p>The twelve pandas methods used in the file. Each entry gives the line where the method appears, a three-row example computed from the six-day data, and a one-sentence definition, hidden until revealed.</p>
 </section>
 <section class="wide">
   <div class="lab">
@@ -251,7 +264,7 @@ code{font-family:var(--mono)}
 
 <!-- 5 FORMULAS -->
 <section class="wrap">
-  <h2>5 · The formulas, read aloud</h2>
+  <h2>5 · Formulas</h2>
   <div class="formula">vol<sub>t</sub> = ewm_std<sub>span</sub>(r)<sub>t</sub> · √<span style="border-top:1.5px solid currentColor;padding:0 .2em">365</span></div>
   <p class="reading">Line 23. The exponentially weighted standard deviation of daily returns, using only past bars, times the square root of bars per year to quote it annually. Span 30 means λ ≈ 0.935; the <a href="ewma.html">EWMA note</a> is about this one line.</p>
   <div class="formula">scale<sub>t</sub> = <span class="frac"><span><span class="w">vol<sub>target</sub></span></span><span><span class="k">vol<sub>t</sub></span></span></span>   target<sub>t</sub> = clip( signal<sub>t</sub> · scale<sub>t</sub>, ±max_leverage )</div>
@@ -270,8 +283,8 @@ code{font-family:var(--mono)}
 
 <!-- 6 STATS -->
 <section class="wrap">
-  <h2>6 · stats() and yearly() on the six days</h2>
-  <p>The eleven numbers <code>stats</code> returns, computed live from the table above (whichever scenario is selected). Click one to see its line and its arithmetic.</p>
+  <h2>6 · Summary statistics</h2>
+  <p>The eleven values returned by <code>stats</code>, computed from the table in section 2 for the selected scenario. Selecting a value shows its line and its arithmetic.</p>
 </section>
 <section class="wide">
   <div class="lab">
@@ -284,8 +297,8 @@ code{font-family:var(--mono)}
 
 <!-- 7 WALK FORWARD -->
 <section class="wrap">
-  <h2>7 · walk_forward() as a picture</h2>
-  <p>Lines 116–157. Choose parameters on a training window, trade only the next test window with that choice, slide, repeat, and stitch the test windows together. Click a stage.</p>
+  <h2>7 · Walk-forward selection</h2>
+  <p>Lines 116–157. Parameters are selected on a training window and applied to the following test window only. The windows then advance, and the test windows are concatenated. Select a stage.</p>
 </section>
 <section class="wide">
   <div class="lab">
@@ -298,16 +311,16 @@ code{font-family:var(--mono)}
 
 <!-- 8 QUESTIONS -->
 <section class="wrap">
-  <h2>8 · The seven interview questions</h2>
-  <p>Session 3 of the study guide: with the file closed, answer these out loud, then reveal. One at a time.</p>
+  <h2>8 · Review questions</h2>
+  <p>Seven questions from session 3 of the study guide. Answers are hidden until revealed.</p>
   <div class="qs" id="qs"></div>
 </section>
 
 <!-- 9 GLOSSARY -->
-<section class="wrap">
-  <h2>9 · Words used here</h2>
+<section class="wide">
+  <h2>9 · Terminology</h2>
   <p class="note">Each entry: the technical definition first, then the same idea in everyday words in the orange strip.</p>
-  <div class="gloss">
+  <div class="gloss cols">
     <div><b>Series / DataFrame</b><span>pandas' one-column and many-column tables, indexed by date here.<span class="plain">a column of numbers with dates down the side, and a whole spreadsheet of them.</span></span></div>
     <div><b>vectorised</b><span>operating on whole columns at once instead of looping row by row.<span class="plain">one line does the sum for every day; no "for each day" loop.</span></span></div>
     <div><b>notional</b><span>the money value of a position; a position of 1 = 100% of the account.<span class="plain">how big the bet is, measured in multiples of your account.</span></span></div>
@@ -368,57 +381,57 @@ const pct=v=>(v<0?'−':v>0?'+':'')+Math.abs(v*100).toFixed(2)+'%';
 const fmt={day:(v,i)=>i+1,price:v=>v,ret:v=>pct(v),sig:v=>v>0?'+1':v<0?'−1':'0',target:v=>v>0?'+1':v<0?'−1':'0',pos:v=>v>0?'+1':v<0?'−1':'0',turnover:v=>v,cost:v=>v?(v*100).toFixed(2)+'%':'0',carry:v=>'0',gross:v=>pct(v),net:v=>pct(v),equity:v=>v.toFixed(4)};
 // steps: which line(s), which column, formula, arithmetic for day 3 (index 2)
 const STEPS=[
- {k:'doc',kind:'doc',lines:[1,2,3,4,5,6,7,8,9,10,11,12,13,14],label:'module docstring',fn:'file',text:'<b>Lines 1–14.</b> The file opens with the four rules it enforces: the one-bar lag, a cost on every change of position, a pro-rata carry on every held position, and volatility scaling. Then the two-line usage. Everything below is the implementation of those four sentences.',
+ {k:'doc',kind:'doc',lines:[1,2,3,4,5,6,7,8,9,10,11,12,13,14],label:'module docstring',fn:'file',text:'<b>Lines 1–14.</b> A note at the top of the file, written for people, not run by the computer (the triple quotes mark it as a note). It lists the four promises the file keeps: (1) a decision made today is only acted on tomorrow; (2) every time the position changes you pay a small fee; (3) holding a position costs a little every day; (4) bets are made smaller when the market is jumpy. Then two lines showing how to use it.',
   arith:R=>'Note: nothing runs yet. The docstring is the contract the rest of the file keeps.'},
- {k:'imports',lines:[15,16,17,18],label:'imports',fn:'file',text:'<b>Lines 15–18.</b> numpy for sqrt, sign and inf; pandas for the Series and DataFrame everything is built on. <code>BARS_PER_YEAR</code> maps a bar size to bars per year: 365 for daily because the clean table has one row per calendar day, 24 × 365 for hourly.',
+ {k:'imports',lines:[15,16,17,18],label:'imports',fn:'file',text:'<b>Lines 15–18.</b> <code>import</code> means "bring in a toolbox". numpy is the maths toolbox (square roots, infinity, "not a number"). pandas is the spreadsheet toolbox: a <em>Series</em> is one column, a <em>DataFrame</em> is a whole sheet. <code>BARS_PER_YEAR</code> is a tiny lookup table: a "bar" is one row of data, so daily data has 365 rows a year and hourly data has 24 × 365.',
   arith:R=>'Note: the six-day example is daily, so bars_per_year = 365 everywhere below.'},
- {k:'rv',lines:[21,22,23],label:'realised_vol',fn:'realised_vol',text:'<b>Lines 21–23.</b> One line of work: the exponentially weighted standard deviation of returns, annualised. <code>adjust=False</code> is the plain recursion (today = α · new + (1 − α) · yesterday), <code>span=30</code> sets α = 2/31. It uses only past bars, so it can be used for sizing without look-ahead. The EWMA note is about this line.',
+ {k:'rv',lines:[21,22,23],label:'realised_vol',fn:'realised_vol',text:'<b>Lines 21–23.</b> A small function that answers one question: how jumpy has the market been lately? It takes the column of daily returns and works out the typical size of a move, counting recent days more than old ones (that is what "exponentially weighted" means; the EWMA note explains it). Then it multiplies by √365 so the answer is quoted per year, the way everyone quotes it. "Using only past bars" means today\'s answer never peeks at tomorrow. In the six-day example this function is not used, because the volatility target is switched off.',
   arith:R=>'Note: in the six-day example vol_target is None, so this function is never called. With vol_target=0.10 it would be called on line 55.'},
- {k:'sigdef',lines:[26,27,28,29,30,31,32,33,34,35,36],label:'backtest signature',fn:'backtest',text:'<b>Lines 26–36.</b> The inputs and their defaults: 5 bps cost, no carry, a 10% volatility target with a 30-bar span, a leverage cap of 2, 365 bars a year, no tradable mask. The type hints say what each thing is: a Series of prices, a Series of signals, numbers, and an optional bool Series. It returns a DataFrame.',
+ {k:'sigdef',lines:[26,27,28,29,30,31,32,33,34,35,36],label:'backtest signature',fn:'backtest',text:'<b>Lines 26–36.</b> The "order form" for backtest: the list of things you can hand it. Two are required: prices and signal. The rest have defaults, meaning "if you do not say, use this": fee 5 bps, no holding cost, aim for 10% jumpiness, measure jumpiness over 30 days, never bet more than 2× your money, 365 rows a year, no list of closed days. The <code>: pd.Series</code> notes just say what kind of thing each input is (a column). The <code>-&gt; pd.DataFrame</code> at the end says it hands back a whole table.',
   arith:R=>'This example overrides two defaults: vol_target=None and cost_bps='+R.bps+(R.ok?', and passes tradable=[T, T, T, F, F, T]':'')+'.'},
- {k:'docbt',kind:'doc',lines:[37,38,39,40,41,42,43,44,45,46,47,48,49],label:'backtest docstring',fn:'backtest',text:'<b>Lines 37–49.</b> What each input means in words. Two are easy to misread: <code>cost_bps</code> is per unit of <em>turnover</em>, not per trade, so a flip costs double; and <code>tradable</code> freezes the position on closed bars (no trades, no size changes, no cost) while signals and vol keep updating underneath.',
+ {k:'docbt',kind:'doc',lines:[37,38,39,40,41,42,43,44,45,46,47,48,49],label:'backtest docstring',fn:'backtest',text:'<b>Lines 37–49.</b> The same order form explained in words. Two things to remember: the fee is charged on how much the position <em>changes</em> (going from long +1 to short −1 is a change of 2, so it costs double); and the list of closed days (<code>tradable</code>) freezes the position on days the market is shut: nothing is bought or sold, so no fee.',
   arith:R=>'Note: "5 bps ~ 0.05 %" means 5 / 10,000 = 0.0005 of notional per unit traded.'},
- {k:'dropna',lines:[50],label:'dropna',fn:'backtest',text:'<b>Line 50.</b> Drop any day with a missing price before anything else, so there are no holes for the returns to trip over. The six example closes have none.',
+ {k:'dropna',lines:[50],label:'dropna',fn:'backtest',text:'<b>Line 50.</b> Throw away any day where the price is missing. NaN ("not a number") is pandas\' word for a blank cell. The six example prices have no blanks, so nothing is thrown away.',
   arith:R=>'Note: six rows in, six rows out.'},
- {k:'ret',lines:[51],col:'ret',label:'ret',text:'<b>Line 51.</b> Returns: today\'s close divided by yesterday\'s, minus one. The first day has no yesterday, so <code>pct_change</code> gives NaN and <code>fillna(0.0)</code> makes it 0. Everything downstream is built on returns, not prices.',
+ {k:'ret',lines:[51],col:'ret',label:'ret',text:'<b>Line 51.</b> Turn prices into daily returns: today\'s price ÷ yesterday\'s price − 1. From 102 to 101 that is 101/102 − 1 = −0.98%. Day 1 has no yesterday, so pandas leaves a blank (NaN); <code>fillna(0.0)</code> turns the blank into 0. From here on the code works with returns, not prices.',
   arith:R=>`ret[3] = 101 / 102 − 1 = ${pct(R.ret[2])}`},
- {k:'sig',lines:[52],col:'sig',label:'signal',text:'<b>Line 52.</b> The signal is lined up with the price dates (<code>reindex</code>); any date it does not cover becomes NaN and then 0, meaning flat. Here it covers all six days, so nothing changes.',
+ {k:'sig',lines:[52],col:'sig',label:'signal',text:'<b>Line 52.</b> Make sure the signal column has exactly the same dates as the price column (<code>reindex</code> = "line the rows up by date"). Any date missing from the signal becomes a blank, then 0, meaning "no position". In the example the signal already has all six days, so nothing changes.',
   arith:R=>`sig[3] = +1   (given; reindex finds every date, nothing to fill)`},
- {k:'target',lines:[54,58,59],col:'target',label:'target',text:'<b>Lines 54–59.</b> With <code>vol_target=None</code> the <code>if</code> is false and line 59 runs: the signal is just capped at ±max_leverage (2). A ±1 signal is unchanged. With a volatility target, lines 55–57 would first scale it by target ÷ vol.',
+ {k:'target',lines:[54,58,59],col:'target',label:'target',text:'<b>Lines 54–59.</b> Decide how big the position <em>should</em> be. <code>if … else</code> is a fork in the road. The volatility target is switched off here (<code>None</code>), so the code takes the <code>else</code> road, line 59: just make sure the signal is never above +2 or below −2 (<code>clip</code> = "cap it"). A signal of +1 stays +1. With the target switched on, lines 55–57 would first shrink the bet when the market is jumpy.',
   arith:R=>`target[3] = clip(+1, −2, +2) = +1`},
- {k:'pos',lines:[61,62],col:'pos',label:'position',danger:true,text:'<b>Line 62, the danger line.</b> <code>shift(1)</code> moves every value down one row: the position held during day t is the target decided at day t−1\'s close. Day 1 gets NaN, filled with 0. Remove this line and the rule trades on prices it has not seen yet; the honest backtest note shows what that does.',
+ {k:'pos',lines:[61,62],col:'pos',label:'position',danger:true,text:'<b>Line 62, the most important line.</b> <code>shift(1)</code> slides the whole column down one row. So the position you hold on day 3 is the target you decided on day 2. Why: on the evening of day 2 you see the closing price and decide; the earliest you can actually trade is day 3. Day 1 has nothing above it, so it gets a blank, then 0. Delete this line and the backtest trades using prices it could not have known yet, and looks far better than any real trader could.',
   arith:R=>`pos[3] = target[2] = +1\npos[1] = NaN → 0   (no yesterday)`},
- {k:'mask',lines:[64,65,66],col:'pos',label:'tradable',danger:true,maskOnly:true,text:'<b>Lines 64–66.</b> Only when a <code>tradable</code> mask is given. <code>where(ok)</code> blanks the position on closed days; <code>ffill()</code> copies the last open day\'s position forward. Days 4 and 5 keep day 3\'s +1; the flip to −1 that line 62 had scheduled for day 5 happens on day 6 instead. No trades, no cost, no size change on a closed day.',
+ {k:'mask',lines:[64,65,66],col:'pos',label:'tradable',danger:true,maskOnly:true,text:'<b>Lines 64–66.</b> Only used when a list of closed days is given (gold at weekends). <code>where(ok)</code> blanks out the position on the closed days, 4 and 5. <code>ffill()</code> ("fill forward") copies the last open day\'s position into the blanks, so days 4 and 5 keep day 3\'s +1. The switch to −1 that was due on day 5 now happens on day 6, the next open day. Nothing is traded on a closed day, so no fee.',
   arith:R=>`pos after where(ok): [0, 0, +1, NaN, NaN, −1]\nafter ffill():       [0, 0, +1, +1, +1, −1]`},
- {k:'turnover',lines:[68],col:'turnover',label:'turnover',text:'<b>Line 68.</b> How much the position changed today, as an absolute value. The first row has no previous position, so <code>fillna(pos.abs())</code> charges the full size of the first position. A flip from +1 to −1 is |−1 − (+1)| = 2: close the long and open the short.',
+ {k:'turnover',lines:[68],col:'turnover',label:'turnover',text:'<b>Line 68.</b> How much the position changed today, ignoring whether it went up or down. <code>diff()</code> is today minus yesterday; <code>abs()</code> drops the minus sign. Day 1 has no yesterday, so it is charged the full size of its position. Going from +1 to −1 is a change of 2: you sell the long <em>and</em> open the short, two trades.',
   arith:R=>`turnover[3] = |pos[3] − pos[2]| = |${R.pos[2]} − ${R.pos[1]}| = ${R.turnover[2]}`},
- {k:'cost',lines:[69],col:'cost',label:'cost',text:'<b>Line 69.</b> Turnover times the per-unit charge. 5 bps is 5 ÷ 10,000 = 0.0005 of notional per unit traded. In the zero-cost scenario this column is all zeros and equity ends higher; that difference is what trading costs.',
+ {k:'cost',lines:[69],col:'cost',label:'cost',text:'<b>Line 69.</b> The fee: turnover × 5 ÷ 10,000. "5 bps" means 5 basis points, and a basis point is one hundredth of a percent, so 5 bps = 0.05%. Each unit of change costs 0.05% of your money. Switch the scenario above to "cost 0" and this column becomes all zeros; the difference in the final equity is what trading cost you.',
   arith:R=>`cost[3] = ${R.turnover[2]} × ${R.bps} / 1e4 = ${(R.cost[2]*100).toFixed(2)}%`},
- {k:'carry',lines:[70],col:'carry',label:'carry',text:'<b>Line 70.</b> The daily slice of the annual holding cost, charged on the absolute position (long or short). With <code>carry_annual=0</code> it is zero here. At 0.365 a year it would be 0.1% on every day with a position.',
+ {k:'carry',lines:[70],col:'carry',label:'carry',text:'<b>Line 70.</b> A daily "rent" for holding a position, long or short. It is the yearly rate ÷ 365, times the size of the position. In the example the yearly rate is 0, so the column is all zeros. For bitcoin this would be the funding rate a broker charges to hold the position overnight.',
   arith:R=>`carry[3] = |${R.pos[2]}| × 0 / 365 = 0`},
- {k:'gross',lines:[72],col:'gross',label:'gross',text:'<b>Line 72.</b> Profit before costs: the position held times today\'s return. Long on an up day earns; short on a down day earns too (minus times minus).',
+ {k:'gross',lines:[72],col:'gross',label:'gross',text:'<b>Line 72.</b> Profit before fees: position × today\'s return. Long (+1) on a +2% day makes +2%. Short (−1) on a −1% day makes +1%, because minus times minus is plus. No position (0) makes 0.',
   arith:R=>`gross[3] = pos[3] × ret[3] = ${R.pos[2]} × ${pct(R.ret[2])} = ${pct(R.gross[2])}`},
- {k:'net',lines:[73],col:'net',label:'net',text:'<b>Line 73.</b> What you keep: gross minus cost minus carry. Rule 3 of the file: every result includes costs.',
+ {k:'net',lines:[73],col:'net',label:'net',text:'<b>Line 73.</b> What you actually keep: profit minus the fee minus the rent. This is the file\'s third promise: never show a result without the costs taken off.',
   arith:R=>`net[3] = ${pct(R.gross[2])} − ${(R.cost[2]*100).toFixed(2)}% − 0 = ${pct(R.net[2])}`},
- {k:'equity',lines:[75,76,77,78,79,80],col:'equity',label:'equity',text:'<b>Lines 75–80.</b> Everything is packed into one DataFrame, one row per day, and equity is the running product of (1 + net): the growth of $1. The function returns the whole table so any column can be inspected or plotted.',
+ {k:'equity',lines:[75,76,77,78,79,80],col:'equity',label:'equity',text:'<b>Lines 75–80.</b> Put all the columns into one table (a DataFrame), one row per day. Then equity: start with $1 and grow it by each day\'s net return, multiplying as you go (<code>cumprod</code> = "cumulative product", a running multiplication). The last number in the column is what $1 became. The function hands back the whole table, so any column can be looked at or plotted.',
   arith:R=>`equity[3] = equity[2] × (1 + net[3]) = ${R.equity[1].toFixed(4)} × (1 ${R.net[2]<0?'−':'+'} ${Math.abs(R.net[2]).toFixed(4)}) = ${R.equity[2].toFixed(4)}\nequity[6] = ${R.equity[5].toFixed(4)}`},
- {k:'stats1',lines:[83,84,85,86,87,88,89],label:'stats: setup',fn:'stats',text:'<b>Lines 83–89.</b> <code>stats</code> takes the DataFrame and pulls out net and equity. Drawdown is equity over its running maximum minus one. Years is rows divided by bars per year. CAGR compounds the final equity to a yearly rate. Vol annualises the daily standard deviation. Section 6 shows every one of these computed on this table.',
+ {k:'stats1',lines:[83,84,85,86,87,88,89],label:'stats: setup',fn:'stats',text:'<b>Lines 83–89.</b> <code>stats</code> takes the table and gets ready to summarise it. Drawdown: how far equity is below its best value so far (equity ÷ best-so-far − 1; zero when you are at a new high). Years: number of rows ÷ 365. CAGR: the steady yearly growth rate that would turn $1 into the final equity. Vol: how much the daily net returns bounce around, scaled up to a yearly number. Section 6 computes each of these on this table.',
   arith:R=>'yrs = 6 / 365 = '+(6/365).toFixed(4)+'\ndd[6] = equity[6] / max(equity[1..6]) − 1 = '+R.equity[5].toFixed(4)+' / '+Math.max(...R.equity).toFixed(4)+' − 1 = '+((R.equity[5]/Math.max(...R.equity)-1)*100).toFixed(2)+'%'},
- {k:'stats2',lines:[90,91,92,93,94,95,96,97,98,99,100,101,102,103,104],label:'stats: the eleven numbers',fn:'stats',text:'<b>Lines 90–104.</b> The Series that comes back: CAGR, Vol, Sharpe (annualised mean over annualised vol, NaN if vol is zero), MaxDrawdown (the minimum of dd), the worst and best single bar, turnover per year, how much costs and carry ate per year, the share of days with a position, and the row count.',
+ {k:'stats2',lines:[90,91,92,93,94,95,96,97,98,99,100,101,102,103,104],label:'stats: the eleven numbers',fn:'stats',text:'<b>Lines 90–104.</b> The eleven summary numbers it hands back: growth per year (CAGR); jumpiness (Vol); return per unit of risk (Sharpe = average return ÷ jumpiness, the number everyone compares); the worst fall from a peak (MaxDrawdown); the worst and best single day; how much trading per year (TurnoverPerYear); how much the fees and the rent ate per year; the share of days with a position; and the row count.',
   arith:R=>'Sharpe = mean(net) × 365 / Vol   (see section 6 for the numbers on this table)'},
- {k:'yearly',lines:[107,108,109,110,111,112],label:'yearly',fn:'yearly',text:'<b>Lines 107–112.</b> Group the rows by calendar year and, for each year, compound the net returns into one return and take the worst drawdown. The quickest regime check: a rule that only worked in two years out of nine is suspect. The six example days are all one year, so one row.',
+ {k:'yearly',lines:[107,108,109,110,111,112],label:'yearly',fn:'yearly',text:'<b>Lines 107–112.</b> Split the table by calendar year (<code>groupby</code> = "sort the rows into piles, one pile per year") and, for each pile, give the total return and the worst drawdown. It is a quick check that a rule worked in most years, not just one lucky one. The six example days are all in one year, so one row.',
   arith:R=>'this year: Return = ∏(1 + net) − 1 = '+((R.equity[5]-1)*100).toFixed(2)+'%'},
- {k:'wfsig',lines:[115,116,117,118,119,120,121,122,123,124],label:'walk_forward signature',fn:'walk_forward',text:'<b>Lines 116–124.</b> Inputs: prices, a <code>rule</code> function that turns prices and parameters into a signal, a <code>grid</code> of parameter dicts to choose from, a training length (default three years) and a test length (default one year). Anything else (<code>**bt_kwargs</code>) is passed straight to <code>backtest</code>: costs, carry, the vol target.',
+ {k:'wfsig',lines:[115,116,117,118,119,120,121,122,123,124],label:'walk_forward signature',fn:'walk_forward',text:'<b>Lines 116–124.</b> The order form for walk_forward. It needs prices; a <code>rule</code> (a function that turns prices into a +1/−1 signal); and a <code>grid</code>, a list of settings to try, such as "look back 63 days", "126 days", "252 days". Training length defaults to 3 years, test length to 1 year. Anything else you pass (<code>**bt_kwargs</code>, "and the rest") is handed straight on to backtest, for example the fee.',
   arith:R=>'Example grid: [{"lookback": 63}, {"lookback": 126}, {"lookback": 252}]'},
- {k:'wfdoc',kind:'doc',lines:[125,126,127,128,129,130,131,132],label:'walk_forward docstring',fn:'walk_forward',text:'<b>Lines 125–132.</b> The promise: for each window, fit on the training bars (pick the grid entry with the best Sharpe), then trade the NEXT test bars with that choice, and stitch the test periods together. That stitched series is the out-of-sample result. It returns that series and a log of what was chosen.',
+ {k:'wfdoc',kind:'doc',lines:[125,126,127,128,129,130,131,132],label:'walk_forward docstring',fn:'walk_forward',text:'<b>Lines 125–132.</b> The promise, in words: for each window of time, try every setting on the three training years, keep the one with the best Sharpe, then use it on the next year only, a year it has never seen. Glue those "next years" together. That glued series is the honest result ("out-of-sample"), because every choice was made before the data it is scored on. It also hands back a diary of what was chosen each time.',
   arith:R=>'Note: "honest parameter selection" means the choice is always made before the period it is scored on.'},
- {k:'wfloop',lines:[133,134,135,136,137,138,139],label:'walk_forward: windows',fn:'walk_forward',text:'<b>Lines 133–139.</b> Clean the prices, start two empty lists, and loop while a full train + test window still fits. <code>train</code> is the training slice. <code>full</code> is train + test together: the comment on line 139 explains why, a lookback signal needs history behind it, so the test is run on the longer slice and only the tail is kept.',
+ {k:'wfloop',lines:[133,134,135,136,137,138,139],label:'walk_forward: windows',fn:'walk_forward',text:'<b>Lines 133–139.</b> Clean the prices, make two empty lists (one for results, one for the diary), and start a loop (<code>while</code> = "keep going as long as…") that runs as long as a full 3 + 1 year window still fits in the data. <code>train</code> is the 3 training years. <code>full</code> is those 3 years plus the test year: the test is run on the longer slice because a rule that looks back 252 days needs 252 days of history before it can say anything.',
   arith:R=>'window 1: train = prices[0 : 1095], full = prices[0 : 1460]   (defaults, daily bars)'},
- {k:'wfgrid',lines:[140,141,142,143,144,145],label:'walk_forward: pick the best',fn:'walk_forward',text:'<b>Lines 140–145.</b> For every parameter set in the grid: build the signal on the training prices, run <code>backtest</code>, read the Sharpe from <code>stats</code>, and keep the best finite one. This is the only place where fitting happens, and it sees training data only.',
+ {k:'wfgrid',lines:[140,141,142,143,144,145],label:'walk_forward: pick the best',fn:'walk_forward',text:'<b>Lines 140–145.</b> Try each setting in the grid on the training years (<code>for params in grid</code> = "for each setting in the list"): build the signal, run backtest, read the Sharpe. Keep the best one. This is the only place where the code "chooses", and it only ever sees training data.',
   arith:R=>'best, best_sharpe = the grid entry with the highest training Sharpe'},
- {k:'wftest',lines:[146,147,148,149,150,151],label:'walk_forward: test and log',fn:'walk_forward',text:'<b>Lines 146–151.</b> Run the chosen parameters on the full slice, keep only the rows after the training bars (the test year), append them to the out-of-sample parts, and log the window: dates, the chosen parameters, the training Sharpe and the test Sharpe side by side.',
+ {k:'wftest',lines:[146,147,148,149,150,151],label:'walk_forward: test and log',fn:'walk_forward',text:'<b>Lines 146–151.</b> Run the chosen setting on the full slice, keep only the last year (the test year, the rows after the training rows), add it to the results list, and write a diary entry: the dates, which setting was chosen, and the Sharpe on the training years next to the Sharpe on the test year. A big gap between those two, window after window, is the sign that a rule only works on data it has already seen.',
   arith:R=>'test_part = res_full.iloc[1095:]   (the last 365 rows of the 1460)'},
- {k:'wfend',lines:[152,153,154,155,156,157],label:'walk_forward: slide and stitch',fn:'walk_forward',text:'<b>Lines 152–157.</b> Move the start forward by the test length and repeat. If no window fitted at all, raise an error rather than return nothing. Finally concatenate the test parts, recompute equity over the stitched series (a fresh cumprod, so it starts at $1), and return it with the log.',
+ {k:'wfend',lines:[152,153,154,155,156,157],label:'walk_forward: slide and stitch',fn:'walk_forward',text:'<b>Lines 152–157.</b> Move the window forward by one year and go round the loop again. If not even one window fitted, stop with an error message rather than hand back nothing. At the end, glue the test years together (<code>concat</code> = "join end to end"), recompute equity from $1 over the glued series, and hand back the result together with the diary.',
   arith:R=>'start += 365; …; oos = concat(test parts); oos["equity"] = cumprod(1 + oos["net"])'}];
 let scen='base', stepIdx=0, R=compute(scen);
 const FKEY={file:'doc',realised_vol:'rv',backtest:'bt',stats:'st',yearly:'yr',walk_forward:'wf'};
@@ -465,11 +478,11 @@ const MAP={
 <span class="note"><b>In the code:</b> <code>def walk_forward(prices, rule, grid, train_bars=365*3, test_bars=365, bars_per_year=365, **bt_kwargs) -> (DataFrame, DataFrame)</code>. "Honest parameter selection."</span>
 <span class="note"><b>In the literature:</b> Bailey et al. (<em>Pseudo-Mathematics</em>, 2014) is the in-sample versus out-of-sample argument this function implements, with the rule of thumb that five years of data support at most about 45 trial configurations. López de Prado (2018, pitfall 9) adds the caveat: walk-forward still tests a single historical path, so it answers "would this choice have been made in time?" and not "how many rules did you throw away first?". The research log answers the second.</span>`};
 (function buildMap(){const svg=$('mapSvg'); 
-  const boxes=[['rv','realised_vol','returns → vol','line 21',40,50,210,70,'rv'],['bt','backtest','prices, signal → res','line 26',395,50,230,70,'bt'],['yr','yearly','res → per-year table','line 107',760,20,210,62,'yr'],['st','stats','res → 11 numbers','line 83',760,250,210,62,'st'],['wf','walk_forward','prices, rule, grid → oos, log','line 116',395,236,230,70,'wf']];
-  const edges=[['rv','bt','M250,85 L395,85','ret → vol',290,75],['bt','yr','M625,72 C690,72 700,51 760,51','res',690,49],['bt','st','M625,98 C690,98 700,268 760,268','res',690,160],['wf','bt','M510,236 L510,120','calls backtest\nfor each window',520,185],['wf','st','M625,292 L760,292','calls stats',655,284]];
-  let h='<defs>'; for(const k of ['rv','bt','st','yr','wf','muted']) h+=`<marker id="mArr-${k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(${k==='muted'?'--muted':'--f-'+k})"/></marker>`; h+='</defs>';
-  edges.forEach(([f,t,d,lab,x,y],i)=>{h+=`<path class="edge" data-f="${f}" data-t="${t}" d="${d}" marker-end="url(#mArr-muted)"/>`; lab.split('\n').forEach((l,j)=>{h+=`<text class="elab" data-f="${f}" data-t="${t}" x="${x}" y="${y+j*14}">${l}</text>`;});});
-  for(const [k,name,io,line,x,y,w,hh,col] of boxes){h+=`<g class="box f-${col}${k==='bt'?' on':''}" data-k="${k}" tabindex="0" role="button" aria-label="${name}"><rect class="bg" x="${x}" y="${y}" width="${w}" height="${hh}" rx="10"/><rect class="strip" x="${x}" y="${y}" width="${w}" height="24" rx="10"/><rect class="strip2" x="${x}" y="${y+12}" width="${w}" height="12"/><text class="nm" x="${x+14}" y="${y+17}">${name}</text><text class="ln" x="${x+w-12}" y="${y+17}" text-anchor="end">${line}</text><text class="sub" x="${x+14}" y="${y+hh-16}">${io}</text></g>`;}
+  const boxes=[['rv','realised_vol',['in: daily returns','out: volatility, per day'],'line 21',20,40,220,84,'rv'],['bt','backtest',['in: prices, signal','out: results table, one row per day'],'line 26',330,40,300,84,'bt'],['yr','yearly',['in: results table','out: return and drawdown per year'],'line 107',720,10,260,84,'yr'],['st','stats',['in: results table','out: eleven summary statistics'],'line 83',720,236,260,84,'st'],['wf','walk_forward',['in: prices, rule, parameter grid','out: out-of-sample results, selection log'],'line 116',330,236,300,84,'wf']];
+  const edges=[['bt','rv','M330,66 L240,66','calls',285,58,'middle','call'],['rv','bt','M240,100 L330,100','volatility',285,87,'middle','data'],['bt','yr','M630,66 C670,66 670,52 700,52 L720,52','results table',664,38,'middle','data'],['bt','st','M630,100 C690,100 650,278 700,278 L720,278','results table',677,193,'middle','data'],['wf','bt','M466,236 L466,124','calls, once per\nsetting and window',454,172,'end','call'],['bt','wf','M504,124 L504,236','results table',514,212,'start','data'],['wf','st','M630,296 L720,296','calls',675,314,'middle','call']];
+  let h='<defs>'; for(const k of ['rv','bt','st','yr','wf','muted']) h+=`<marker id="mArr-${k}" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(${k==='muted'?'--muted':'--f-'+k})"/></marker>`; h+='</defs>';
+  edges.forEach(([f,t,d,lab,x,y,anc,kind])=>{h+=`<path class="edge ${kind}" data-f="${f}" data-t="${t}" d="${d}" marker-end="url(#mArr-muted)"/>`;}); edges.forEach(([f,t,d,lab,x,y,anc])=>{lab.split('\n').forEach((l,j)=>{h+=`<text class="elab" data-f="${f}" data-t="${t}" x="${x}" y="${y+j*14}" text-anchor="${anc}">${l}</text>`;});});
+  for(const [k,name,io,line,x,y,w,hh,col] of boxes){h+=`<g class="box f-${col}${k==='bt'?' on':''}" data-k="${k}" tabindex="0" role="button" aria-label="${name}"><rect class="bg" x="${x}" y="${y}" width="${w}" height="${hh}" rx="10"/><rect class="strip" x="${x}" y="${y}" width="${w}" height="24" rx="10"/><rect class="strip2" x="${x}" y="${y+12}" width="${w}" height="12"/><text class="nm" x="${x+14}" y="${y+17}">${name}</text><text class="ln" x="${x+w-12}" y="${y+17}" text-anchor="end">${line}</text><text class="sub" x="${x+14}" y="${y+46}">${io[0]}</text><text class="sub" x="${x+14}" y="${y+66}">${io[1]}</text></g>`;}
   svg.innerHTML=h;
   function light(k){svg.querySelectorAll('.edge,.elab').forEach(e=>{const on=e.dataset.f===k||e.dataset.t===k; e.classList.toggle('lit',on); if(e.classList.contains('edge')) e.setAttribute('marker-end',`url(#mArr-${on?k:'muted'})`); if(on) e.style.stroke=e.classList.contains('edge')?`var(--f-${k})`:''; else e.style.stroke=''; if(on&&!e.classList.contains('edge')) e.style.fill=`var(--f-${k})`; else if(!e.classList.contains('edge')) e.style.fill='';});}
   svg.querySelectorAll('.box').forEach(g=>{const act=()=>{svg.querySelectorAll('.box').forEach(n=>n.classList.remove('on')); g.classList.add('on'); $('mapX').innerHTML=MAP[g.dataset.k]; light(g.dataset.k);}; g.addEventListener('click',act); g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();act();}});});
@@ -494,7 +507,7 @@ const METHODS=[
  ['pct_change','line 51','prices.pct_change()',mini([[1,100,'NaN'],[2,102,f4(B.ret[1])],[3,101,f4(B.ret[2])]],['day','price','pct_change']),'Each value divided by the previous one, minus one: the percentage change from row to row. The first row has nothing before it and becomes NaN.'],
  ['reindex','line 52 (and 65)','signal.reindex(prices.index)',mini([['day 1','0','0'],['day 2','+1','+1'],['day 7','—','NaN']],['date','signal','reindexed to price dates']),'Rebuild the Series on a given set of labels, keeping values whose label exists and inserting NaN where it does not. Here it forces the signal onto exactly the price dates.'],
  ['fillna','7 uses, lines 51–68','x.fillna(0.0)',mini([[1,'NaN','0.0000'],[2,f4(B.ret[1]),f4(B.ret[1])],[3,f4(B.ret[2]),f4(B.ret[2])]],['day','before','fillna(0.0)']),'Replace every missing value (NaN) with the value given. The backtester uses 0 so that "no data" means "no return, no position, no trade".'],
- ['ewm','line 23, inside realised_vol','ret.ewm(span=30, adjust=False).mean()',mini([[1,f4(B.ret[0]),f4(ewm[0])],[2,f4(B.ret[1]),f4(ewm[1])],[3,f4(B.ret[2]),f4(ewm[2])]],['day','ret','ewm mean (span 30)']),'An exponentially weighted window: recent values count most and older ones fade by a constant factor. span=30 sets α = 2/31. Shown here as the mean; the file takes .std(). The whole <a href="ewma.html">EWMA note</a> is about this method.'],
+ ['ewm','line 23 · the file takes .std(), mean shown here','ret.ewm(span=30, adjust=False).mean()   # line 23 uses .std()',mini([[1,f4(B.ret[0]),f4(ewm[0])],[2,f4(B.ret[1]),f4(ewm[1])],[3,f4(B.ret[2]),f4(ewm[2])]],['day','ret','ewm mean (span 30)']),'An exponentially weighted window: recent values count most and older ones fade by a constant factor. span=30 sets α = 2/31. Shown here as the mean; the file takes .std(). The whole <a href="ewma.html">EWMA note</a> is about this method.'],
  ['clip','lines 57, 59','sig.clip(-2, 2)',mini([['a','+2.5','+2.0'],['b','−3.0','−2.0'],['c','+0.5','+0.5']],['','before','clip(−2, 2)']),'Cap every value to a range: anything above the upper bound becomes the bound, anything below the lower bound likewise. The leverage cap.'],
  ['shift','line 62','target.shift(1)',mini([[1,fmt.target(B.target[0]),'NaN'],[2,fmt.target(B.target[1]),fmt.pos(B.pos[1])],[3,fmt.target(B.target[2]),fmt.pos(B.pos[2])]],['day','target','shift(1)']),'Move every value down by one row (the first row becomes NaN). Row t now holds what row t−1 had. This is the one-bar lag.'],
  ['where','line 66','pos.where(ok)',mini([[3,'+1','True','+1'],[4,'+1','False','NaN'],[5,'−1','False','NaN']],['day','pos','ok','where(ok)']),'Keep values where the condition is True and replace the rest with NaN. On closed days the position is blanked, ready to be filled from the day before.'],
@@ -557,8 +570,8 @@ const QS=[['Why is the position yesterday\'s signal?','Because the signal for da
  ['What is turnover, and why does a long-to-short flip cost double?','Turnover is |pos<sub>t</sub> − pos<sub>t−1</sub>|, how much the position changed. Going from +1 to −1 is a change of 2: you close one unit of long and open one unit of short, two trades\' worth of spread. The cost line multiplies turnover by the per-unit charge, so the flip pays twice.'],
  ['What does vol_target / vol do when volatility doubles overnight?','The scale halves, so the target position halves: at a 10% target, 20% vol gives 0.5 units, 40% gives 0.25. The position shrinks automatically as markets get wilder, which keeps each instrument\'s expected risk near the target. Because of the lag, the smaller position is held from the next day. This is the mechanism to describe on the risk page.'],
  ['Why 365 bars a year here, not 252?','The clean daily table has one row per calendar day, because bitcoin trades every day and gold is forward-filled over weekends onto the same calendar. Annualising with the number of rows per year (365) keeps Sharpe and volatility consistent for both instruments on one calendar. Gold on its own trading days would use about 252; mixing the two conventions would scale every position by the wrong factor.'],
- ['What happens to gold on a weekend, and why did the first version inflate turnover twenty-fold?','The clean table carries Friday\'s close across Saturday and Sunday and marks <code>xau_tradable = False</code>. The first script set gold\'s signal to zero on those days, so the model closed every Friday and reopened every Monday, paying the spread twice a week for nothing: turnover 82 a year, cost drag 2.5%. The fix is lines 64–66: <code>pos.where(ok).ffill()</code> freezes the position on closed days. After it: turnover 19, cost drag 0.6%.'],
- ['With zero costs and an always-long signal, what must equity equal, and why is that a useful test?','Exactly the asset\'s own growth, last price divided by first price, because the position is 1 on every day after the first and nothing is subtracted. It is the plumbing test: if that number is off, the returns, the lag or the compounding is wrong, independent of any strategy idea. The project\'s tests check it on synthetic data and the week-1 script checked it on real data (6.091× bitcoin, 3.114× gold since 2018).'],
+ ['What happens to gold on a weekend, and why did the first version inflate turnover twenty-fold?','The clean table carries Friday\'s close across Saturday and Sunday and marks <code>xau_tradable = False</code>. The first script set gold\'s signal to zero on those days, so the model closed every Friday and reopened every Monday, paying the spread twice a week for nothing: turnover 82 a year (research log, 2026-10-28). The fix is lines 64–66: <code>pos.where(ok).ffill()</code> freezes the position on closed days. After it: turnover 19, and the cost drag fell by roughly the same factor.'],
+ ['With zero costs and an always-long signal, what must equity equal, and why is that a useful test?','Exactly the asset\'s own growth, last price divided by first price, because the position is 1 on every day after the first and nothing is subtracted. It is the plumbing test: if that number is off, the returns, the lag or the compounding is wrong, independent of any strategy idea. The project\'s tests check it on synthetic data (test_backtest.py: buy-and-hold reproduces the asset) and the week-1 script checked it on real data: last close ÷ first close, printed by 01_first_look.py.'],
  ['Why might a walk-forward Sharpe be lower than a full-history one, and which would you trust?','The full-history number lets the parameters see the years they are scored on, so it includes the luck of that one history. The walk-forward number only ever uses a choice made before each test window, which is the situation you are actually in when you trade. Trust the walk-forward Sharpe, and read the log: a large, repeated gap between train_sharpe and test_sharpe means the grid is being fitted to noise.']];
 $('qs').innerHTML=QS.map((q,i)=>`<div class="q"><span class="qt">${i+1}. ${q[0]}</span><button class="small rvq" style="align-self:flex-start">reveal answer</button><div class="a">${q[1]}</div></div>`).join('');
 document.querySelectorAll('.rvq').forEach(b=>b.addEventListener('click',()=>b.closest('.q').classList.toggle('rev')));
