@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Research Plan · quant-notes</title>
+<meta name="description" content="A sixteen-week research plan for two long/short models on XAU/USD and BTC/USD: phases, weekly scope, sources consulted and deliverables, with the evaluation criteria.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column (~720px) with wide "lab" panels that break out to ~1040px for the timeline and the week cards. */
+:root{
+  --bg:#F7F5EF; --panel:#FFFFFF; --ink:#1E2430; --muted:#5C6473; --line:#D9D5CB;
+  --accent:#1F6F8B; --accent-soft:#D8E9EF; --warm:#C2651E; --warm-soft:#F6E2D2;
+  --good:#2E7D4F; --good-soft:#D9EDE0; --purple:#6B4FA0; --purple-soft:#E6DFF3; --code-bg:#1B222C; --code-fg:#E8EBF0;
+  --display:'Fraunces',Georgia,serif; --body:'Atkinson Hyperlegible',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#12161C; --panel:#1A2029; --ink:#E9E6DF; --muted:#A3AAB6; --line:#2E3540;
+  --accent:#6FB8D1; --accent-soft:#1E3440; --warm:#E5945A; --warm-soft:#3E2A1C;
+  --good:#6DBE8C; --good-soft:#1E3A2A; --purple:#B39DDB; --purple-soft:#2E2640; --code-bg:#0D1116; --code-fg:#E8EBF0; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#12161C; --panel:#1A2029; --ink:#E9E6DF; --muted:#A3AAB6; --line:#2E3540;
+  --accent:#6FB8D1; --accent-soft:#1E3440; --warm:#E5945A; --warm-soft:#3E2A1C;
+  --good:#6DBE8C; --good-soft:#1E3A2A; --purple:#B39DDB; --purple-soft:#2E2640; --code-bg:#0D1116; --code-fg:#E8EBF0; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;
+  padding-block:0 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:720px;margin:0 auto}
+.wide{max-width:1040px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);font-weight:600;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(38px,6vw,58px)}
+h2{font-size:30px;margin-top:64px}
+h3{font-size:21px}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+header{padding-block:56px 24px;display:flex;flex-direction:column;gap:16px}
+.lede{font-size:21px;color:var(--muted);max-width:620px}
+section{display:flex;flex-direction:column;gap:18px}
+.lab{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px;margin-top:8px}
+.lab-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.lab-head .tag{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.note{font-size:13px;color:var(--muted)}
+.callout{background:var(--warm-soft);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.callout b{color:var(--warm)}
+.rules{background:var(--accent-soft);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;font-size:15px}
+.rules b{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+dfn{font-style:normal;border-bottom:1px dotted var(--accent);cursor:help;position:relative}
+dfn:hover::after,dfn:focus::after{content:attr(title);position:absolute;left:0;top:1.6em;z-index:5;background:var(--ink);color:var(--bg);font-size:13px;line-height:1.4;padding:8px 10px;border-radius:6px;width:260px;max-width:70vw;font-style:normal}
+.explain{background:var(--warm-soft);border:1px solid var(--warm);border-left:6px solid var(--warm);border-radius:8px;padding:16px 18px;font-size:15.5px;line-height:1.55;display:flex;flex-direction:column;gap:6px;min-height:84px;margin-top:6px}
+.explain::before{content:"Explanation";font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--warm)}
+code{font-family:var(--mono)}
+a{color:var(--accent)}
+/* timeline */
+.tlgrid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
+.tl{display:flex;flex-direction:column;gap:10px}
+.phase{display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:center}
+.phase .pn{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.3}
+.phase .pn b{display:block;font-family:var(--body);font-size:14px;color:var(--ink);font-weight:700}
+.cells{display:flex;gap:4px}
+.cell{flex:1;min-width:0;border:1.5px solid var(--line);background:var(--panel);border-radius:6px;padding:8px 0;font-family:var(--mono);font-size:13px;text-align:center;cursor:pointer;color:var(--ink);position:relative}
+.cell:hover,.cell:focus-visible{border-color:var(--accent);outline:none}
+.cell.p1{border-color:var(--accent)}.cell.p2{border-color:var(--purple)}.cell.p3{border-color:var(--good)}.cell.p4{border-color:var(--warm)}
+.cell.on.p1{background:var(--accent-soft)}.cell.on.p2{background:var(--purple-soft)}.cell.on.p3{background:var(--good-soft)}.cell.on.p4{background:var(--warm-soft)}
+.cell.on{font-weight:700}
+.cell.done::after{content:"";position:absolute;left:6px;right:6px;bottom:3px;height:3px;border-radius:2px;background:var(--good)}
+.cell.now::after{content:"";position:absolute;left:6px;right:6px;bottom:3px;height:3px;border-radius:2px;background:var(--warm)}
+.cell.live{box-shadow:inset 0 0 0 2px var(--warm)}
+.tlkey{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.tlkey i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.tlkey .box{display:inline-block;width:12px;height:12px;border-radius:3px;box-shadow:inset 0 0 0 2px var(--warm);vertical-align:middle;margin-right:6px}
+.tlgrid .explain{margin-top:0}
+@media (max-width:760px){.tlgrid{grid-template-columns:1fr}.phase{grid-template-columns:1fr;gap:4px}}
+/* weeks */
+.weeks{display:flex;flex-direction:column;gap:12px}
+details.week{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+details.week[open]{border-color:var(--accent)}
+details.week summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:64px 1fr auto;gap:14px;align-items:center;padding:14px 18px}
+details.week summary::-webkit-details-marker{display:none}
+.wk{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.2}
+.wk b{display:block;font-size:20px;color:var(--ink);font-weight:500}
+.wt{min-width:0}.wt strong{font-family:var(--display);font-weight:600;font-size:20px;display:block}
+.wt span{font-size:14px;color:var(--muted)}
+.status{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.status.done{color:var(--good);background:var(--good-soft)}.status.now{color:var(--warm);background:var(--warm-soft)}.status.next{color:var(--muted);background:var(--accent-soft)}
+.wbody{padding:0 18px 18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.wbody h4{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;font-weight:500}
+.wbody ul{margin:0;padding-left:18px;font-size:15px;display:flex;flex-direction:column;gap:5px}
+.wbody .out{grid-column:1/-1;background:var(--accent-soft);border-radius:8px;padding:12px 14px;font-size:15px}
+.wbody .out h4{color:var(--accent)}
+.pill{font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:999px;background:var(--purple-soft);color:var(--purple);margin-left:4px;white-space:nowrap}
+@media (max-width:640px){.wbody{grid-template-columns:1fr}details.week summary{grid-template-columns:52px 1fr}.status{display:none}}
+/* map */
+.map{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.map div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14.5px;display:flex;flex-direction:column;gap:4px}
+.map b{font-family:var(--mono);font-weight:500;font-size:13.5px;color:var(--accent)}
+.gloss{display:grid;grid-template-columns:1fr;gap:10px;font-size:15px}
+.gloss div{display:grid;grid-template-columns:150px 1fr;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.gloss b{font-family:var(--mono);font-weight:500;font-size:14px}
+.gloss .plain{display:block;margin-top:4px;padding:6px 10px;background:var(--warm-soft);border-radius:6px;font-size:14px;line-height:1.5}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{display:flex;flex-direction:column;gap:2px;padding:10px 12px;background:var(--accent-soft);border-radius:8px}
+.stat b{font-family:var(--mono);font-size:20px;font-weight:500;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted)}
+@media (max-width:560px){.gloss div{grid-template-columns:1fr;gap:2px}h2{font-size:26px}}
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <p class="eyebrow">Quant notes · 05 research plan</p>
+  <h1>A sixteen-week research plan for two long/short models on gold and bitcoin</h1>
+  <p class="lede">Objective, phases, weekly scope, sources consulted and deliverables for a programme that builds a daily trend model and an intraday model on XAU/USD and BTC/USD and evaluates both on a simulated account. The plan is published so that the sequence of work can be checked against the research log; the week numbers are a schedule, not a claim.</p>
+  <div class="rules"><b>Methodological constraints</b>
+    <span>1 · Signals are functions of past data only. 2 · Positions are lagged one bar relative to the signal (<code>pos = target.shift(1)</code>). 3 · All reported results are net of transaction costs and carry.</span></div>
+  <p class="note">No market data is shown and no performance is claimed. Status marks are maintained by hand from the research log; the counts on this page are computed from the plan data in the page.</p>
+</header>
+
+<!-- 1 shape -->
+<section class="wrap">
+  <h2>1 · Structure</h2>
+  <p>Four phases. Phase I builds the data pipeline and the evaluation tools. Phase II develops a daily trend-following model, tests it out of sample and freezes its specification. Phase III runs that model on a <dfn title="A broker account that executes orders against live prices with simulated capital; also called a paper account.">simulated account</dfn> while an intraday model is developed. Phase IV runs both models and produces the written results. Selecting a week on the timeline shows its summary; section 2 gives the full scope.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="lab-head"><h3>Timeline</h3><span class="tag">select a week</span></div>
+    <div class="tlgrid">
+      <div class="tl" id="tl"></div>
+      <div class="explain" id="tlX"></div>
+    </div>
+    <div class="tlkey"><span><i style="background:var(--good)"></i>complete</span><span><i style="background:var(--warm)"></i>in progress</span><span><span class="box"></span>a model begins simulated trading</span></div>
+    <div class="stats" id="stats"></div>
+  </div>
+</section>
+
+<!-- 2 weeks -->
+<section class="wrap">
+  <h2>2 · Weekly scope</h2>
+  <p>Each week specifies the <strong>work</strong> (what is built or tested), the <strong>reading</strong> (the sources consulted before the work, so that methods are taken from the literature rather than improvised) and the <strong>deliverable</strong> (the file that records the week's result). Where a note on this site covers the week's method, it is linked.</p>
+</section>
+<section class="wide">
+  <div class="weeks" id="weeks"></div>
+</section>
+
+<!-- 3 credible -->
+<section class="wrap">
+  <h2>3 · Evaluation criteria</h2>
+  <div class="callout"><b>Conditions for a result to be reported as credible.</b>
+    <span>An <dfn title="Measured on data that was not used when the parameters were chosen.">out-of-sample</dfn> Sharpe ratio, net of costs, within a plausible range: approximately 0.7–1.2 for a daily trend model. Backtest values of 3 or above are treated as evidence of overfitting rather than of skill.</span>
+    <span>Simulated-account results consistent with the backtest: comparable position sizes and turnover, and realised slippage within the cost assumption.</span>
+    <span>A complete research log: each rule recorded before it is tested, negative results retained, and the number of variants tried stated so that the Sharpe ratio can be adjusted for multiple testing.</span>
+    <span>Funding rates, gold trading hours and weekend gaps modelled within the backtest rather than noted outside it.</span></div>
+  <p class="reading" style="font-size:15px;color:var(--muted);padding-left:16px;border-left:3px solid var(--accent-soft)">Results are presented only after three to four months of simulated trading, which places that point around weeks 20–24, beyond the end of this plan. The plan is the preparation; the live log is the evidence.</p>
+</section>
+
+<!-- 4 in this project -->
+<section class="wrap">
+  <h2>In this project</h2>
+  <p>Where each phase is implemented in the <code>xau-btc-models</code> repository.</p>
+  <div class="map">
+    <div><b>src/data.py</b><span>Week 1. Downloads and cleans the daily table: one row per calendar day, columns <code>btc</code>, <code>xau</code>, <code>xau_tradable</code>.</span></div>
+    <div><b>src/backtest.py</b><span>Week 2. The backtester with the lag, the cost model, the tradable mask, <code>stats</code>, <code>yearly</code> and <code>walk_forward</code>. Read line by line in note 04.</span></div>
+    <div><b>src/signals.py</b><span>Weeks 3–4. The trend rules: <code>tsmom</code>, <code>tsmom_multi</code>, <code>ma_cross</code>, <code>donchian</code>; EWMAC joins in week 3.</span></div>
+    <div><b>scripts/NN_*.py</b><span>Weeks 2–7. One research question per numbered script; <code>02_cost_sensitivity.py</code> is week 2's.</span></div>
+    <div><b>notes/research_log.md</b><span>Every week. One table row per test, written before the test runs. Failures stay.</span></div>
+    <div><b>live/live_alpaca.py</b><span>Weeks 8 and 14. The daily script that turns a frozen rule into orders on the simulated account and appends to <code>results/live_log.csv</code>.</span></div>
+    <div><b>notes/&lt;model&gt;_spec.md</b><span>Weeks 7 and 13. The frozen rule, written out exactly, before any live order.</span></div>
+    <div><b>tests/</b><span>Every change to <code>src/</code>. Buy-and-hold reproduces the asset, the position is yesterday's signal, costs reduce returns, the mask freezes gold.</span></div>
+  </div>
+</section>
+
+<!-- 5 glossary -->
+<section class="wrap">
+  <h2>4 · Terminology</h2>
+  <p class="note">Each entry gives the technical definition, then the same idea in everyday terms in the orange strip.</p>
+  <div class="gloss">
+    <div><b>long / short</b><span>a long position gains when the price rises; a short position gains when it falls.<span class="plain">a position that benefits from a rise, or one that benefits from a fall. A long/short model can hold either, so it does not depend on the market going up.</span></span></div>
+    <div><b>simulated account</b><span>a broker account that executes orders against live prices with simulated capital; also called a paper or demo account.<span class="plain">a practice account with real prices and real order handling but no real money. It tests the execution and the process, not the return.</span></span></div>
+    <div><b>walk-forward</b><span>parameters are chosen on a training window and evaluated on the following, unseen window; the procedure is repeated along the history and the evaluation windows are concatenated.<span class="plain">choose the setting on three years of data, apply it to the next year only, move forward a year, repeat. No setting is judged on the data that chose it.</span></span></div>
+    <div><b>out-of-sample</b><span>data not used when the parameters were chosen.<span class="plain">the part of the history the rule was not fitted to.</span></span></div>
+    <div><b>robustness</b><span>the stability of a result under perturbation: neighbouring parameters, higher assumed costs, each instrument alone, different market regimes.<span class="plain">whether the result survives small changes. A rule that works only at one exact lookback and one exact cost level is a coincidence.</span></span></div>
+    <div><b>frozen specification</b><span>the rule, parameters and position sizing recorded in full and held fixed from the start of simulated trading.<span class="plain">the method written down before it is run. A later change defines a new model with a new log, not a revision of the old one.</span></span></div>
+    <div><b>regime</b><span>a period of the history with distinct statistical character: a crash, a sustained rise, a flat year.<span class="plain">a period with its own conditions. A rule evaluated only on favourable periods has not been tested.</span></span></div>
+    <div><b>live log</b><span>one record per trading day: signal, target position, fill, slippage, and profit and loss against the backtest's expectation.<span class="plain">the daily record that lets a reader check that the model did in practice what the backtest said it would.</span></span></div>
+    <div><b>Model 1 / Model 2</b><span>a daily trend-following model and a short-term intraday model on the same two instruments.<span class="plain">a slow model that follows moves lasting months, and a fast one that trades within days. They are expected to earn at different times.</span></span></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>Sources</h2>
+  <p class="note">The reading in section 2 names each paper by the week it is read. Listed here once, in reading order.</p>
+  <div class="gloss">
+    <div><b>López de Prado</b><span>M. López de Prado, "The 10 Reasons Most Machine Learning Funds Fail", <em>Journal of Portfolio Management</em> 44 (2018). Week 2.</span></div>
+    <div><b>RiskMetrics</b><span>J.P. Morgan / Reuters, <em>RiskMetrics Technical Document</em>, 4th ed., 1996, ch. 5. Week 2.</span></div>
+    <div><b>Bailey et al. 2014</b><span>D. Bailey, J. Borwein, M. López de Prado, Q. J. Zhu, "Pseudo-Mathematics and Financial Charlatanism", <em>Notices of the AMS</em> 61 (2014). Week 2.</span></div>
+    <div><b>Moskowitz et al.</b><span>T. Moskowitz, Y. H. Ooi, L. H. Pedersen, "Time Series Momentum", <em>Journal of Financial Economics</em> 104 (2012). Week 3.</span></div>
+    <div><b>Hurst et al.</b><span>B. Hurst, Y. H. Ooi, L. H. Pedersen, "A Century of Evidence on Trend-Following Investing", <em>Journal of Portfolio Management</em> 44 (2017). Week 3.</span></div>
+    <div><b>Liu &amp; Tsyvinski</b><span>Y. Liu, A. Tsyvinski, "Risks and Returns of Cryptocurrency", <em>Review of Financial Studies</em> 34 (2021). Week 3.</span></div>
+    <div><b>Tsay</b><span>R. Tsay, <em>Analysis of Financial Time Series</em>, 2nd ed., Wiley, 2005. Ch. 1 and 3 in week 4; ch. 2 in week 9; ch. 8 in week 10.</span></div>
+    <div><b>Wasserman</b><span>L. Wasserman, <em>All of Statistics</em>, Springer, 2004, ch. 2–3. Week 4, optional.</span></div>
+    <div><b>Bailey et al. 2015</b><span>D. Bailey, J. Borwein, M. López de Prado, Q. J. Zhu, "The Probability of Backtest Overfitting", working paper 2015, published in <em>Journal of Computational Finance</em> 20 (2017). Week 5.</span></div>
+    <div><b>Bailey &amp; López de Prado</b><span>D. Bailey, M. López de Prado, "The Deflated Sharpe Ratio", <em>Journal of Portfolio Management</em> 40 (2014). Week 6.</span></div>
+    <div><b>Harvey &amp; Liu</b><span>C. Harvey, Y. Liu, "Backtesting", <em>Journal of Portfolio Management</em> 42 (2015). Week 6.</span></div>
+    <div><b>Efron &amp; Tibshirani</b><span>B. Efron, R. Tibshirani, <em>An Introduction to the Bootstrap</em>, Chapman &amp; Hall, 1993, ch. 1–6. Week 7.</span></div>
+    <div><b>Politis &amp; Romano</b><span>D. Politis, J. Romano, "The Stationary Bootstrap", <em>Journal of the American Statistical Association</em> 89 (1994). Week 7.</span></div>
+    <div><b>Lo &amp; MacKinlay</b><span>A. Lo, A. C. MacKinlay, "Stock Market Prices Do Not Follow Random Walks", <em>Review of Financial Studies</em> 1 (1988). Week 9.</span></div>
+    <div><b>Halls-Moore</b><span>M. Halls-Moore, <em>Successful Algorithmic Trading</em>, QuantStart, 2015, the cointegration chapter. Week 10.</span></div>
+    <div><b>Avellaneda &amp; Lee</b><span>M. Avellaneda, J.-H. Lee, "Statistical Arbitrage in the US Equities Market", <em>Quantitative Finance</em> 10 (2010), section 2 and appendix. Week 11.</span></div>
+  </div>
+  <p class="note" style="margin-top:12px">Carver's <em>Systematic Trading</em> (2015), its companion spreadsheets, Chan's <em>Algorithmic Trading</em> (2013) and the pysystemtrade documentation are quoted from the reading list, not from the text. Part of <a href="index.html">quant-notes</a>. See also <a href="momentum.html">01 · momentum</a>, <a href="ewma.html">02 · EWMA</a>, <a href="backtest.html">03 · the honest backtest</a> and <a href="backtester.html">04 · the backtester, line by line</a>.</p>
+</section>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const PHASES=[
+ {id:"p1",name:"Phase I · Data and evaluation tools",span:"Weeks 1–2",weeks:[1,2]},
+ {id:"p2",name:"Phase II · Model 1, daily trend",span:"Weeks 3–7",weeks:[3,4,5,6,7]},
+ {id:"p3",name:"Phase III · Simulated trading; Model 2",span:"Weeks 8–13",weeks:[8,9,10,11,12,13]},
+ {id:"p4",name:"Phase IV · Combined book and write-up",span:"Weeks 14–16",weeks:[14,15,16]}];
+// status by hand from notes/research_log.md: done | now | next
+const STATUS={1:"done",2:"now"};
+const LIVE=[8,14];
+const W=[
+ {n:1,p:"p1",t:"Data: gold and bitcoin",brief:"Download the full daily and hourly history for both instruments, check gaps, weekends and time zones, and save the raw files untouched.",
+  work:["BTC/USD: full daily and 1-hour history from an exchange API (Binance via ccxt)","XAU/USD: daily from Yahoo (GC=F, cross-checked against XAUUSD=X); hourly from Dukascopy when Yahoo's 730-day limit bites","Gaps, weekends (gold closes, bitcoin does not), alignment to UTC; raw files never edited by hand"],
+  read:["The ccxt manual's fetch_ohlcv section and the yfinance download() docs: how each API pages through history","README.md, Data notes: why UTC, why gold is forward-filled, why 365 bars a year"],
+  out:"data/raw/ with the four downloads; data/clean/daily.csv, one row per calendar day since 2017-08-17 with btc, xau, xau_tradable; the sanity report (missing values, moves over 15%, largest gap) in the research log."},
+ {n:2,p:"p1",t:"Backtester with real costs",brief:"A vectorised backtester with the one-bar lag, a cost model and a tradable mask, studied line by line; the cost assumptions replaced by measured broker numbers.",
+  work:["Vectorised backtester: signal → position → P&L, every signal lagged one bar","Cost model: spread plus slippage per unit of turnover; carry (funding) per day held; gold frozen on closed days","Metrics: Sharpe, max drawdown, worst day, turnover, time in market, cost drag","Cost sensitivity: the trend rule at 0×, 1×, 2×, 3× spread crossed with 0 / 5 / 10% carry","Real costs from the brokers' own pages, with date and source, into the README cost table"],
+  read:["Carver, Systematic Trading, ch. 1–3 and ch. 12, with his ch. 2 Sharpe-across-periods and ch. 12 cost-template sheets","López de Prado 2018: one line per reason on how the repo handles it","RiskMetrics 1996 ch. 5: the EWMA recursion, against realised_vol","Bailey et al. 2014, Pseudo-Mathematics: why repeated backtesting produces fake results"],
+  links:[["backtest.html","03 · the honest backtest"],["backtester.html","04 · the backtester, line by line"],["ewma.html","02 · EWMA"]],
+  out:"src/backtest.py annotated; the tradable mask and its test; results/02_cost_sensitivity.csv; the README cost table with measured numbers; the 2026-01-30 gold print checked against a second source with a verdict in the log; one commit."},
+ {n:3,p:"p2",t:"Trend signals on two instruments",brief:"Time-series momentum at several horizons, moving-average crossover, Donchian breakout and EWMAC, on gold and bitcoin separately.",
+  work:["Time-series momentum at 1, 3, 6 and 12 months for XAU and BTC separately","Moving-average crossover and Donchian breakout as alternative trend signals","Carver's EWMAC(16,64) with forecast scaling, compared with tsmom and ma_cross"],
+  read:["Moskowitz, Ooi & Pedersen 2012: the rule, the 12-month lookback, the vol-scaled position formula","Hurst, Ooi & Pedersen 2017: a century of evidence and the drawdown years; the regime list for week 7 comes from here","Liu & Tsyvinski 2021: momentum in bitcoin at one week and one month; what it implies for the BTC lookback grid","Carver ch. 7 and the EWMAC sheet: forecast scaling cell by cell"],
+  links:[["momentum.html","01 · momentum"]],
+  out:"Signal research notebook: which horizons work on which instrument, with costs."},
+ {n:4,p:"p2",t:"Volatility sizing and risk",brief:"EWMA realised volatility per instrument, a 10% annual risk target each, a hard leverage cap, and a rule for going flat.",
+  work:["EWMA realised volatility per instrument; target 10% annual risk each","Position shrinks as volatility rises; hard cap on leverage","Rule for flat positions when signals disagree or volatility explodes","Gold and bitcoin checked against Carver's instrument criteria, answer in the log"],
+  read:["Carver ch. 6, 9 and 10: instruments, volatility targeting, position sizing; his formulas against realised_vol and scale = vol_target / vol","Tsay ch. 1 and 3.1–3.5: fat tails, the stylised facts, GARCH(1,1) against the EWMA estimate on BTC","Wasserman ch. 2–3 only if the distribution material needs backing up"],
+  links:[["ewma.html","02 · EWMA"]],
+  out:"Model 1 v1 with a full-history backtest, costs included."},
+ {n:5,p:"p2",t:"Walk-forward testing",brief:"Parameters chosen on training windows and scored strictly out of sample; in-sample and out-of-sample Sharpe compared honestly.",
+  work:["Split the history: fit in sample, evaluate strictly out of sample","Walk-forward re-estimation of every parameter in the grid","In-sample vs out-of-sample Sharpe, per instrument and combined","Instrument weights handcrafted 50/50 by risk; the optimiser read, not run"],
+  read:["Carver ch. 4–5: handcrafting versus fitting weights; the system diagram","Bailey et al. 2015, Probability of Backtest Overfitting, sections 1–4"],
+  links:[["backtest.html","03 · the honest backtest"]],
+  out:"Out-of-sample results table and the walk-forward selection log."},
+ {n:6,p:"p2",t:"Robustness I",brief:"Does the result survive nearby parameters, double and triple costs, and each instrument on its own? The Sharpe haircut for the number of variants tried.",
+  work:["Parameter sensitivity: do nearby lookbacks give similar results?","Cost sensitivity at 2× and 3× assumed spread and funding","Gold-only and bitcoin-only versus the combination","A no-edge baseline: the rule on random prices, the Sharpe you get by luck","Forecast weights and the diversification multiplier for the tsmom + EWMAC + Donchian blend"],
+  read:["Bailey & López de Prado 2014, Deflated Sharpe Ratio: computed for the variants tried so far","Harvey & Liu 2015, Backtesting: the haircut after N trials, cross-checked","Carver ch. 8 and its two sheets; the pysystemtrade system-design docs"],
+  out:"Robustness report in the research log."},
+ {n:7,p:"p2",t:"Robustness II and freeze Model 1",brief:"Regimes, event days, a bootstrap stress test, then the exact rule written down and frozen before any live order.",
+  work:["Regime analysis: 2020 crash, 2021 bitcoin bull run, 2022 bear, 2024–25 gold rally","Behaviour on Fed decision days and large USD moves","Stationary-bootstrap Monte Carlo: distribution of max drawdown and worst year; how often a no-skill strategy matches the backtest Sharpe","Freeze: the exact rules written in notes/ before going live, with the diary columns the live log will use"],
+  read:["Efron & Tibshirani ch. 1–6 and Politis & Romano 1994: the bootstrap and block resampling for autocorrelated returns","Carver ch. 13–14 (skim) and the ch. 13 trading-diary sheet"],
+  out:"Model 1 frozen spec and a research-note draft."},
+ {n:8,p:"p3",t:"Model 1 on the simulated account",brief:"A scheduled daily script converts the frozen rule into orders on the simulated account; the live log begins.",
+  work:["Simulated accounts: Alpaca paper for BTC/USD; a gold broker (OANDA or IG) for XAU/USD and for short positions","Daily script: signals → target positions → orders, run on a schedule","Live log: date, signal, fill, slippage, P&L against the backtest's expectation"],
+  read:["The Alpaca trading API docs, side by side with live/live_alpaca.py until each function can be explained"],
+  out:"Model 1 trading on the simulated account; results/live_log.csv started fresh."},
+ {n:9,p:"p3",t:"Intraday behaviour of gold and bitcoin",brief:"Hourly returns: autocorrelation, volatility by hour and weekday, sessions, and which short horizons revert.",
+  work:["Autocorrelation and volatility by hour of day and day of week","Sessions: the London/New York overlap for gold; weekend behaviour for bitcoin","Short-horizon mean reversion versus continuation; the variance-ratio test on both instruments"],
+  read:["Lo & MacKinlay 1988: the variance-ratio test","Tsay ch. 2.1–2.6: stationarity, ACF, AR models, the ADF test"],
+  out:"Intraday research notebook."},
+ {n:10,p:"p3",t:"Model 2 design: short-term model",brief:"One model chosen, intraday mean reversion or volatility breakout, with bar size, entry, exit, stop and an explicit cost check.",
+  work:["Choose one: intraday mean reversion (z-score of price vs rolling mean) or volatility breakout","Bar size (1h or 4h), entry, exit and stop rules","Explicit cost check: can the edge survive the spread at this frequency?"],
+  read:["Chan, Algorithmic Trading ch. 2–3: mean reversion, half-life, Bollinger-style entries","Tsay ch. 8.5–8.6 and Halls-Moore's cointegration chapter"],
+  out:"Model 2 written spec."},
+ {n:11,p:"p3",t:"Ornstein-Uhlenbeck on price deviations",brief:"An OU process fitted to short-term deviations from a rolling mean; only horizons whose half-life fits the holding period are kept.",
+  work:["Fit an OU process to deviations: speed, mean, half-life, by AR(1) regression","Keep only horizons where the half-life sits well inside bar size × holding period","Backtest Model 2 with costs and funding"],
+  read:["Avellaneda & Lee 2010, section 2 and the appendix: the OU model for residuals and how to fit it"],
+  out:"Model 2 v1 backtest."},
+ {n:12,p:"p3",t:"Model 2 testing",brief:"Walk-forward, cost and slippage sensitivity at intraday frequency, and whether Model 2 is really different from Model 1.",
+  work:["Walk-forward evaluation of Model 2 parameters","Cost and slippage sensitivity at intraday frequency","Correlation of Model 2 returns with Model 1"],
+  read:["Carver ch. 8 again, with Model 2 in hand: what weight does it earn next to Model 1?"],
+  out:"Model 2 out-of-sample report."},
+ {n:13,p:"p3",t:"Freeze Model 2",brief:"Final checks, the exact rules written down, the execution script for the simulated accounts, and a first comparison of Model 1's live log against its backtest.",
+  work:["Final robustness checks; the frozen rules written out","Model 1 live log versus backtest: any drift?","Execution script for Model 2 on the simulated accounts"],
+  read:["Carver ch. 12 again for the intraday model: is it fast enough to be hurt by its own costs?"],
+  out:"Model 2 frozen spec."},
+ {n:14,p:"p4",t:"Model 2 on the simulated account; combined book",brief:"Both models trade on the simulated account under a shared risk budget and a total leverage cap.",
+  work:["Start Model 2 on the simulated accounts","Combined book: risk budget across both models, total leverage cap","Weekly check: live vs expected P&L, slippage, errors"],
+  read:["Carver ch. 11 and 15: the instrument diversification multiplier for two instruments; the full worked system"],
+  out:"Both models trading on the simulated account."},
+ {n:15,p:"p4",t:"Research notes and risk page",brief:"A research note per model, tearsheets, and a risk page in the language a firm's risk desk uses.",
+  work:["Research note per model: hypothesis, data, method, results, what did not work","Tearsheet per model and combined: equity curve, drawdown, rolling Sharpe, costs and funding","Risk page: max drawdown, worst day, leverage, how size shrinks with volatility"],
+  read:["Carver ch. 9 again: his drawdown and leverage tables as the template","The quantstats docs for one-line tearsheets"],
+  out:"Draft research package."},
+ {n:16,p:"p4",t:"Final package; simulated trading continues",brief:"Final review of code, notes and tearsheets; the repository cleaned; simulated trading continues to accumulate the live record.",
+  work:["Final review of code, notes, tearsheets and risk page; clean repository","Simulated trading continues; results are presented only with three to four months of live record"],
+  read:["The research log from start to finish, and the README, read as a reviewer would: anything unexplained receives a line"],
+  out:"Research package complete."}];
+const byN=n=>W.find(w=>w.n===n);
+// timeline
+function renderTL(on){
+  $('tl').innerHTML=PHASES.map(p=>`<div class="phase"><div class="pn"><b>${p.name}</b>${p.span}</div><div class="cells">${p.weeks.map(n=>`<button class="cell ${p.id}${STATUS[n]?' '+STATUS[n]:''}${LIVE.includes(n)?' live':''}${n===on?' on':''}" data-n="${n}" aria-label="week ${n}">${n}</button>`).join('')}</div></div>`).join('');
+  $('tl').querySelectorAll('.cell').forEach(b=>b.addEventListener('click',()=>{renderTL(+b.dataset.n); const d=document.querySelector(`details[data-n="${b.dataset.n}"]`); if(d){d.open=true;}}));
+  const w=byN(on); const st=STATUS[on]==='done'?'Complete.':STATUS[on]==='now'?'In progress.':'Not started.';
+  $('tlX').innerHTML=`<b>Week ${w.n} · ${w.t}</b><span>${w.brief}</span><span class="note">${st}${LIVE.includes(on)?' A model begins simulated trading this week.':''} Deliverable: ${w.out.split('.')[0]}.</span>`;
+}
+renderTL(2);
+// stats computed from the plan
+const nWork=W.reduce((a,w)=>a+w.work.length,0), nRead=W.reduce((a,w)=>a+w.read.length,0), nDone=Object.values(STATUS).filter(s=>s==='done').length;
+$('stats').innerHTML=`<div class="stat"><b>${W.length}</b><span>weeks</span></div><div class="stat"><b>${nWork}</b><span>work items</span></div><div class="stat"><b>${nRead}</b><span>reading items</span></div><div class="stat"><b>${nDone}</b><span>weeks complete (from the research log)</span></div>`;
+// weeks
+$('weeks').innerHTML=W.map(w=>{const st=STATUS[w.n]||'next'; const lab={done:'complete',now:'in progress',next:'not started'}[st];
+  return `<details class="week" data-n="${w.n}"${st==='now'?' open':''}><summary><span class="wk">Week<b>${w.n}</b></span><span class="wt"><strong>${w.t}</strong><span>${w.brief}</span></span><span class="status ${st}">${lab}</span></summary>
+  <div class="wbody"><div><h4>Work</h4><ul>${w.work.map(x=>`<li>${x}</li>`).join('')}</ul></div><div><h4>Reading</h4><ul>${w.read.map(x=>`<li>${x}</li>`).join('')}</ul>${w.links?`<p class="note" style="margin-top:8px">Related notes: ${w.links.map(([h,l])=>`<a href="${h}">${l}</a>`).join(' · ')}</p>`:''}</div><div class="out"><h4>Deliverable</h4>${w.out}</div></div></details>`;}).join('');
+document.querySelectorAll('details.week').forEach(d=>d.addEventListener('toggle',()=>{if(d.open) renderTL(+d.dataset.n);}));
+})();
+</script>
+</body>
+</html>

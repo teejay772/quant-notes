@@ -16,6 +16,7 @@ Live site: https://teejay772.github.io/quant-notes/
 | 02 | docs/ewma.html | EWMA and volatility estimation |
 | 03 | docs/backtest.html | The honest backtest |
 | 04 | docs/backtester.html | The backtester, line by line (backtest.py) |
+| 05 | docs/roadmap.html | Research plan: phases, weekly scope, sources, deliverables |
 
 ## Adding a note
 
