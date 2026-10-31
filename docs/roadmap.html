@@ -90,7 +90,24 @@ details.week summary::-webkit-details-marker{display:none}
 .wbody .out h4{color:var(--accent)}
 .pill{font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:999px;background:var(--purple-soft);color:var(--purple);margin-left:4px;white-space:nowrap}
 .stag{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;padding:1px 7px;border-radius:999px;margin-right:6px;white-space:nowrap;vertical-align:1px}
-.stag.fin{color:var(--purple);background:var(--purple-soft)}.stag.stat{color:var(--good);background:var(--good-soft)}.stag.math{color:var(--warm);background:var(--warm-soft)}.stag.prog{color:var(--prog);background:var(--prog-soft)}
+.stag.fin{color:var(--purple);background:var(--purple-soft)}.stag.sts{color:var(--good);background:var(--good-soft)}.stag.math{color:var(--warm);background:var(--warm-soft)}.stag.prog{color:var(--prog);background:var(--prog-soft)}
+.plist{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.plist b{font-family:var(--mono);font-weight:500;font-size:14px;color:var(--accent);margin-right:4px}
+.callout.cgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 16px;padding:18px 20px}
+.callout.cgrid>b{grid-column:1/-1}
+.callout.cgrid>span{background:var(--panel);border-radius:8px;padding:12px 14px;font-size:15px;line-height:1.55}
+.wide .gloss{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px}
+.wide .map{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:900px){.callout.cgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.wide .map{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.callout.cgrid,.wide .gloss,.wide .map{grid-template-columns:1fr}}
+.plist.pgrid{list-style:none;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.pgrid li{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:10px;padding:12px 14px;font-size:15px;line-height:1.5}
+.pgrid li b{display:block;margin:0 0 4px}
+.pgrid li.p2{border-top-color:var(--purple)}.pgrid li.p2 b{color:var(--purple)}
+.pgrid li.p3{border-top-color:var(--good)}.pgrid li.p3 b{color:var(--good)}
+.pgrid li.p4{border-top-color:var(--warm)}.pgrid li.p4 b{color:var(--warm)}
+@media (max-width:900px){.plist.pgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.plist.pgrid{grid-template-columns:1fr}}
 .skey{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);align-items:center}
 @media (max-width:900px){.wbody{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.wbody .out{grid-column:1/-1}}
 @media (max-width:640px){.wbody{grid-template-columns:1fr}details.week summary{grid-template-columns:52px 1fr}.status{display:none}}
@@ -111,18 +128,25 @@ details.week summary::-webkit-details-marker{display:none}
 </head>
 <body>
 
-<header class="wrap">
+<header class="wide">
   <p class="eyebrow">Quant notes · 05 research plan</p>
   <h1>Development, backtesting and out-of-sample evaluation of two long/short models on gold and bitcoin</h1>
   <p class="lede">A daily trend model and an intraday model on XAU/USD and BTC/USD are specified from the literature, backtested net of transaction costs, validated by walk-forward analysis, frozen, and run on a simulated account. This page sets out the sixteen-week schedule, the sources consulted in each week and the deliverable that records it, so that the sequence of work can be checked against the research log.</p>
 </header>
 
 <!-- 1 shape -->
-<section class="wrap">
+<section class="wide">
   <h2>1 · Structure</h2>
-  <p>Four phases. Phase I builds the data pipeline and the evaluation tools. Phase II develops a daily trend-following model, tests it out of sample and freezes its specification. Phase III runs that model on a <dfn title="A broker account that executes orders against live prices with simulated capital; also called a paper account.">simulated account</dfn> while an intraday model is developed. Phase IV runs both models and produces the written results. Selecting a week on the timeline shows its summary; section 2 gives the full scope.</p>
 </section>
 <section class="wide">
+  <p>Four phases:</p>
+  <ul class="plist pgrid">
+    <li class="p1"><b>Phase I</b> builds the data pipeline and the evaluation tools.</li>
+    <li class="p2"><b>Phase II</b> develops a daily trend-following model, tests it out of sample and freezes its specification.</li>
+    <li class="p3"><b>Phase III</b> runs that model on a <dfn title="A broker account that executes orders against live prices with simulated capital; also called a paper account.">simulated account</dfn> while an intraday model is developed.</li>
+    <li class="p4"><b>Phase IV</b> runs both models and produces the written results.</li>
+  </ul>
+  <p>Selecting a week on the timeline shows its summary; section 2 gives the full scope.</p>
   <div class="lab">
     <div class="lab-head"><h3>Timeline</h3><span class="tag">select a week</span></div>
     <div class="tlgrid">
@@ -135,19 +159,21 @@ details.week summary::-webkit-details-marker{display:none}
 </section>
 
 <!-- 2 weeks -->
-<section class="wrap">
+<section class="wide">
   <h2>2 · Weekly scope</h2>
-  <p>Each week specifies the <strong>work</strong> (what is built or tested), the <strong>reading</strong> (the sources consulted before the work, so that methods are taken from the literature rather than improvised) and the <strong>deliverable</strong> (the file that records the week's result). Where a note on this site covers the week's method, it is linked. Reading items are labelled by subject. The mathematics lane (Shreve, <em>Stochastic Calculus for Finance</em>) runs in parallel and does not block the model work; it is first required in week 11, where an Ornstein–Uhlenbeck process is fitted.</p>
-  <div class="skey"><span>Subject:</span><span class="stag fin">finance</span><span class="stag stat">statistics</span><span class="stag math">mathematics</span><span class="stag prog">programming</span></div>
 </section>
 <section class="wide">
+  <p>Each week specifies the <strong>work</strong> (what is built or tested), the <strong>reading</strong> (the sources consulted before the work, so that methods are taken from the literature rather than improvised) and the <strong>deliverable</strong> (the file that records the week's result). Where a note on this site covers the week's method, it is linked. Reading items are labelled by subject. The mathematics lane (Shreve, <em>Stochastic Calculus for Finance</em>) runs in parallel and does not block the model work; it is first required in week 11, where an Ornstein–Uhlenbeck process is fitted.</p>
+  <div class="skey"><span>Subject:</span><span class="stag fin">finance</span><span class="stag sts">statistics</span><span class="stag math">mathematics</span><span class="stag prog">programming</span></div>
   <div class="weeks" id="weeks"></div>
 </section>
 
 <!-- 3 credible -->
-<section class="wrap">
+<section class="wide">
   <h2>3 · Evaluation criteria</h2>
-  <div class="callout"><b>Conditions for a result to be reported as credible.</b>
+</section>
+<section class="wide">
+  <div class="callout cgrid"><b>Conditions for a result to be reported as credible.</b>
     <span>An <dfn title="Measured on data that was not used when the parameters were chosen.">out-of-sample</dfn> Sharpe ratio, net of costs, within a plausible range: approximately 0.7–1.2 for a daily trend model. Backtest values of 3 or above are treated as evidence of overfitting rather than of skill.</span>
     <span>Simulated-account results consistent with the backtest: comparable position sizes and turnover, and realised slippage within the cost assumption.</span>
     <span>A complete research log: each rule recorded before it is tested, negative results retained, and the number of variants tried stated so that the Sharpe ratio can be adjusted for multiple testing.</span>
@@ -156,9 +182,11 @@ details.week summary::-webkit-details-marker{display:none}
 </section>
 
 <!-- 4 in this project -->
-<section class="wrap">
+<section class="wide">
   <h2>In this project</h2>
   <p>Where each phase is implemented in the <code>xau-btc-models</code> repository.</p>
+</section>
+<section class="wide">
   <div class="map">
     <div><b>src/data.py</b><span>Week 1. Downloads and cleans the daily table: one row per calendar day, columns <code>btc</code>, <code>xau</code>, <code>xau_tradable</code>.</span></div>
     <div><b>src/backtest.py</b><span>Week 2. The backtester with the lag, the cost model, the tradable mask, <code>stats</code>, <code>yearly</code> and <code>walk_forward</code>. Read line by line in note 04.</span></div>
@@ -172,9 +200,11 @@ details.week summary::-webkit-details-marker{display:none}
 </section>
 
 <!-- 5 glossary -->
-<section class="wrap">
+<section class="wide">
   <h2>4 · Terminology</h2>
   <p class="note">Each entry gives the technical definition, then the same idea in everyday terms in the orange strip.</p>
+</section>
+<section class="wide">
   <div class="gloss">
     <div><b>long / short</b><span>a long position gains when the price rises; a short position gains when it falls.<span class="plain">a position that benefits from a rise, or one that benefits from a fall. A long/short model can hold either, so it does not depend on the market going up.</span></span></div>
     <div><b>simulated account</b><span>a broker account that executes orders against live prices with simulated capital; also called a paper or demo account.<span class="plain">a practice account with real prices and real order handling but no real money. It tests the execution and the process, not the return.</span></span></div>
@@ -188,9 +218,11 @@ details.week summary::-webkit-details-marker{display:none}
   </div>
 </section>
 
-<section class="wrap">
+<section class="wide">
   <h2>Sources</h2>
   <p class="note">The reading in section 2 names each paper by the week it is read. Listed here once, in reading order.</p>
+</section>
+<section class="wide">
   <div class="gloss">
     <div><b>López de Prado</b><span>M. López de Prado, "The 10 Reasons Most Machine Learning Funds Fail", <em>Journal of Portfolio Management</em> 44 (2018). Week 2.</span></div>
     <div><b>RiskMetrics</b><span>J.P. Morgan / Reuters, <em>RiskMetrics Technical Document</em>, 4th ed., 1996, ch. 5. Week 2.</span></div>
@@ -310,9 +342,9 @@ const W=[
   math:["Review: rework the hardest exercises of ch. 3–6; a one-page summary of Itô, Girsanov and Feynman–Kac"],
   out:"Research package complete."}];
 const byN=n=>W.find(w=>w.n===n);
-const SUBJ=[[/quantstats|Alpaca|ccxt|yfinance|README\.md, Data notes|pysystemtrade/i,'prog'],[/Avellaneda/i,'math'],[/López de Prado|RiskMetrics|Bailey|Harvey|Efron|Politis|Tsay|Wasserman|Lo & MacKinlay|Deflated|random prices|Carver ch\. 8/i,'stat'],[/./,'fin']];
+const SUBJ=[[/quantstats|Alpaca|ccxt|yfinance|README\.md, Data notes|pysystemtrade/i,'prog'],[/Avellaneda/i,'math'],[/López de Prado|RiskMetrics|Bailey|Harvey|Efron|Politis|Tsay|Wasserman|Lo & MacKinlay|Deflated|random prices|Carver ch\. 8/i,'sts'],[/./,'fin']];
 const subj=t=>SUBJ.find(([re])=>re.test(t))[1];
-const SLAB={fin:'finance',stat:'statistics',math:'mathematics',prog:'programming'};
+const SLAB={fin:'finance',sts:'statistics',math:'mathematics',prog:'programming'};
 const tagLi=(t,k)=>`<li><span class="stag ${k}">${SLAB[k]}</span>${t}</li>`;
 // timeline
 function renderTL(on){
