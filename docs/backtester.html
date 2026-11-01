@@ -273,20 +273,37 @@ code{font-family:var(--mono)}
 <!-- 5 FORMULAS -->
 <section class="wrap">
   <h2>5 · Formulas</h2>
+  <p>One formula per box, in the order the code computes them, each followed by its reading.</p>
   <div class="formula">vol<sub>t</sub> = ewm_std<sub>span</sub>(r)<sub>t</sub> · √<span style="border-top:1.5px solid currentColor;padding:0 .2em">365</span></div>
-  <p class="reading">Line 23. The exponentially weighted standard deviation of daily returns, using only past bars, times the square root of bars per year to quote it annually. Span 30 means λ ≈ 0.935; the <a href="ewma.html">EWMA note (02)</a> is about this one line.</p>
-  <div class="formula">scale<sub>t</sub> = <span class="frac"><span><span class="w">vol<sub>target</sub></span></span><span><span class="k">vol<sub>t</sub></span></span></span>   target<sub>t</sub> = clip( signal<sub>t</sub> · scale<sub>t</sub>, ±max_leverage )</div>
-  <p class="reading">Lines 56–57. <span class="w">The risk you want</span> divided by <span class="k">the risk the market is giving</span>: at 10% target and 20% vol, half a unit; at 60% vol, a sixth. Then capped at ±2 units of notional. With <code>vol_target=None</code> the signal is just clipped (line 59).</p>
+  <p class="reading">Line 23. The exponentially weighted standard deviation of daily returns up to day t, times √365 to quote it per year. Span 30 corresponds to λ ≈ 0.935; the <a href="ewma.html">EWMA note (02)</a> covers this line.</p>
+  <div class="formula">scale<sub>t</sub> = <span class="frac"><span><span class="w">vol<sub>target</sub></span></span><span><span class="k">vol<sub>t</sub></span></span></span></div>
+  <p class="reading">Line 56. <span class="w">The volatility you want each instrument to contribute</span> divided by <span class="k">the volatility the market currently shows</span>. At a 10% target and 20% volatility the scale is 0.5; at 60% volatility it is 0.17.</p>
+  <div class="formula">target<sub>t</sub> = clip( signal<sub>t</sub> · scale<sub>t</sub>, −max_leverage, +max_leverage )</div>
+  <p class="reading">Line 57. The signal (+1, −1 or 0) times the scale, capped at ±2 units of notional. With <code>vol_target=None</code> the scale step is skipped and the signal is only clipped (line 59).</p>
   <div class="formula"><span class="w">pos<sub>t</sub> = target<sub>t−1</sub></span></div>
-  <p class="reading">Line 62, the danger line. The position held during day t is the target computed at day t−1's close. Decide tonight, trade tomorrow.</p>
-  <div class="formula">turnover<sub>t</sub> = | pos<sub>t</sub> − pos<sub>t−1</sub> |   cost<sub>t</sub> = turnover<sub>t</sub> · <span class="frac"><span>bps</span><span>10<sup>4</sup></span></span>   carry<sub>t</sub> = | pos<sub>t</sub> | · <span class="frac"><span>carry<sub>annual</sub></span><span>365</span></span></div>
-  <p class="reading">Lines 68–70. Turnover is how much the position changed today; a flip from +1 to −1 is 2. Cost is turnover times the per-unit charge (5 bps = 0.0005). Carry is a daily slice of the annual charge for holding any position, long or short.</p>
-  <div class="formula">net<sub>t</sub> = <span class="g">pos<sub>t</sub> · r<sub>t</sub></span> − <span class="w">cost<sub>t</sub></span> − <span class="w">carry<sub>t</sub></span>   equity<sub>t</sub> = ∏<sub>s≤t</sub> (1 + net<sub>s</sub>)</div>
-  <p class="reading">Lines 72–73 and 79. <span class="g">Position times today's return</span> is the gross profit; subtract <span class="w">what trading and holding cost</span>; equity is the running product, the growth of $1.</p>
-  <div class="formula">CAGR = equity<sub>T</sub><sup>365/T</sup> − 1   Vol = std(net) · √<span style="border-top:1.5px solid currentColor;padding:0 .2em">365</span>   Sharpe = <span class="frac"><span>mean(net) · 365</span><span>Vol</span></span></div>
-  <p class="reading">Lines 87–94. CAGR turns the final equity into a per-year growth rate (meaningless on six days; the page shows it anyway because the code does). Vol annualises the daily standard deviation. Sharpe is the annualised mean over the annualised standard deviation.</p>
-  <div class="formula">drawdown<sub>t</sub> = <span class="frac"><span>equity<sub>t</sub></span><span>max<sub>s≤t</sub> equity<sub>s</sub></span></span> − 1   MaxDrawdown = min<sub>t</sub> drawdown<sub>t</sub></div>
-  <p class="reading">Line 86 and 95. How far below its running peak the equity is on each day, and the worst such value. The number a risk page asks for first.</p>
+  <p class="reading">Line 62. The position held during day t is the target computed at the close of day t−1. The decision is made at one close and executed from the next bar.</p>
+  <div class="formula">turnover<sub>t</sub> = | pos<sub>t</sub> − pos<sub>t−1</sub> |</div>
+  <p class="reading">Line 68. The absolute change in position from one day to the next. A change from +1 to −1 is 2.</p>
+  <div class="formula">cost<sub>t</sub> = turnover<sub>t</sub> · <span class="frac"><span>cost<sub>bps</sub></span><span>10<sup>4</sup></span></span></div>
+  <p class="reading">Line 69. Turnover times the charge per unit traded. 5 bps = 5 / 10,000 = 0.0005 of notional.</p>
+  <div class="formula">carry<sub>t</sub> = | pos<sub>t</sub> | · <span class="frac"><span>carry<sub>annual</sub></span><span>365</span></span></div>
+  <p class="reading">Line 70. The daily share of the annual holding cost, charged on the size of the position, long or short.</p>
+  <div class="formula">gross<sub>t</sub> = <span class="g">pos<sub>t</sub> · r<sub>t</sub></span></div>
+  <p class="reading">Line 72. Position held times the day's return: profit before costs.</p>
+  <div class="formula">net<sub>t</sub> = gross<sub>t</sub> − <span class="w">cost<sub>t</sub></span> − <span class="w">carry<sub>t</sub></span></div>
+  <p class="reading">Line 73. Profit after <span class="w">the trading cost and the holding cost</span>.</p>
+  <div class="formula">equity<sub>t</sub> = ∏<sub>s ≤ t</sub> (1 + net<sub>s</sub>)</div>
+  <p class="reading">Line 79. The running product of (1 + net): the value of $1 invested at the start.</p>
+  <div class="formula">drawdown<sub>t</sub> = <span class="frac"><span>equity<sub>t</sub></span><span>max<sub>s ≤ t</sub> equity<sub>s</sub></span></span> − 1</div>
+  <p class="reading">Line 86. Equity divided by its highest value so far, minus one: how far below its running peak the equity is on day t. Zero at a new high, negative otherwise.</p>
+  <div class="formula">MaxDrawdown = min<sub>t</sub> drawdown<sub>t</sub></div>
+  <p class="reading">Line 95. The lowest value of the drawdown series: the largest fall from a peak to a subsequent trough.</p>
+  <div class="formula">CAGR = equity<sub>T</sub><sup> 365 / T</sup> − 1</div>
+  <p class="reading">Line 88. The final equity raised to the power (bars per year ÷ number of bars), minus one: the constant yearly growth rate that would produce the final equity. On six days the exponent is 365/6, so the figure is extreme; it is shown because the code computes it.</p>
+  <div class="formula">Vol = std(net) · √<span style="border-top:1.5px solid currentColor;padding:0 .2em">365</span></div>
+  <p class="reading">Line 89. The standard deviation of daily net returns, times √365 to quote it per year.</p>
+  <div class="formula">Sharpe = <span class="frac"><span>mean(net) · 365</span><span>Vol</span></span></div>
+  <p class="reading">Line 94. The annualised mean of daily net returns divided by the annualised volatility: return per unit of risk. NaN when Vol is zero.</p>
 </section>
 
 <!-- 6 STATS -->
