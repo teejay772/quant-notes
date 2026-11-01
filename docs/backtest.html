@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The Honest Backtest · quant-notes</title>
-<meta name="description" content="Interactive note: what a backtest is, the one-bar lag, costs, the multiple-testing trap, walk-forward testing, and the seven ways a backtest lies.">
+<title>Backtest Errors and Controls · quant-notes</title>
+<meta name="description" content="Backtest errors and controls: structure, look-ahead, costs, selection among trials, walk-forward evaluation, with simulated labs.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: a single reading column (~720px) with wide "lab" panels that break out to ~1040px for the interactive charts and tables. */
@@ -105,21 +105,21 @@ a{color:var(--accent)}
 </head>
 <body>
 
-<meta name="description" content="Interactive note: what a backtest is, the one-bar lag, costs, the multiple-testing trap, walk-forward testing, and the seven ways a backtest lies.">
+<meta name="description" content="Backtest errors and controls: structure, look-ahead, costs, selection among trials, walk-forward evaluation, with simulated labs.">
 
 
 
 
 <header class="wrap">
-  <p class="eyebrow">Quant notes · interactive · 03 the honest backtest</p>
-  <h1>A backtest can only tell you what would not have worked</h1>
-  <p class="lede">A backtest replays a trading rule over past prices as if you had been there, using only what you could have known each day, and subtracts what trading would have cost. Done honestly it is the most useful tool you have. Done carelessly it will show you a fortune that was never available. This page builds one by hand, then shows the four ways it lies and the checks that catch them.</p>
+  <p class="eyebrow">Quant notes · 03 · interactive</p>
+  <h1>Backtest errors and controls</h1>
+  <p class="lede">A backtest applies a trading rule to past prices using, on each day, only information available on that day, and deducts transaction costs. This page builds one on a six-day example, then presents four sources of error (look-ahead, omitted costs, selection among trials, aggregation over regimes), the controls for each, and their implementation in the project backtester. Labs use simulated series.</p>
   <p class="note">All series on this page are simulated so the "true" answer is known. Nothing here is market data or a performance claim.</p>
 </header>
 
 <!-- 1 -->
 <section class="wrap">
-  <h2>1 · A backtest is a table</h2>
+  <h2>1 · Structure of a backtest</h2>
   <p>Each column uses only the columns to its left, and each row is one day. Read left to right: <strong>price → return → signal → position → turnover → cost → gross → net → equity</strong>. Two columns carry all the honesty. <em>Position</em> is <em>yesterday's</em> signal, because you decide at the close and hold from the next day. <em>Cost</em> is charged every time the position changes.</p>
 </section>
 <section class="wide">
@@ -152,7 +152,7 @@ a{color:var(--accent)}
 
 <!-- 2 -->
 <section class="wrap">
-  <h2>2 · Lie one: the backtest can see tomorrow</h2>
+  <h2>2 · Error 1: look-ahead</h2>
   <p><dfn title="Using information in a backtest that was not available at the time the decision was made.">Look-ahead bias</dfn> is the most common and the most flattering error. Delete the lag and the position on day t is computed from day t's own close, so the rule is trading on a price it has not seen yet. The lab below runs the same rule twice on a market that has <strong>no trend at all</strong>, so an honest rule should make nothing.</p>
 </section>
 <section class="wide">
@@ -176,7 +176,7 @@ a{color:var(--accent)}
 
 <!-- 3 -->
 <section class="wrap">
-  <h2>3 · Lie two: trading is free</h2>
+  <h2>3 · Error 2: omitted costs</h2>
   <p>Every change of position pays the <dfn title="The gap between the price you can buy at and the price you can sell at, plus the price impact of your own order.">spread and slippage</dfn>, and holding a position overnight pays financing (a CFD on gold) or funding (a bitcoin perpetual). A rule that trades often can be profitable before costs and a steady loser after them. The project's starting assumptions are about 5 bps per trade on bitcoin spot and about 3 bps on gold, plus carry.</p>
 </section>
 <section class="wide">
@@ -202,7 +202,7 @@ a{color:var(--accent)}
 
 <!-- 4 -->
 <section class="wrap">
-  <h2>4 · Lie three: the best of many tries</h2>
+  <h2>4 · Error 3: selection among trials</h2>
   <p>This one is subtler because nothing in the code is wrong. Test twenty variations of a rule on the same data and one of them will look good by luck. Report only that one and you have a backtest that is "worthless, regardless of how excellent the reported performance might be" (Bailey and López de Prado 2014). The question an honest report must answer is: <strong>how many things did you try?</strong></p>
 </section>
 <section class="wide">
@@ -228,7 +228,7 @@ a{color:var(--accent)}
 
 <!-- 5 -->
 <section class="wrap">
-  <h2>5 · Lie four: one number for ten years</h2>
+  <h2>5 · Error 4: aggregation over regimes</h2>
   <p>A full-history Sharpe of 0.8 can hide a rule that made everything in 2020–21 and lost in every other year. The defences are cheap: the <strong>yearly table</strong> (each year's return and worst drawdown), and keeping a period of data the rule never saw while it was designed. The project's <code style="font-family:var(--mono)">walk_forward</code> does the second one mechanically. Click a stage.</p>
 </section>
 <section class="wide">
@@ -247,7 +247,7 @@ a{color:var(--accent)}
 
 <!-- 6 -->
 <section class="wrap">
-  <h2>6 · The seven ways a backtest lies</h2>
+  <h2>6 · Error sources and controls</h2>
   <p>The four above plus three that are specific to this project's data. Click each for the check that catches it.</p>
 </section>
 <section class="wide">
@@ -273,7 +273,7 @@ a{color:var(--accent)}
 
 <!-- 8 -->
 <section class="wrap">
-  <h2>7 · In pandas</h2>
+  <h2>7 · Implementation</h2>
 <pre><span class="cm"># the whole backtester in nine lines (no vol sizing, no closed-day mask)</span>
 ret      = px.pct_change().fillna(0.0)
 sig      = signal.reindex(px.index).fillna(0.0)      <span class="cm"># +1, -1, 0 or a fraction</span>
@@ -292,7 +292,7 @@ assert (pos == sig.shift(1).fillna(0.0)).all()      <span class="cm"># no look-a
 
 <!-- 9 -->
 <section class="wrap">
-  <h2>8 · Words used here</h2>
+  <h2>8 · Terminology</h2>
   <p class="note">Each entry: the technical definition first, then the same idea in everyday words in the orange strip.</p>
   <div class="gloss">
     <div><b>backtest</b><span>a historical simulation of a rule, using at each step only information available at that step, net of costs.<span class="plain">replaying the past with your rule, honestly, to see what it would have done.</span></span></div>
@@ -319,7 +319,7 @@ assert (pos == sig.shift(1).fillna(0.0)).all()      <span class="cm"># no look-a
     <div><b>López de Prado</b><span>M. López de Prado, "The 10 Reasons Most Machine Learning Funds Fail" (2018). Pitfall 2 (research through backtesting, "about 20 iterations"), pitfall 9 (walk-forward tests a single path) and pitfall 10 (backtest overfitting).</span></div>
     <div><b>Project notes</b><span>The Code Walkthrough doc (backtest.py, the six-day worked example, the tests) and <code style="font-family:var(--mono)">notes/research_log.md</code> in xau-btc-models.</span></div>
   </div>
-  <p class="note" style="margin-top:12px">All charts on this page are generated from simulated series inside the page; no market data is used. Part of <a href="index.html">quant-notes</a>. See also <a href="momentum.html">01 · momentum</a> (the rule being tested) and <a href="ewma.html">02 · EWMA</a> (the volatility that sizes it).</p>
+  <p class="note" style="margin-top:12px">All charts on this page are generated from simulated series inside the page; no market data is used. Part of <a href="index.html">quant-notes</a>. See also <a href="momentum.html">01 · Time-series momentum</a> (the rule being tested) and <a href="ewma.html">02 · Volatility estimation by EWMA</a> (the volatility that sizes it).</p>
 </section>
 
 <script>
@@ -428,7 +428,7 @@ const LIES={
  l3:'<b>It is the best of many.</b> The reported rule is one survivor of a search you did not report. <b>Check:</b> the research log counts the trials; parameters are tested as a range, not crowned; the Deflated Sharpe Ratio or the five-years / 45-trials rule says whether the best one clears luck.',
  l4:'<b>One number for ten years.</b> A full-history Sharpe that hides one lucky regime. <b>Check:</b> the yearly table (each year\'s return and drawdown), and the walk-forward slices. Judge on those, as the repo rules say, not on the headline.',
  l5:'<b>It traded on a closed day.</b> Gold has no weekend bars; the clean table carries Friday\'s close across Saturday and Sunday. A rule that reads those days as real can "trade" at a price nobody could trade at, or, as in week 1, close and reopen every weekend and pay the spread twice a week for nothing. <b>Check:</b> the <code style="font-family:var(--mono)">tradable</code> mask freezes the position on closed days; gold\'s turnover should be in the same range as bitcoin\'s.',
- l6:'<b>It used a volatility from the whole history.</b> Dividing by <code style="font-family:var(--mono)">r.std()</code> over the full sample sizes 2018\'s trades with 2026\'s information. A cousin of lie one. <b>Check:</b> the sizing volatility is the trailing EWMA (span 30) and the lag is applied to the whole target, volatility included. See the <a href="ewma.html">EWMA page</a>, section 7.',
+ l6:'<b>It used a volatility from the whole history.</b> Dividing by <code style="font-family:var(--mono)">r.std()</code> over the full sample sizes 2018\'s trades with 2026\'s information. A cousin of lie one. <b>Check:</b> the sizing volatility is the trailing EWMA (span 30) and the lag is applied to the whole target, volatility included. See the <a href="ewma.html">EWMA note (02)</a>, section 7.',
  l7:'<b>The data itself was wrong.</b> A doubled row makes a fake 0% day and a fake jump; a missing day hides a move; a futures roll shows as a price gap that never happened in spot (the 30 January 2026 gold print of −10.8% is on the research log to check for exactly this). <b>Check:</b> the sanity report before anything else: missing values, days over 15%, largest gap; and the five worst days must be real events you can name.'};
 document.querySelectorAll('[data-k^="l"]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-k^="l"]').forEach(n=>n.classList.remove('on'));b.classList.add('on');$('lX').innerHTML=LIES[b.dataset.k];}));
 $('lX').innerHTML=LIES.l1;

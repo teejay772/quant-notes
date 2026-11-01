@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Time-series Momentum · quant-notes</title>
-<meta name="description" content="Interactive note: the trend-following rule, why it works, how the lookback changes it, and what a century of evidence says.">
+<meta name="description" content="Time-series momentum: definition, mechanism, formulas, lookback selection, trend signals and published evidence, with simulated labs.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: a single reading column (~720px) with wide "lab" panels that break out to ~1040px for the interactive charts. */
@@ -109,21 +109,21 @@ a{color:var(--accent)}
 </head>
 <body>
 
-<meta name="description" content="Interactive note: the trend-following rule, why it works, how the lookback changes it, and what a century of evidence says.">
+<meta name="description" content="Time-series momentum: definition, mechanism, formulas, lookback selection, trend signals and published evidence, with simulated labs.">
 
 
 
 
 <header class="wrap">
-  <p class="eyebrow">Quant notes · interactive · 01 momentum</p>
-  <h1>Things that went up keep going up, for a while</h1>
-  <p class="lede">Time-series momentum, also called trend following, is the simplest trading rule that has worked across markets for over a century: if a market has risen over the past months, be long; if it has fallen, be short. This page shows what the rule is, why it works, what breaks it, and what the evidence says. Move the sliders. Every chart updates.</p>
+  <p class="eyebrow">Quant notes · 01 · interactive</p>
+  <h1>Time-series momentum</h1>
+  <p class="lede">Time-series momentum is a rule that holds a long position in an instrument whose return over a trailing window is positive and a short position when it is negative. This page states the rule, the mechanism proposed for it, the formulas, the effect of the lookback length, the related trend signals, and the published evidence. Labs use simulated series.</p>
   <p class="note">All series on this page are simulated so the "true" answer is known. Nothing here is market data or a performance claim.</p>
 </header>
 
 <!-- 1 -->
 <section class="wrap">
-  <h2>1 · The rule in one sentence</h2>
+  <h2>1 · Definition</h2>
   <p>Look at where the price is today compared with where it was L days ago. If it is higher, hold a long position (you profit if it keeps rising). If it is lower, hold a short position (you profit if it keeps falling). Check again tomorrow. That is the whole rule. L is called the <strong>lookback</strong>.</p>
   <p>Nothing in it predicts <em>how much</em> the market will move, or <em>when</em> it will turn. It only bets that whatever direction the last few months had will, on average, carry on a little longer.</p>
   <div class="callout"><b>Worked example.</b><span>Gold is at 4,000 today and was at 3,500 twelve months ago. Higher, so be long. Bitcoin is at 80,000 today and was at 95,000 twelve months ago. Lower, so be short. Tomorrow, repeat with tomorrow's prices.</span></div>
@@ -155,7 +155,7 @@ a{color:var(--accent)}
 
 <!-- 2 -->
 <section class="wrap">
-  <h2>2 · Why it works</h2>
+  <h2>2 · Mechanism</h2>
   <p>A market that reacted perfectly to news would jump straight to the new fair price and stop. Trends exist because people do not react like that. Click each stage.</p>
   <div class="stages">
     <button class="stage on" data-k="s1">1 · News arrives<small>the fair price moves</small></button>
@@ -171,18 +171,18 @@ a{color:var(--accent)}
 
 <!-- 3 -->
 <section class="wrap">
-  <h2>3 · The formulas, read aloud</h2>
+  <h2>3 · Formulas</h2>
   <div class="formula">signal<sub>t</sub> = sign<span style="font-size:1.4em;line-height:1">(</span> <span class="frac"><span>P<sub>t</sub></span><span>P<sub>t−L</sub></span></span> − 1 <span style="font-size:1.4em;line-height:1">)</span></div>
   <p class="reading">Today's price divided by the price L days ago, minus one, is the return over the lookback. The <strong>sign</strong> function throws away the size and keeps only +1 (it rose) or −1 (it fell). That ±1 is the whole opinion of the rule.</p>
   <div class="formula">position<sub>t</sub> = signal<sub>t</sub> · <span class="frac"><span><span class="w">σ<sub>target</sub></span></span><span><span class="k">σ<sub>t</sub></span></span></span></div>
-  <p class="reading">The ±1 is then scaled by <span style="color:var(--warm)">the risk you want</span> divided by <span style="color:var(--accent)">the risk the market is currently giving you</span>. σ<sub>t</sub> is the EWMA volatility from the <a href="ewma.html">EWMA page</a>. This is what lets gold at 18% volatility and bitcoin at 64% sit in the same book: bitcoin gets roughly a quarter of the position size, so each contributes the same expected risk.</p>
+  <p class="reading">The ±1 is then scaled by <span style="color:var(--warm)">the risk you want</span> divided by <span style="color:var(--accent)">the risk the market is currently giving you</span>. σ<sub>t</sub> is the EWMA volatility from the <a href="ewma.html">EWMA note (02)</a>. This is what lets gold at 18% volatility and bitcoin at 64% sit in the same book: bitcoin gets roughly a quarter of the position size, so each contributes the same expected risk.</p>
   <div class="formula">r<sup>TSMOM</sup><sub>t,t+1</sub> = sign(r<sub>t−12,t</sub>) · <span class="frac"><span><span class="w">40%</span></span><span><span class="k">σ<sub>t−1</sub></span></span></span> · r<sub>t,t+1</sub></div>
   <p class="reading">The same thing as the paper writes it (Moskowitz, Ooi and Pedersen 2012, eq. 5): next month's strategy return is the sign of the last 12 months' return, scaled to 40% volatility, times next month's market return. Note σ<sub>t−1</sub>: the volatility used for sizing is from before the month being traded. The 40% is a presentational choice; the paper calls it inconsequential.</p>
 </section>
 
 <!-- 4 -->
 <section class="wrap">
-  <h2>4 · The lookback is a dial, not a fact</h2>
+  <h2>4 · Lookback selection</h2>
   <p>Short lookbacks catch turns early but flip on every wobble and pay costs each time. Long lookbacks are calm but late. Nobody knows the "right" L; the papers use 1, 3 and 12 months and average them precisely so they do not have to choose.</p>
 </section>
 <section class="wide">
@@ -207,7 +207,7 @@ a{color:var(--accent)}
 
 <!-- 5 -->
 <section class="wrap">
-  <h2>5 · The family of trend signals</h2>
+  <h2>5 · Trend signals</h2>
   <p>"Compare today with L days ago" is one way to ask "is it trending?". There are others, and they mostly agree. Click any box. The project's <code style="font-family:var(--mono)">signals.py</code> already has the first four.</p>
 </section>
 <section class="wide">
@@ -236,7 +236,7 @@ a{color:var(--accent)}
 
 <!-- 6 -->
 <section class="wrap">
-  <h2>6 · What the evidence says</h2>
+  <h2>6 · Evidence</h2>
   <div class="evid">
     <div class="ev"><b>Moskowitz, Ooi &amp; Pedersen (2012)</b>
       <ul>
@@ -265,7 +265,7 @@ a{color:var(--accent)}
 
 <!-- 8 -->
 <section class="wrap">
-  <h2>7 · Three ways this goes wrong</h2>
+  <h2>7 · Failure modes</h2>
   <p>The first is built into the strategy and cannot be removed, only managed. The other two are mistakes.</p>
   <div class="mistakes">
     <div class="mk"><b>The turn.</b><span>By construction the rule is fully long at the top and fully short at the bottom, because it only knows the past. In a sharp reversal (2009, March 2020) it holds yesterday's winner on the day it becomes the loser. The crash in Lab A shows it.</span><span class="plain">Manage it: size by volatility so the position is already smaller when markets get wild, and blend lookbacks so some of the book turns early.</span></div>
@@ -276,9 +276,9 @@ a{color:var(--accent)}
 
 <!-- 9 -->
 <section class="wrap">
-  <h2>8 · In pandas</h2>
+  <h2>8 · Implementation</h2>
 <pre><span class="cm"># px: daily closes (one instrument), oldest first; r: daily returns</span>
-<span class="cm"># sigma: the EWMA vol from the EWMA page, already annualised</span>
+<span class="cm"># sigma: the EWMA vol from the EWMA note (02), already annualised</span>
 L      = 252                                    <span class="cm"># about 12 months of trading days</span>
 signal = np.sign(px / px.shift(L) - 1)          <span class="cm"># +1 rose, -1 fell</span>
 pos    = (signal * 0.10 / sigma).shift(1)       <span class="cm"># 10% vol target; decided at t-1, held over t</span>
@@ -291,7 +291,7 @@ signal = sum(np.sign(px / px.shift(k) - 1) for k in (63, 126, 252)) / 3</pre>
 
 <!-- 10 -->
 <section class="wrap">
-  <h2>9 · Words used here</h2>
+  <h2>9 · Terminology</h2>
   <p class="note">Each entry: the technical definition first, then the same idea in everyday words in the orange strip.</p>
   <div class="gloss">
     <div><b>time-series momentum</b><span>a rule that trades each market on the sign of its own past return.<span class="plain">if it went up lately, bet on up; if down, bet on down. Each market judged on its own.</span></span></div>
@@ -316,7 +316,7 @@ signal = sum(np.sign(px / px.shift(k) - 1) for k in (63, 126, 252)) / 3</pre>
     <div><b>Project notes</b><span>The Quant Notes doc and <code style="font-family:var(--mono)">notes/research_log.md</code> in xau-btc-models: week-1 numbers and the repo rules.</span></div>
   </div>
   <p class="note" style="margin-top:12px">Named on this page but not in the Literature folder, so quoted from the reading list rather than from the text: R. Carver, <em>Systematic Trading</em> (2015), for EWMAC and the forecast scaling in section 5; N. Jegadeesh and S. Titman, "Returns to Buying Winners and Selling Losers", <em>Journal of Finance</em> 48 (1993), for cross-sectional momentum.</p>
-  <p class="note" style="margin-top:12px">All charts on this page are generated from simulated series inside the page; no market data is used. Part of <a href="index.html">quant-notes</a>. Next: the <a href="ewma.html">EWMA page</a>, which supplies the σ that sizes every position here.</p>
+  <p class="note" style="margin-top:12px">All charts on this page are generated from simulated series inside the page; no market data is used. Part of <a href="index.html">quant-notes</a>. Next: the <a href="ewma.html">EWMA note (02)</a>, which supplies the σ that sizes every position here.</p>
 </section>
 
 <script>
@@ -415,7 +415,7 @@ const TREE={
  tsm:'<b>Price now versus L days ago.</b> The rule on this page. One number, one sign. The 2012 paper uses 12 months and holds for one month. Simple to explain to a firm, which is a feature.',
  multi:'<b>Several lookbacks blended.</b> Compute the sign for 21, 63, 126 and 252 days and average them. The result is a fraction between −1 and +1: fully long only when every horizon agrees. Smoother than any single lookback and no need to crown one. Hurst et al. use 1, 3 and 12 months this way. Already in the project\'s <code style="font-family:var(--mono)">signals.py</code>.',
  ma:'<b>Moving-average cross.</b> Long when a short average (50 days) is above a long one (200 days), short when below. It is time-series momentum in disguise: the gap between two averages is a weighted sum of past returns. Popular because it is easy to draw on a chart. The 50/200 pair is in <code style="font-family:var(--mono)">signals.py</code>.',
- ewmac:'<b>EWMAC (Carver).</b> The same cross, built from two EWMAs (see the <a href="ewma.html">EWMA page</a>) and, crucially, using the <em>size</em> of the gap divided by volatility as a continuous forecast, not just its sign. Carver scales forecasts to an average absolute value of 10 and caps them at ±20, then combines several speeds (e.g. 16/64, 32/128, 64/256). A week 3 candidate for the project.',
+ ewmac:'<b>EWMAC (Carver).</b> The same cross, built from two EWMAs (see the <a href="ewma.html">EWMA note (02)</a>) and, crucially, using the <em>size</em> of the gap divided by volatility as a continuous forecast, not just its sign. Carver scales forecasts to an average absolute value of 10 and caps them at ±20, then combines several speeds (e.g. 16/64, 32/128, 64/256). A week 3 candidate for the project.',
  don:'<b>Breakout (Donchian).</b> Go long when the price makes a new 55-day high, short on a new 55-day low. The classic "Turtle" rule. Reacts only at extremes, so it trades less often than a moving-average rule, at the price of entering later. The 55-bar version is in <code style="font-family:var(--mono)">signals.py</code>.',
  rel:'Cross-sectional momentum compares markets with each other: rank them by past return, buy the top group, sell the bottom group. Always half long and half short, whatever the overall market is doing. It needs a universe of many assets, so it does not fit two instruments.',
  cs:'<b>Buy the winners, sell the losers.</b> Jegadeesh and Titman (1993): in US stocks, the past 3–12-month winners beat the losers over the next 3–12 months. The paper that started the academic literature on momentum. It is often quoted on time-series momentum slides, which is a misattribution: it is about relative ranking among stocks, not each market against its own past.'};

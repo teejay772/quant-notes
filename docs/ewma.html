@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>EWMA and Volatility · quant-notes</title>
-<meta name="description" content="Interactive note: exponentially weighted moving averages and volatility estimation, with simulated labs and sources.">
+<title>Volatility Estimation by EWMA · quant-notes</title>
+<meta name="description" content="Volatility estimation by EWMA: weighting, formulas, the RiskMetrics estimator and alternatives, and its place in the backtest, with simulated labs.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: a single reading column (~720px) with wide "lab" panels that break out to ~1040px for the interactive charts. */
@@ -124,21 +124,21 @@ button.pill:hover{border-color:var(--accent)}
 </head>
 <body>
 
-<meta name="description" content="Interactive note: exponentially weighted moving averages and volatility estimation, with simulated labs and sources.">
+<meta name="description" content="Volatility estimation by EWMA: weighting, formulas, the RiskMetrics estimator and alternatives, and its place in the backtest, with simulated labs.">
 
 
 
 
 <header class="wrap">
-  <p class="eyebrow">Quant notes · interactive · EWMA</p>
-  <h1>An average that forgets</h1>
-  <p class="lede">The Exponentially Weighted Moving Average is a running average that trusts recent days more than old ones. In finance it is the standard way to measure how "bouncy" a market is right now, and that number drives how big your positions are. Move the sliders. Every chart updates.</p>
+  <p class="eyebrow">Quant notes · 02 · interactive</p>
+  <h1>Volatility estimation by EWMA</h1>
+  <p class="lede">The exponentially weighted moving average assigns weights to past observations that decay geometrically with age. Applied to squared returns it gives the volatility estimate used to size positions in the backtester. This page states the weighting, the formulas, the volatility estimator and its alternatives, and its place in the backtest. Labs use simulated series.</p>
   <p class="note">All series on this page are simulated so the "true" answer is known. Nothing here is market data or a performance claim.</p>
 </header>
 
 <!-- 1. The idea -->
 <section class="wrap">
-  <h2>1 · Two ways to average</h2>
+  <h2>1 · Simple and exponentially weighted averages</h2>
   <p>A <strong>simple moving average</strong> looks back a fixed number of days and gives each of them the same vote. Day 20 counts as much as yesterday; day 21 counts for nothing. That sharp edge is unnatural: a market does not suddenly forget what happened three weeks ago.</p>
   <p>An <strong>EWMA</strong> gives every past day a vote, but each day's vote shrinks by a fixed factor the further back it is. Yesterday counts most, the day before a bit less, and so on forever. There is no edge, only a smooth fade. One number, <span class="formula" style="display:inline;padding:2px 6px">λ</span> (lambda, "the memory"), sets how fast the fade is.</p>
   <div class="callout"><b>Worked example, four days of returns: 1%, 2%, 3%, 4% (4% is yesterday).</b>
@@ -163,13 +163,13 @@ button.pill:hover{border-color:var(--accent)}
       <div class="stat"><b id="w1A">6.0%</b><span>yesterday's share of the total</span></div>
       <div class="stat"><b id="w60A">1.4%</b><span>share still held by days older than 60</span></div>
     </div>
-    <p class="note">Try λ = 0.94: that is the value RiskMetrics made famous for daily data. Try λ = 0.985: that is roughly a 60-day centre of mass, the setting used in the time-series momentum paper on sheet 1.</p>
+    <p class="note">Try λ = 0.94: that is the value RiskMetrics made famous for daily data. Try λ = 0.985: that is roughly a 60-day centre of mass, the setting used in the time-series momentum paper (note 01).</p>
   </div>
 </section>
 
 <!-- 2. Formula -->
 <section class="wrap">
-  <h2>2 · The formula, read aloud</h2>
+  <h2>2 · Formulas</h2>
   <div class="formula">EWMA<sub>t</sub> = <span class="k">λ</span> · EWMA<sub>t−1</sub> + <span class="w">(1 − λ)</span> · x<sub>t</sub></div>
   <p class="reading">"Today's average is <span style="color:var(--accent)">λ</span> parts of yesterday's average plus <span style="color:var(--warm)">(1 − λ)</span> parts of today's new observation." You never store the history. You keep one number and nudge it each day. Blue is the share kept from the past; orange is the share given to the newest point. The two always add to 1.</p>
   <p>Unrolling that recursion shows where the name comes from. Each old observation ends up multiplied by λ raised to its age:</p>
@@ -187,7 +187,7 @@ button.pill:hover{border-color:var(--accent)}
 
 <!-- 3. Volatility -->
 <section class="wrap">
-  <h2>3 · From averages to volatility</h2>
+  <h2>3 · Volatility estimation</h2>
   <p><dfn title="The size of a market's typical daily move, up or down. Measured as the standard deviation of returns, usually quoted per year.">Volatility</dfn> is the typical size of a day's move, ignoring direction. A market that moves ±0.5% a day is calm; one that moves ±3% a day is wild. You cannot observe volatility directly. You estimate it from recent <dfn title="Today's price divided by yesterday's, minus one. The percentage change.">returns</dfn>.</p>
   <p>The recipe is: square each daily return (so up and down moves both count as "movement"), average the squares, take the square root. The only question is <em>which average</em>.</p>
   <div class="bridge"><span class="arr">→</span><span>Use a simple average of squared returns over a window and you get <strong>rolling realised volatility</strong>, the plain <code style="font-family:var(--mono)">rolling(N).std()</code>.</span></div>
@@ -225,7 +225,7 @@ button.pill:hover{border-color:var(--accent)}
 
 <!-- 4. Family tree -->
 <section class="wrap">
-  <h2>4 · The family of volatility estimators</h2>
+  <h2>4 · Volatility estimators</h2>
   <p>EWMA is one branch of a bigger tree. Click any box to see what it is, what it needs, and when people use it.</p>
 </section>
 <section class="wide">
@@ -254,7 +254,7 @@ button.pill:hover{border-color:var(--accent)}
 
 <!-- 5. Flow -->
 <section class="wrap">
-  <h2>5 · Where it sits in a backtest</h2>
+  <h2>5 · Position in the backtest</h2>
   <p>A <dfn title="A simulation of how a trading rule would have done on past data, run under the strict rule that at each day you only know what was knowable that day.">backtest</dfn> is a pipeline. Volatility enters at one specific step, and the step right after it is where most beginners' backtests silently cheat. Click a step for the detail.</p>
 </section>
 <section class="wide">
@@ -278,7 +278,7 @@ button.pill:hover{border-color:var(--accent)}
 
 <!-- 6. Code -->
 <section class="wrap">
-  <h2>6 · In pandas</h2>
+  <h2>6 · Implementation</h2>
   <p>pandas has EWMA built in as <code style="font-family:var(--mono)">.ewm()</code>. It accepts the fade in any of the four spellings from section 2. Type a half-life and see the others.</p>
   <div class="lab">
     <div class="conv">
@@ -312,7 +312,7 @@ sigma_roll = (r.rolling(60).std() * 252 ** 0.5).shift(1)</pre>
 
 <!-- 7. Mistakes -->
 <section class="wrap">
-  <h2>7 · Three ways this goes wrong</h2>
+  <h2>7 · Failure modes</h2>
   <p>All three are versions of the same error: letting a decision in the past use a number that only existed later.</p>
   <div class="mistakes">
     <div class="mk"><b>Using today's move to decide today's trade.</b><span>In a backtest you decide the size of Monday's trade using the volatility number. If that number already includes Monday's return, you are using a move that had not happened yet when the decision was made. In real life you could never do that. In a backtest it is easy to do by accident, and it makes the results look better than any real trader could achieve.</span><span class="plain">Fix: compute the volatility, then push it one day later with <code style="font-family:var(--mono)">.shift(1)</code>, so Monday's trade uses Friday's number.</span></div>
@@ -323,7 +323,7 @@ sigma_roll = (r.rolling(60).std() * 252 ** 0.5).shift(1)</pre>
 
 <!-- 8. Glossary -->
 <section class="wrap">
-  <h2>8 · Words used here</h2>
+  <h2>8 · Terminology</h2>
   <p class="note">Each entry: the technical definition first, then the same idea in everyday words in the orange strip.</p>
   <div class="gloss">
     <div><b>return</b><span>today's price ÷ yesterday's − 1. A 1% rise is 0.01.<span class="plain">how much you made or lost in one day, as a percentage. Gold at 100 yesterday and 101 today is a return of 1%.</span></span></div>
@@ -336,7 +336,7 @@ sigma_roll = (r.rolling(60).std() * 252 ** 0.5).shift(1)</pre>
     <div><b>RiskMetrics</b><span>a 1990s J.P. Morgan risk method that popularised λ = 0.94 for daily EWMA volatility.<span class="plain">a bank's published rule book from the 1990s. Its choice of λ = 0.94 became the default everyone copies.</span></span></div>
     <div><b>GARCH</b><span>an EWMA for variance with one extra term pulling the estimate back toward a long-run level.<span class="plain">an EWMA that also remembers what "normal" looks like, so after a wild patch it expects things to drift back to normal rather than staying wild forever.</span></span></div>
   </div>
-  <p class="note" style="margin-top:12px">Companion to <a href="momentum.html" style="color:var(--accent)">sheet 1 (time-series momentum)</a>, where the same EWMA, with a 60-day centre of mass, sizes every position.</p>
+  <p class="note" style="margin-top:12px">Companion to <a href="momentum.html" style="color:var(--accent)">note 01 (time-series momentum)</a>, where the same EWMA, with a 60-day centre of mass, sizes every position.</p>
 </section>
 
 <section class="wrap">
@@ -350,7 +350,7 @@ sigma_roll = (r.rolling(60).std() * 252 ** 0.5).shift(1)</pre>
     <div><b>Bollerslev</b><span>T. Bollerslev, "Generalized Autoregressive Conditional Heteroskedasticity", <em>Journal of Econometrics</em> 31 (1986). GARCH(1,1).</span></div>
     <div><b>pandas</b><span><em>pandas.Series.ewm</em> documentation: the four equivalent spellings <code style="font-family:var(--mono)">com, span, halflife, alpha</code>, and the <code style="font-family:var(--mono)">adjust</code> and <code style="font-family:var(--mono)">bias</code> switches.</span></div>
   </div>
-  <p class="note" style="margin-top:12px">All charts on this page are generated from simulated series inside the page; no market data is used. Part of <a href="index.html" style="color:var(--accent)">quant-notes</a>. See also <a href="momentum.html" style="color:var(--accent)">01 · momentum</a>, <a href="backtest.html" style="color:var(--accent)">03 · the honest backtest</a> and <a href="backtester.html" style="color:var(--accent)">04 · the backtester, line by line</a>.</p>
+  <p class="note" style="margin-top:12px">All charts on this page are generated from simulated series inside the page; no market data is used. Part of <a href="index.html" style="color:var(--accent)">quant-notes</a>. See also <a href="momentum.html" style="color:var(--accent)">01 · Time-series momentum</a>, <a href="backtest.html" style="color:var(--accent)">03 · Backtest errors and controls</a> and <a href="backtester.html" style="color:var(--accent)">Backtester implementation</a>.</p>
 </section>
 
 <script>
@@ -437,7 +437,7 @@ const FLOW={
  f1:'A column of closing prices, one per trading day, oldest first. Check for gaps and duplicate dates before anything else; a single doubled row will create a fake 0% return and a fake jump.',
  f2:'Percentage change from one close to the next. Everything downstream is built on returns, not prices, because returns are comparable across assets and across time.',
  f3:'The EWMA of squared returns, square-rooted, scaled by √252. This is the "how bouncy is it now" number. λ, half-life, com or span: pick one spelling. The estimate at day t uses returns up to day t.',
- f4:'The rule that says long or short. Here it is the sign of the trailing return (sheet 1\'s trend rule), but any rule slots in. It too is built only from data up to day t.',
+ f4:'The rule that says long or short. Here it is the sign of the trailing return (the rule of note 01), but any rule slots in. It too is built only from data up to day t.',
  f5:'Divide the risk you want by the risk the market is giving you. If target is 10% a year and σ is 40%, hold a quarter-size position. This is why BTC and gold can sit in one book: each is scaled to the same expected risk.',
  f6:'<b>Shift by one.</b> Steps 3 to 5 used data up to and including day t\'s close. You cannot trade at a close you have not seen yet. So the position computed from day t is held during day t+1. One line, <code style="font-family:var(--mono)">pos.shift(1)</code>. Skip it and your backtest trades on tomorrow\'s news; the "profit" is pure look-ahead.',
  f7:'Each day\'s profit is the position you were holding times that day\'s return. Costs are charged whenever the position changes: a cost rate times the absolute change in position. Never compute P&L from the percentage change of a spread or of an equity curve.',

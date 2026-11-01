@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>quant-notes</title>
-<meta name="description" content="Interactive study notes on systematic trading: concepts explained with simulated labs, every page cited to books and papers.">
+<meta name="description" content="Research notes on long/short models for XAU/USD and BTC/USD: plan, backtester documentation, and one page per method with simulated labs and cited sources.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 :root{--bg:#F7F5EF;--panel:#FFFFFF;--ink:#1E2430;--muted:#5C6473;--line:#D9D5CB;--accent:#1F6F8B;--accent-soft:#D8E9EF;
@@ -17,9 +17,13 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font
 h1{font-family:var(--display);font-weight:600;font-size:clamp(36px,6vw,54px);line-height:1.1;margin:0}
 p{margin:0}.lede{font-size:20px;color:var(--muted)}
 .list{display:flex;flex-direction:column;gap:12px}
+section{display:flex;flex-direction:column;gap:12px}
+h2{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0;padding-bottom:6px;border-bottom:1px solid var(--line)}
+a.card.sub1{margin-left:36px;position:relative}a.card.sub2{margin-left:72px;position:relative}
+a.card.sub1::before,a.card.sub2::before{content:"";position:absolute;left:-20px;top:-13px;width:14px;height:40px;border-left:1.5px solid var(--line);border-bottom:1.5px solid var(--line);border-radius:0 0 0 6px}
 a.card{display:grid;grid-template-columns:52px 1fr;gap:14px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;color:inherit;text-decoration:none}
 a.card:hover{border-color:var(--accent)}
-.num{font-family:var(--mono);font-size:13px;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:6px 0;text-align:center}
+.num{font-family:var(--mono);font-size:12px;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:6px 0;text-align:center;letter-spacing:.04em}
 .card b{font-family:var(--display);font-weight:600;font-size:20px;display:block}
 .card span{color:var(--muted);font-size:15px}
 .soon{opacity:.55}
@@ -28,18 +32,26 @@ a.card:hover{border-color:var(--accent)}
 </head>
 <body>
 <div class="wrap">
-  <p class="eyebrow">quant-notes · interactive</p>
-  <h1>Notes from building a trading model</h1>
-  <p class="lede">One page per concept, written while building a long/short model on gold and bitcoin from scratch. Each page has sliders you can move, every chart is simulated so the true answer is known, and every page ends with the books and papers it came from.</p>
-  <div class="list">
-    <a class="card" href="momentum.html"><span class="num">01</span><span><b>Things that went up keep going up, for a while</b><span>Time-series momentum: the trend rule, why it works, the lookback trade-off, and a century of evidence.</span></span></a>
-    <a class="card" href="ewma.html"><span class="num">02</span><span><b>An average that forgets</b><span>EWMA and volatility: how to measure how bouncy a market is right now, and why that number sizes every position.</span></span></a>
-    <a class="card" href="backtest.html"><span class="num">03</span><span><b>A backtest can only tell you what would not have worked</b><span>The honest backtest: six days by hand, the one-bar lag, costs, the best-of-N trap, walk-forward, and the seven ways a backtest lies.</span></span></a>
-    <a class="card" href="backtester.html"><span class="num">04</span><span><b>Backtester implementation</b><span>Documentation of backtest.py: structure, a six-day worked example computed in the page, line classification, pandas methods, formulas, summary statistics, walk-forward selection and review questions.</span></span></a>
-    <a class="card" href="backtester-sheet.html"><span class="num">04a</span><span><b>Backtester structure sheet</b><span>One wide sheet: the five functions in the positions of the structure diagram, each with its code and its output on the six-day example. Desktop width.</span></span></a>
-    <a class="card" href="roadmap.html"><span class="num">05</span><span><b>Research plan</b><span>Sixteen weeks for two long/short models on XAU/USD and BTC/USD: phases, weekly scope, sources consulted, deliverables, and the evaluation criteria.</span></span></a>
-  </div>
-  <p class="note">Written by a chemistry graduate learning quantitative trading. Nothing here is investment advice or a performance claim; all series are simulated.</p>
+  <p class="eyebrow">quant-notes</p>
+  <h1>Research notes on two long/short models</h1>
+  <p class="lede">Documentation written during the development of long/short models on XAU/USD and BTC/USD. The research section holds the plan and the backtester. The notes section holds one page per method, each with labs on simulated series and a sources section citing the books and papers used.</p>
+  <section>
+    <h2>Research</h2>
+    <div class="list">
+      <a class="card" href="roadmap.html"><span class="num">plan</span><span><b>Research plan</b><span>Development, backtesting and out-of-sample evaluation of two long/short models: phases, weekly scope, evaluation criteria, sources and deliverables.</span></span></a>
+      <a class="card sub1" href="backtester.html"><span class="num">code</span><span><b>Backtester implementation</b><span>Documentation of backtest.py: structure, the six-day worked example computed in the page, line classification, pandas methods, formulas, summary statistics, walk-forward selection and review questions.</span></span></a>
+      <a class="card sub2" href="backtester-sheet.html"><span class="num">sheet</span><span><b>Backtester structure sheet</b><span>The five functions in the positions of the structure diagram, each with its code and its output on the six-day example. One wide sheet; desktop width.</span></span></a>
+    </div>
+  </section>
+  <section>
+    <h2>Notes</h2>
+    <div class="list">
+      <a class="card" href="momentum.html"><span class="num">01</span><span><b>Time-series momentum</b><span>Definition, mechanism, formulas, lookback selection, trend signals and published evidence.</span></span></a>
+      <a class="card" href="ewma.html"><span class="num">02</span><span><b>Volatility estimation by EWMA</b><span>Weighting, formulas, the RiskMetrics estimator and alternatives, and its place in the backtest.</span></span></a>
+      <a class="card" href="backtest.html"><span class="num">03</span><span><b>Backtest errors and controls</b><span>Structure of a backtest; look-ahead, omitted costs, selection among trials and aggregation over regimes; the control for each.</span></span></a>
+    </div>
+  </section>
+  <p class="note">All series on these pages are simulated. No investment advice is given and no performance is reported.</p>
 </div>
 </body>
 </html>

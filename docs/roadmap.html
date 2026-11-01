@@ -242,7 +242,7 @@ details.week summary::-webkit-details-marker{display:none}
     <div><b>Shreve</b><span>S. Shreve, <em>Stochastic Calculus for Finance I: The Binomial Asset Pricing Model</em>, Springer, 2004. Weeks 1–3 of the mathematics lane.</span></div>
     <div><b>Avellaneda &amp; Lee</b><span>M. Avellaneda, J.-H. Lee, "Statistical Arbitrage in the US Equities Market", <em>Quantitative Finance</em> 10 (2010), section 2 and appendix. Week 11.</span></div>
   </div>
-  <p class="note" style="margin-top:12px">Carver's <em>Systematic Trading</em> (2015), its companion spreadsheets, Chan's <em>Algorithmic Trading</em> (2013), Shreve's <em>Stochastic Calculus for Finance II</em> (2004) and the pysystemtrade documentation are quoted from the reading list, not from the text. Part of <a href="index.html">quant-notes</a>. See also <a href="momentum.html">01 · momentum</a>, <a href="ewma.html">02 · EWMA</a>, <a href="backtest.html">03 · the honest backtest</a> and <a href="backtester.html">04 · the backtester, line by line</a>.</p>
+  <p class="note" style="margin-top:12px">Carver's <em>Systematic Trading</em> (2015), its companion spreadsheets, Chan's <em>Algorithmic Trading</em> (2013), Shreve's <em>Stochastic Calculus for Finance II</em> (2004) and the pysystemtrade documentation are quoted from the reading list, not from the text. Part of <a href="index.html">quant-notes</a>. See also <a href="momentum.html">01 · Time-series momentum</a>, <a href="ewma.html">02 · Volatility estimation by EWMA</a>, <a href="backtest.html">03 · Backtest errors and controls</a> and <a href="backtester.html">Backtester implementation</a>.</p>
 </section>
 
 <script>
@@ -266,7 +266,7 @@ const W=[
   work:["Vectorised backtester: signal → position → P&L, every signal lagged one bar","Cost model: spread plus slippage per unit of turnover; carry (funding) per day held; gold frozen on closed days","Metrics: Sharpe, max drawdown, worst day, turnover, time in market, cost drag","Cost sensitivity: the trend rule at 0×, 1×, 2×, 3× spread crossed with 0 / 5 / 10% carry","Real costs from the brokers' own pages, with date and source, into the README cost table"],
   read:["Carver, Systematic Trading, ch. 1–3 and ch. 12, with his ch. 2 Sharpe-across-periods and ch. 12 cost-template sheets","López de Prado 2018: one line per reason on how the repo handles it","RiskMetrics 1996 ch. 5: the EWMA recursion, against realised_vol","Bailey et al. 2014, Pseudo-Mathematics: why repeated backtesting produces fake results"],
   math:["Shreve I ch. 2: probability on coin-toss space, conditional expectation, the martingale property; exercises 2.1–2.4 and a 10,000-path simulation checking that the discounted price does not drift"],
-  links:[["backtest.html","03 · the honest backtest"],["backtester.html","04 · the backtester, line by line"],["ewma.html","02 · EWMA"]],
+  links:[["backtest.html","03 · Backtest errors and controls"],["backtester.html","04 · Backtester implementation"],["ewma.html","02 · Volatility estimation by EWMA"]],
   out:"src/backtest.py annotated; the tradable mask and its test; results/02_cost_sensitivity.csv; the README cost table with measured numbers; the 2026-01-30 gold print checked against a second source with a verdict in the log; one commit."},
  {n:3,p:"p2",t:"Trend signals on two instruments",brief:"Time-series momentum at several horizons, moving-average crossover, Donchian breakout and EWMAC, on gold and bitcoin separately.",
   work:["Time-series momentum at 1, 3, 6 and 12 months for XAU and BTC separately","Moving-average crossover and Donchian breakout as alternative trend signals","Carver's EWMAC(16,64) with forecast scaling, compared with tsmom and ma_cross"],
@@ -278,13 +278,13 @@ const W=[
   work:["EWMA realised volatility per instrument; target 10% annual risk each","Position shrinks as volatility rises; hard cap on leverage","Rule for flat positions when signals disagree or volatility explodes","Gold and bitcoin checked against Carver's instrument criteria, answer in the log"],
   read:["Carver ch. 6, 9 and 10: instruments, volatility targeting, position sizing; his formulas against realised_vol and scale = vol_target / vol","Tsay ch. 1 and 3.1–3.5: fat tails, the stylised facts, GARCH(1,1) against the EWMA estimate on BTC","Wasserman ch. 2–3 only if the distribution material needs backing up"],
   math:["Shreve II ch. 1: general probability, measures, expectation; exercises on change of measure"],
-  links:[["ewma.html","02 · EWMA"]],
+  links:[["ewma.html","02 · Volatility estimation by EWMA"]],
   out:"Model 1 v1 with a full-history backtest, costs included."},
  {n:5,p:"p2",t:"Walk-forward testing",brief:"Parameters chosen on training windows and scored strictly out of sample; in-sample and out-of-sample Sharpe compared honestly.",
   work:["Split the history: fit in sample, evaluate strictly out of sample","Walk-forward re-estimation of every parameter in the grid","In-sample vs out-of-sample Sharpe, per instrument and combined","Instrument weights handcrafted 50/50 by risk; the optimiser read, not run"],
   read:["Carver ch. 4–5: handcrafting versus fitting weights; the system diagram","Bailey et al. 2015, Probability of Backtest Overfitting, sections 1–4"],
   math:["Shreve II ch. 2: information, conditioning, filtrations; exercises on conditional expectation"],
-  links:[["backtest.html","03 · the honest backtest"]],
+  links:[["backtest.html","03 · Backtest errors and controls"]],
   out:"Out-of-sample results table and the walk-forward selection log."},
  {n:6,p:"p2",t:"Robustness I",brief:"Does the result survive nearby parameters, double and triple costs, and each instrument on its own? The Sharpe haircut for the number of variants tried.",
   work:["Parameter sensitivity: do nearby lookbacks give similar results?","Cost sensitivity at 2× and 3× assumed spread and funding","Gold-only and bitcoin-only versus the combination","A no-edge baseline: the rule on random prices, the Sharpe you get by luck","Forecast weights and the diversification multiplier for the tsmom + EWMAC + Donchian blend"],
