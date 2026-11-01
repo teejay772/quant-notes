@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sharpe Ratio Estimation · quant-notes</title>
+<meta name="description" content="Sharpe ratio estimation: definition, annualisation and the variance ratio, sampling error, selection among trials, the deflated Sharpe ratio and the multiple-testing haircut, with simulated labs.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column (~720px) with wide "lab" panels that break out to ~1040px. */
+:root{
+  --bg:#F7F5EF; --panel:#FFFFFF; --ink:#1E2430; --muted:#5C6473; --line:#D9D5CB;
+  --accent:#1F6F8B; --accent-soft:#D8E9EF; --warm:#C2651E; --warm-soft:#F6E2D2;
+  --good:#2E7D4F; --good-soft:#D9EDE0; --code-bg:#1B222C; --code-fg:#E8EBF0;
+  --display:'Fraunces',Georgia,serif; --body:'Atkinson Hyperlegible',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#12161C; --panel:#1A2029; --ink:#E9E6DF; --muted:#A3AAB6; --line:#2E3540;
+  --accent:#6FB8D1; --accent-soft:#1E3440; --warm:#E5945A; --warm-soft:#3E2A1C;
+  --good:#6DBE8C; --good-soft:#1E3A2A; --code-bg:#0D1116; --code-fg:#E8EBF0; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#12161C; --panel:#1A2029; --ink:#E9E6DF; --muted:#A3AAB6; --line:#2E3540;
+  --accent:#6FB8D1; --accent-soft:#1E3440; --warm:#E5945A; --warm-soft:#3E2A1C;
+  --good:#6DBE8C; --good-soft:#1E3A2A; --code-bg:#0D1116; --code-fg:#E8EBF0; color-scheme:dark }
+
+*{box-sizing:border-box}
+sub,sup{font-size:0.68em;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-0.55em}sub{top:0.3em}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;
+  padding-block:0 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:720px;margin:0 auto}
+.wide{max-width:1040px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);font-weight:600;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(38px,6vw,58px)}
+h2{font-size:30px;margin-top:64px}
+h3{font-size:21px}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.92em}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+header{padding-block:56px 24px;display:flex;flex-direction:column;gap:16px}
+.lede{font-size:21px;color:var(--muted);max-width:620px}
+section{display:flex;flex-direction:column;gap:18px}
+.lab{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px;margin-top:8px}
+.lab-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.lab-head .tag{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.controls{display:flex;gap:24px;flex-wrap:wrap}
+.ctl{display:flex;flex-direction:column;gap:6px;flex:1 1 200px;min-width:0}
+.ctl label{font-size:14px;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.ctl output{font-family:var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent);height:28px}
+canvas{width:100%;height:auto;display:block;max-width:100%}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{display:flex;flex-direction:column;gap:2px;padding:10px 12px;background:var(--accent-soft);border-radius:8px}
+.stat.w{background:var(--warm-soft)}
+.stat b{font-family:var(--mono);font-size:20px;font-weight:500;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted)}
+.formula{font-family:var(--mono);font-size:16px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;white-space:nowrap;display:flex;align-items:center;gap:.35em;flex-wrap:nowrap;line-height:1.4}
+.k{color:var(--accent)}.w{color:var(--warm)}.g{color:var(--good)}
+.formula .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 .15em}
+.formula .frac > span{padding:0 .3em;white-space:nowrap}
+.formula .frac > span:first-child{border-bottom:1.5px solid currentColor}
+.formula .big{font-size:1.4em;line-height:1}
+.sq{border-top:1.5px solid currentColor;padding:0 .2em}
+.reading{font-size:15px;color:var(--muted);padding-left:16px;border-left:3px solid var(--accent-soft)}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+.note{font-size:13px;color:var(--muted)}
+.callout{background:var(--warm-soft);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.callout b{color:var(--warm)}
+.rules{background:var(--accent-soft);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;font-size:15px}
+.rules b{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.explain{background:var(--warm-soft);border:1px solid var(--warm);border-left:6px solid var(--warm);border-radius:8px;padding:16px 18px;font-size:15.5px;line-height:1.55;display:flex;flex-direction:column;gap:6px;min-height:84px}
+.explain::before{content:"Explanation";font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--warm)}
+/* click-to-explain anatomy: terms left, explanation beside */
+.anat{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
+.anat .explain{position:relative}
+.anat .explain::after{content:"";position:absolute;left:-16px;top:18px;border:10px solid transparent;border-right-color:var(--warm);border-left:0}
+.terms{display:flex;flex-direction:column;gap:8px}
+.term{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:center;padding:10px 12px;border-radius:10px;cursor:pointer;border:1.5px solid var(--line);background:var(--panel);text-align:left;font-family:var(--body);color:var(--ink);width:100%;font-size:15px}
+.term:hover,.term:focus-visible{border-color:var(--accent);outline:none}
+.term.on{border-color:var(--accent);background:var(--accent-soft)}
+.term .sym{font-family:var(--mono);font-size:16px;text-align:center}
+.term small{display:block;font-size:12.5px;color:var(--muted)}
+@media (max-width:760px){.anat{grid-template-columns:1fr}.anat .explain::after{left:24px;top:-10px;border:10px solid transparent;border-bottom-color:var(--warm);border-top:0}}
+.toggle{display:inline-flex;border:1.5px solid var(--line);border-radius:999px;overflow:hidden}
+.toggle button{font-family:var(--body);font-size:14px;padding:7px 14px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
+.toggle button.on{background:var(--accent);color:#fff}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+button.pill{font-family:var(--body);font-size:14px;padding:7px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button.pill:hover{border-color:var(--accent)}
+.inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.inputs div{background:var(--accent-soft);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:4px}
+.inputs span{font-size:12px;color:var(--muted)}
+.inputs input{font-family:var(--mono);font-size:16px;width:100%;border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:var(--panel);color:var(--ink)}
+.two{display:grid;grid-template-columns:1fr;gap:20px}
+.card{border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.arith{font-family:var(--mono);font-size:13px;background:var(--bg);border:1px dashed var(--line);border-radius:8px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;line-height:1.55}
+.verdict{font-family:var(--mono);font-size:14px;padding:8px 12px;border-radius:8px}
+.verdict.pass{background:var(--good-soft);color:var(--good)}
+.verdict.fail{background:var(--warm-soft);color:var(--warm)}
+.gloss{display:grid;grid-template-columns:1fr;gap:10px;font-size:15px}
+.gloss div{display:grid;grid-template-columns:150px 1fr;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.gloss b{font-family:var(--mono);font-weight:500;font-size:14px}
+.gloss .plain{display:block;margin-top:4px;padding:6px 10px;background:var(--warm-soft);border-radius:6px;font-size:14px;line-height:1.5}
+table.t{border-collapse:collapse;font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;width:100%}
+table.t th,table.t td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.t th{font-weight:500;color:var(--muted);font-size:11px;letter-spacing:.04em;text-transform:uppercase;border-bottom:2px solid var(--line)}
+table.t td:first-child,table.t th:first-child{text-align:left}
+.tbl{overflow-x:auto}
+@media (max-width:560px){.gloss div{grid-template-columns:1fr;gap:2px}h2{font-size:26px}.term{grid-template-columns:90px 1fr}}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <p class="eyebrow">Quant notes · 06 · interactive</p>
+  <h1>Sharpe ratio estimation</h1>
+  <p class="lede">The Sharpe ratio is the mean of a strategy's excess returns divided by their standard deviation. This page states the definition and its annualisation, the sampling error of the estimate, the inflation of the best estimate among several trials, and two published corrections: the deflated Sharpe ratio and the multiple-testing haircut. Each section is followed by a lab on simulated returns.</p>
+  <div class="rules"><b>Constraints</b>
+    <span>1 · Signals use only past data. 2 · The one-bar lag, <code>pos = target.shift(1)</code>, is never removed. 3 · Every result includes costs. A Sharpe ratio reported by the project is computed on returns produced under all three.</span></div>
+  <p class="note">All series on this page are simulated, not market data. No performance is reported. The worked examples in sections 4 and 5 are the hypothetical examples published in the cited papers.</p>
+</header>
+
+<!-- 1 DEFINITION -->
+<section class="wrap">
+  <h2>1 · Definition</h2>
+  <p>Let r<sub>1</sub>, …, r<sub>T</sub> be a strategy's returns over T periods and r<sub>f</sub> the risk-free return over one period. With μ̂ the sample mean and σ̂ the sample standard deviation of the excess returns r<sub>t</sub> − r<sub>f</sub>, the Sharpe ratio per period is</p>
+  <div class="formula">SR̂ = <span class="frac"><span><span class="k">μ̂</span> − <span class="w">r<sub>f</sub></span></span><span><span class="g">σ̂</span></span></span></div>
+  <p class="reading">Read aloud: the estimated Sharpe ratio is the average return in excess of the risk-free rate, divided by the standard deviation of those returns. The hat on a symbol marks a quantity estimated from a sample.</p>
+  <p>Sharpe ratios are quoted in annual units so that strategies sampled at different frequencies can be compared. With q periods per year and returns independent and identically distributed (IID), Bailey, Borwein, López de Prado and Zhu (2014, eq. 2) give</p>
+  <div class="formula">SR<sub>annual</sub> = <span class="frac"><span><span class="k">μ</span></span><span><span class="g">σ</span></span></span> · <span class="w">√<span class="sq">q</span></span></div>
+  <p class="reading">Read aloud: the annual Sharpe ratio is the per-period ratio of mean to standard deviation, multiplied by the square root of the number of periods in a year. Daily data with one row per calendar day has q = 365.</p>
+  <p>Harvey and Liu (2015, eq. 1–2) connect the ratio to the t-statistic for the null hypothesis that the mean return is zero:</p>
+  <div class="formula">t = <span class="frac"><span><span class="k">μ̂</span></span><span><span class="g">σ̂</span> / √<span class="sq">T</span></span></span> = SR̂ · √<span class="sq">T</span></div>
+  <p class="reading">Read aloud: the t-statistic is the per-period Sharpe ratio times the square root of the number of observations. For a fixed sample length, a higher Sharpe ratio means a higher t-statistic and a smaller p-value.</p>
+  <p>Select a term of the formula for its definition and its counterpart in <code>backtest.py</code>.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="anat">
+      <div class="terms" id="termsSR">
+        <button class="term on" data-k="mu"><span class="sym k">μ̂</span><span>sample mean of returns<small>average of the daily net returns</small></span></button>
+        <button class="term" data-k="rf"><span class="sym w">r<sub>f</sub></span><span>risk-free return<small>what cash earns per period</small></span></button>
+        <button class="term" data-k="sd"><span class="sym g">σ̂</span><span>sample standard deviation<small>typical size of a deviation from the mean</small></span></button>
+        <button class="term" data-k="q"><span class="sym w">√q</span><span>annualisation factor<small>periods per year, under the square root</small></span></button>
+        <button class="term" data-k="hat"><span class="sym">SR̂ vs SR</span><span>estimate and true value<small>sample statistic and population parameter</small></span></button>
+        <button class="term" data-k="t"><span class="sym">SR̂·√T</span><span>t-statistic<small>the same ratio scaled by sample length</small></span></button>
+      </div>
+      <div class="explain" id="xSR"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 ANNUALISATION -->
+<section class="wrap">
+  <h2>2 · Annualisation</h2>
+  <p>Over q periods the mean of a sum of returns is q times the per-period mean. If the returns are uncorrelated, the variance of the sum is q times the per-period variance, so the standard deviation grows with √q. The ratio of the two therefore grows with q / √q = √q. Lo and MacKinlay (1988, p. 44) state the underlying property: "the variance of the increments of a random walk is linear in the observation interval."</p>
+  <p>When returns are autocorrelated the variance of the q-period sum is no longer q times the one-period variance. Lo and MacKinlay measure the departure with the variance ratio VR(q), the variance of q-period returns divided by q times the variance of one-period returns. Their equation 16 expresses it through the autocorrelations ρ(k):</p>
+  <div class="formula">VR(q) ≈ 1 + <span class="big">Σ</span><sub style="align-self:flex-end">k = 1 … q−1</sub> <span class="frac"><span>2 (q − k)</span><span>q</span></span> <span class="w">ρ(k)</span></div>
+  <p class="reading">Read aloud: the variance ratio is one plus a weighted sum of the autocorrelations at lags 1 to q − 1, with weights that decline in a straight line from nearly 2 at lag 1 to 2/q at lag q − 1. Positive autocorrelation makes VR(q) greater than 1; negative autocorrelation makes it less than 1.</p>
+  <div class="formula">SR<sub>annual</sub> = <span class="frac"><span><span class="k">μ</span> · q</span><span><span class="g">σ</span> · √<span class="sq">q · VR(q)</span></span></span> = <span class="frac"><span>(<span class="k">μ</span>/<span class="g">σ</span>) · √<span class="sq">q</span></span><span>√<span class="sq">VR(q)</span></span></span></div>
+  <p class="reading">Read aloud: with autocorrelation, the annual Sharpe ratio equals the √q-scaled ratio divided by the square root of the variance ratio. The √q rule overstates the annual Sharpe ratio when returns are positively autocorrelated and understates it when they are negatively autocorrelated.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="lab-head"><h3>Lab A · Annualisation with autocorrelated returns</h3><span class="tag">simulated · not market data</span></div>
+    <p class="note">Daily returns are simulated from a first-order autoregressive process, r<sub>t</sub> − μ = ρ (r<sub>t−1</sub> − μ) + ε<sub>t</sub>, for which ρ(k) = ρ<sup>k</sup>. The standard deviation of ε is set so that the standard deviation of r is σ for every ρ. The chart shows the standard deviation of h-day summed returns, in units of σ, against the horizon h.</p>
+    <div class="controls">
+      <div class="ctl"><label for="aMu">Daily mean μ, basis points <output id="aMuO"></output></label><input type="range" id="aMu" min="-5" max="20" step="0.5" value="6"></div>
+      <div class="ctl"><label for="aSd">Daily standard deviation σ, % <output id="aSdO"></output></label><input type="range" id="aSd" min="0.5" max="5" step="0.1" value="2"></div>
+      <div class="ctl"><label for="aRho">Autocorrelation ρ <output id="aRhoO"></output></label><input type="range" id="aRho" min="-0.3" max="0.3" step="0.01" value="0.1"></div>
+      <div class="ctl"><label for="aSeed">Simulation seed <output id="aSeedO"></output></label><input type="range" id="aSeed" min="1" max="30" step="1" value="3"></div>
+    </div>
+    <div class="row"><span class="note">Periods per year q:</span><div class="toggle" id="aQ"><button class="on" data-q="365">365 (calendar days)</button><button data-q="252">252 (trading days)</button></div></div>
+    <canvas id="cvA" width="1000" height="300"></canvas>
+    <div class="legend"><span><i style="background:var(--muted)"></i>√h: uncorrelated returns</span><span><i style="background:var(--accent)"></i>√(h·VR(h)): formula with ρ(k) = ρ<sup>k</sup></span><span><i style="background:var(--warm);height:8px;width:8px;border-radius:50%"></i>simulated: 300 years of daily returns, non-overlapping h-day sums</span></div>
+    <div class="stats">
+      <div class="stat"><b id="aSRd">–</b><span>daily Sharpe ratio, μ/σ</span></div>
+      <div class="stat"><b id="aSRq">–</b><span>annual, √q rule</span></div>
+      <div class="stat"><b id="aVR">–</b><span>variance ratio VR(q)</span></div>
+      <div class="stat w"><b id="aSRt">–</b><span>annual, corrected for autocorrelation</span></div>
+      <div class="stat"><b id="aSRs">–</b><span>annual, simulated: mean of yearly sums ÷ their standard deviation</span></div>
+    </div>
+    <div class="callout"><b>Lab steps</b>
+      <span>1. Set ρ = 0. The blue line lies on the grey line, VR(q) = 1, and the two annual Sharpe ratios are equal.</span>
+      <span>2. Set ρ = 0.10. Each day's return is pushed slightly in the direction of the previous day's. Moves accumulate over the year, the yearly spread is wider than √q predicts, and the corrected Sharpe ratio is lower than the √q figure.</span>
+      <span>3. Set ρ = −0.10. Each day partly reverses the previous one. The yearly spread is narrower, and the corrected Sharpe ratio is higher.</span>
+      <span>4. Change the seed. The orange points move; the blue line does not. The points are one simulated history; the line is the formula.</span></div>
+  </div>
+</section>
+
+<!-- 3 SAMPLING ERROR -->
+<section class="wrap">
+  <h2>3 · Sampling error</h2>
+  <p>The true Sharpe ratio is a property of the process that generates returns and is not observed. A backtest of y years returns an estimate, and a different y-year history from the same process would return a different estimate. For IID Normal returns, Bailey et al. (2014, eq. 3), citing Lo (2002), give the asymptotic distribution of the annualised estimate:</p>
+  <div class="formula">SR̂ <span style="font-size:.85em">→</span> N <span class="big">(</span> SR , <span class="frac"><span>1 + <span class="frac" style="font-size:.85em"><span>SR<sup>2</sup></span><span>2q</span></span></span><span><span class="w">y</span></span></span> <span class="big">)</span></div>
+  <p class="reading">Read aloud: as the sample grows, the estimated annual Sharpe ratio is approximately Normal, centred on the true value, with variance one plus SR squared over 2q, all divided by the number of years y. The standard error falls with the square root of the number of years, not with the number of observations: sampling daily instead of monthly does not shorten the history required.</p>
+  <p>A 95% interval is approximately SR̂ ± 1.96 standard errors. The interval excludes zero only when y exceeds 1.96² (1 + SR²/2q) / SR². For a true annual Sharpe ratio of 0.5 that is <b id="yr05">–</b> years; for 1.0 it is <b id="yr10">–</b> years. The formula assumes IID Normal returns. For returns with autocorrelation and changing volatility, the stationary bootstrap of Politis and Romano (1994) resamples blocks of consecutive returns of random, geometrically distributed length, and is the method the research plan applies to the project's own returns.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="lab-head"><h3>Lab B · Distribution of the estimate</h3><span class="tag">simulated · not market data</span></div>
+    <p class="note">Each run simulates 600 independent histories of y years of daily Normal returns (q = 365) whose true annual Sharpe ratio is fixed by the first slider. Each history yields one estimate, computed as line 94 of <code>backtest.py</code> computes it. The histogram is the distribution of the 600 estimates; the curve is the asymptotic Normal above.</p>
+    <div class="controls">
+      <div class="ctl"><label for="bSR">True annual Sharpe ratio <output id="bSRO"></output></label><input type="range" id="bSR" min="0" max="2" step="0.05" value="0.5"></div>
+      <div class="ctl"><label for="bY">Years of data y <output id="bYO"></output></label><input type="range" id="bY" min="1" max="15" step="1" value="5"></div>
+      <div class="ctl"><label for="bSeed">Simulation seed <output id="bSeedO"></output></label><input type="range" id="bSeed" min="1" max="30" step="1" value="5"></div>
+    </div>
+    <canvas id="cvB" width="1000" height="280"></canvas>
+    <div class="legend"><span><i style="background:var(--accent);height:8px"></i>simulated estimates</span><span><i style="background:var(--warm)"></i>asymptotic Normal, eq. 3</span><span><i style="background:var(--ink)"></i>true value</span><span><i style="background:var(--muted)"></i>zero</span></div>
+    <div class="stats">
+      <div class="stat"><b id="bMean">–</b><span>mean of the estimates</span></div>
+      <div class="stat"><b id="bSdE">–</b><span>standard deviation, simulated</span></div>
+      <div class="stat"><b id="bSdF">–</b><span>standard error, eq. 3</span></div>
+      <div class="stat"><b id="bInt">–</b><span>central 95% of the estimates</span></div>
+      <div class="stat w"><b id="bNeg">–</b><span>share of histories with SR̂ &lt; 0</span></div>
+    </div>
+    <div class="callout"><b>Lab steps</b>
+      <span>1. True Sharpe ratio 0.5, 5 years. By eq. 3, 95% of estimates fall between <b id="bR1"></b> and <b id="bR2"></b>. A history with a true Sharpe ratio of 0.5 can report almost any value in that range.</span>
+      <span>2. Increase y to 15. The spread narrows by about √3, the ratio of √15 to √5.</span>
+      <span>3. Set the true Sharpe ratio to 0. Every estimate is noise. About half are positive, and the largest of the 600 is far above zero; section 4 uses that maximum.</span></div>
+  </div>
+</section>
+
+<!-- 4 SELECTION AMONG TRIALS -->
+<section class="wrap">
+  <h2>4 · Selection among trials</h2>
+  <p>A trial is one backtested configuration: a rule with one set of parameters. If N independent trials are run and the configuration with the highest Sharpe ratio is retained, the retained estimate is the maximum of N noisy estimates, and it exceeds zero even when every true Sharpe ratio is zero. For N independent standard Normal variables, Bailey et al. (2014, eq. 4) approximate the expected maximum as</p>
+  <div class="formula">E[max<sub>N</sub>] ≈ (1 − <span class="k">γ</span>) Z<sup>−1</sup><span class="big">[</span>1 − <span class="frac"><span>1</span><span><span class="w">N</span></span></span><span class="big">]</span> + <span class="k">γ</span> Z<sup>−1</sup><span class="big">[</span>1 − <span class="frac"><span>1</span><span><span class="w">N</span></span></span>e<sup>−1</sup><span class="big">]</span></div>
+  <p class="reading">Read aloud: the expected largest of N standard Normal draws is a weighted combination of two Normal quantiles, with weights set by the Euler–Mascheroni constant γ ≈ 0.5772. Z<sup>−1</sup> is the inverse of the standard Normal cumulative distribution and e is Euler's number. The value grows with N without limit, but slowly, and stays below √(2 ln N).</p>
+  <p>With zero true Sharpe ratio, the annualised estimate over y years has standard deviation y<sup>−1/2</sup> (eq. 3 with SR = 0). The expected maximum annual Sharpe ratio among N skill-less trials is therefore E[max<sub>N</sub>] / √y (eq. 5). For N = 10 and one year this is <b id="em10">–</b>, the figure the paper reports as 1.57. Solving for y gives the minimum backtest length, MinBTL, the number of years required for the expected maximum to stay at a chosen level, here 1 (eq. 6):</p>
+  <div class="formula">MinBTL ≈ <span class="big">(</span> <span class="frac"><span>E[max<sub>N</sub>]</span><span>E[max SR̂]</span></span> <span class="big">)</span><sup>2</sup> &lt; <span class="frac"><span>2 ln N</span><span>E[max SR̂]<sup>2</sup></span></span></div>
+  <p class="reading">Read aloud: the minimum backtest length in years is the square of the expected maximum of N standard Normal draws divided by the Sharpe ratio that the best skill-less trial is allowed to reach. More trials require more years.</p>
+  <p>The paper's statement, computed here: with five years of data, at most <b id="nfor5">–</b> independent configurations can be tried before the best of them is expected to show an annual Sharpe ratio of 1 with no skill; with two years, <b id="nfor2">–</b>. The paper concludes that "a backtest which does not report the number of trials N used to identify the selected configuration makes it impossible to assess the risk of overfitting" (Bailey et al., 2014, p. 461).</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="lab-head"><h3>Lab C · The best of N trials with no skill</h3><span class="tag">simulated · not market data</span></div>
+    <p class="note">Each run simulates N independent strategies, each with y years of daily Normal returns of mean zero, so every true Sharpe ratio is 0. Each dot is one strategy's estimated annual Sharpe ratio. The orange dot is the maximum, the configuration a search would retain.</p>
+    <div class="controls">
+      <div class="ctl"><label for="cN">Number of trials N <output id="cNO"></output></label><input type="range" id="cN" min="0" max="11" step="1" value="5"></div>
+      <div class="ctl"><label for="cY">Years of data y <output id="cYO"></output></label><input type="range" id="cY" min="1" max="10" step="1" value="5"></div>
+      <div class="ctl"><label for="cSeed">Simulation seed <output id="cSeedO"></output></label><input type="range" id="cSeed" min="1" max="30" step="1" value="2"></div>
+    </div>
+    <canvas id="cvC" width="1000" height="240"></canvas>
+    <div class="legend"><span><i style="background:var(--accent);height:8px;width:8px;border-radius:50%"></i>one trial</span><span><i style="background:var(--warm);height:8px;width:8px;border-radius:50%"></i>retained maximum</span><span><i style="background:var(--good)"></i>E[max<sub>N</sub>]/√y, eq. 5</span><span><i style="background:var(--muted)"></i>upper bound √(2 ln N)/√y</span></div>
+    <div class="stats">
+      <div class="stat w"><b id="cMax">–</b><span>maximum in this simulation</span></div>
+      <div class="stat"><b id="cEm">–</b><span>expected maximum, eq. 5</span></div>
+      <div class="stat"><b id="cBtl">–</b><span>MinBTL in years for this N, eq. 6</span></div>
+      <div class="stat"><b id="cNmax">–</b><span>largest N for y years</span></div>
+    </div>
+    <div class="callout"><b>Lab steps</b>
+      <span>1. N = 1. One trial, one estimate near zero. A single test with no selection.</span>
+      <span>2. Increase N to 100 with y = 5. The maximum moves above 1. No strategy in the simulation has any edge.</span>
+      <span>3. Hold N = 100 and increase y. The cloud contracts toward zero and the maximum falls with 1/√y. A longer history is the only input that lowers the expected maximum for a fixed N.</span></div>
+  </div>
+</section>
+
+<!-- 5 DEFLATED SHARPE RATIO -->
+<section class="wrap">
+  <h2>5 · The deflated Sharpe ratio and the haircut</h2>
+  <p>Bailey and López de Prado (2014) combine the two sources of inflation, selection among trials and non-Normal returns, in one statistic. The deflated Sharpe ratio is the probability that the true Sharpe ratio exceeds the threshold SR̂<sub>0</sub> expected from the best of N skill-less trials (eq. 2). All Sharpe ratios in the formula are per period, not annualised.</p>
+  <div class="formula">DSR = Z <span class="big">[</span> <span class="frac"><span>(<span class="k">SR̂</span> − <span class="w">SR̂<sub>0</sub></span>) √<span class="sq">T − 1</span></span><span>√<span class="sq">1 − <span class="g">γ̂<sub>3</sub></span> SR̂ + <span class="frac" style="font-size:.85em"><span><span class="g">γ̂<sub>4</sub></span> − 1</span><span>4</span></span> SR̂<sup>2</sup></span></span></span> <span class="big">]</span></div>
+  <div class="formula"><span class="w">SR̂<sub>0</sub></span> = √<span class="sq">V[{SR̂<sub>n</sub>}]</span> · <span class="big">(</span>(1 − γ) Z<sup>−1</sup>[1 − 1/N] + γ Z<sup>−1</sup>[1 − e<sup>−1</sup>/N]<span class="big">)</span></div>
+  <p class="reading">Read aloud: the deflated Sharpe ratio is the standard Normal probability of the gap between the estimate and the threshold, multiplied by the square root of the sample length minus one, and divided by a term that grows when returns are negatively skewed or fat-tailed. The threshold is the expected maximum of N skill-less trials, scaled by the standard deviation of the Sharpe ratios across the trials. A DSR above 0.95 is evidence at the 95% level that the selected strategy has a positive true Sharpe ratio.</p>
+  <p>Harvey and Liu (2015, eq. 3–5) take a p-value route. The single-test p-value of the t-statistic SR̂·√T is converted to a multiple-testing p-value for N independent tests, p<sup>M</sup> = 1 − (1 − p<sup>S</sup>)<sup>N</sup>, and the haircut Sharpe ratio is the Sharpe ratio whose single-test p-value equals p<sup>M</sup>. Their example: twenty years of monthly returns, an annual Sharpe ratio of 0.75, and 200 tests reduce the Sharpe ratio to about 0.32. Select a term for its definition.</p>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="anat">
+      <div class="terms" id="termsD">
+        <button class="term on" data-k="sr"><span class="sym k">SR̂</span><span>selected strategy's estimate<small>per period, not annualised</small></span></button>
+        <button class="term" data-k="sr0"><span class="sym w">SR̂<sub>0</sub></span><span>rejection threshold<small>expected best of N skill-less trials</small></span></button>
+        <button class="term" data-k="T"><span class="sym">√(T − 1)</span><span>sample length<small>number of returns, minus one</small></span></button>
+        <button class="term" data-k="g3"><span class="sym g">γ̂<sub>3</sub></span><span>skewness<small>asymmetry of the return distribution</small></span></button>
+        <button class="term" data-k="g4"><span class="sym g">γ̂<sub>4</sub></span><span>kurtosis<small>weight of the tails; 3 for a Normal</small></span></button>
+        <button class="term" data-k="V"><span class="sym">V[{SR̂<sub>n</sub>}]</span><span>variance across trials<small>how widely the tried configurations differ</small></span></button>
+        <button class="term" data-k="Z"><span class="sym">Z[·]</span><span>standard Normal CDF<small>turns a z-score into a probability</small></span></button>
+      </div>
+      <div class="explain" id="xD"></div>
+    </div>
+  </div>
+</section>
+<section class="wide">
+  <div class="lab">
+    <div class="lab-head"><h3>Lab D · Deflated Sharpe ratio and haircut calculators</h3><span class="tag">published examples · editable</span></div>
+    <p class="note">Both calculators open on the hypothetical examples published in the papers, so each output can be compared with the printed value. The inputs can be edited.</p>
+    <div class="two">
+      <div class="card">
+        <h3 style="font-size:18px">Deflated Sharpe ratio, Bailey and López de Prado (2014)</h3>
+        <div class="inputs">
+          <div><span>annual SR̂</span><input id="dSR" type="number" step="0.1" value="2.5"></div>
+          <div><span>periods per year q</span><input id="dQ" type="number" step="1" value="250"></div>
+          <div><span>sample length T</span><input id="dT" type="number" step="50" value="1250"></div>
+          <div><span>trials N</span><input id="dN" type="number" step="1" min="1" value="100"></div>
+          <div><span>V[annual SR̂ across trials]</span><input id="dV" type="number" step="0.1" value="0.5"></div>
+          <div><span>skewness γ̂<sub>3</sub></span><input id="dG3" type="number" step="0.5" value="-3"></div>
+          <div><span>kurtosis γ̂<sub>4</sub></span><input id="dG4" type="number" step="0.5" value="10"></div>
+        </div>
+        <div class="row"><button class="pill" id="dEx">Paper example</button><button class="pill" id="dNorm">Normal returns (γ̂₃ = 0, γ̂₄ = 3)</button></div>
+        <div class="arith" id="dOut"></div>
+        <div class="verdict" id="dV95"></div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:18px">Multiple-testing haircut, Harvey and Liu (2015)</h3>
+        <div class="inputs">
+          <div><span>annual SR̂</span><input id="hSR" type="number" step="0.05" value="0.75"></div>
+          <div><span>periods per year q</span><input id="hQ" type="number" step="1" value="12"></div>
+          <div><span>sample length T</span><input id="hT" type="number" step="12" value="240"></div>
+          <div><span>tests N</span><input id="hN" type="number" step="1" min="1" value="200"></div>
+        </div>
+        <div class="row"><button class="pill" id="hEx">Paper example</button></div>
+        <div class="arith" id="hOut"></div>
+        <p class="note">Probabilities use the standard Normal. The paper's printed values (p<sup>S</sup> = 0.0008, p<sup>M</sup> = 0.15, haircut Sharpe ratio 0.32) agree with that choice to the digits shown.</p>
+      </div>
+    </div>
+    <div class="callout"><b>Lab steps</b>
+      <span>1. The deflated Sharpe ratio opens on the paper's example: an annual Sharpe ratio of 2.5 over five years, selected from 100 trials, with skewness −3 and kurtosis 10. The output reproduces the paper's threshold of 0.1132 per period and DSR of 0.9004, below 0.95.</span>
+      <span>2. Set N = 46. The DSR rises above 0.95, as the paper reports. Fewer trials lower the threshold.</span>
+      <span>3. Return to N = 100 and select "Normal returns". The denominator shrinks and the DSR rises. The paper reports that with Normal returns the strategy would pass after as many as 88 trials.</span>
+      <span>4. In the haircut calculator, set N = 1. With one test there is no adjustment and the haircut is zero.</span></div>
+  </div>
+</section>
+
+<!-- 6 TAILS AND PATH -->
+<section class="wrap">
+  <h2>6 · Non-Normal returns and drawdown</h2>
+  <p>The Sharpe ratio uses two moments of the return distribution, the mean and the standard deviation. Harvey and Liu (2015, p. 13) state the limitation: "high observed Sharpe ratios could be the results of non-normal returns, for instance, an option-like strategy with high ex ante negative skew. In this case, Sharpe ratios should be viewed in the context of the skew." The DSR denominator includes the skewness γ̂<sub>3</sub> and kurtosis γ̂<sub>4</sub> for this reason: with negative skewness or kurtosis above 3, the same Sharpe ratio carries less evidence.</p>
+  <p>The Sharpe ratio is also unchanged by the order of the returns. A history in which the losses arrive consecutively and a history in which they are scattered have the same mean and standard deviation, and therefore the same Sharpe ratio, but different maximum drawdowns. The project reports the maximum drawdown from <code>stats()</code> next to every Sharpe ratio for this reason.</p>
+</section>
+
+<!-- IN THIS PROJECT -->
+<section class="wrap">
+  <h2>In this project</h2>
+  <div class="callout"><b>How backtest.py computes the Sharpe ratio</b>
+    <span>Lines 89 and 94 of <code>src/backtest.py</code>: <code>vol = net.std() * np.sqrt(bars_per_year)</code> and <code>Sharpe = (net.mean() * bars_per_year) / vol</code>. This equals (μ̂/σ̂)·√q with q = <code>bars_per_year</code> = 365, the annualised form of section 1.</span>
+    <span><b style="color:inherit">Risk-free rate.</b> The code uses <code>net</code>, not net minus a risk-free return, so r<sub>f</sub> = 0. For a long/short position financed at a cost, the carry line (line 70) already charges financing; for a funded long position, setting r<sub>f</sub> = 0 overstates the Sharpe ratio by roughly the cash rate divided by the volatility. Each model report states this assumption.</span>
+    <span><b style="color:inherit">Costs and lag.</b> <code>net</code> is computed after the one-bar lag (line 62), after transaction costs (line 69) and after carry (line 70). Every Sharpe ratio the project reports therefore satisfies constraints 2 and 3.</span>
+    <span><b style="color:inherit">Gold on a calendar-day table.</b> The clean table has one row per calendar day, and gold's forward-filled weekend rows carry zero return. Annualisation sums per-row means and variances over the 365 rows of a year; rows with zero return add nothing to either sum. The result is close to the figure from gold's own trading days with q ≈ 252, which keeps the two instruments on one annualisation convention.</span>
+    <span><b style="color:inherit">Trials.</b> Every grid entry evaluated by <code>walk_forward</code>, and every rule or parameter tried by hand, is one trial in the sense of section 4. The research log records each one, so that N is known when a result is reported.</span>
+    <span><b style="color:inherit">What stats() does not report.</b> <code>stats()</code> returns a point estimate only. The research plan adds two items before a model report is written: a stationary-bootstrap confidence interval for the Sharpe ratio (section 3) and the deflated Sharpe ratio with N taken from the research log (section 5).</span></div>
+</section>
+
+<!-- TERMINOLOGY -->
+<section class="wrap">
+  <h2>Terminology</h2>
+  <p class="note">Each entry: the technical definition first, then the same idea in everyday words in the orange strip.</p>
+  <div class="gloss">
+    <div><b>Sharpe ratio</b><span>mean excess return divided by the standard deviation of returns, usually annualised.<span class="plain">how much a strategy earns for each unit of risk it takes. Two strategies with the same profit: the one with the smaller swings has the higher Sharpe ratio.</span></span></div>
+    <div><b>excess return</b><span>the return minus the risk-free return over the same period.<span class="plain">what the strategy earned beyond what cash would have earned with no risk.</span></span></div>
+    <div><b>risk-free rate</b><span>the return on a riskless asset, conventionally a short-term government bill.<span class="plain">the interest that money in the safest place would earn.</span></span></div>
+    <div><b>annualisation</b><span>conversion of a per-period statistic to annual units: mean × q, standard deviation × √q.<span class="plain">turning a daily number into a yearly one so that different strategies can be compared on the same scale.</span></span></div>
+    <div><b>IID</b><span>independent and identically distributed: each return is drawn from the same distribution, unaffected by earlier returns.<span class="plain">each day's return is a fresh draw from the same distribution, with no memory of yesterday.</span></span></div>
+    <div><b>autocorrelation ρ(k)</b><span>correlation between a return and the return k periods earlier.<span class="plain">how much today's move tends to follow (positive) or reverse (negative) the move k days ago.</span></span></div>
+    <div><b>variance ratio</b><span>variance of q-period returns divided by q times the variance of one-period returns; 1 for uncorrelated returns.<span class="plain">a check on whether risk adds up over time the simple way. Above 1: moves build on each other. Below 1: moves partly cancel.</span></span></div>
+    <div><b>standard error</b><span>standard deviation of an estimator across repeated samples.<span class="plain">how much the number would change if the same strategy were tested on a different stretch of history.</span></span></div>
+    <div><b>t-statistic</b><span>an estimate divided by its standard error; for the mean return it equals SR̂·√T.<span class="plain">how many standard errors the result is away from zero. Larger means less likely to be chance.</span></span></div>
+    <div><b>p-value</b><span>probability, under the null hypothesis, of a test statistic at least as extreme as the one observed.<span class="plain">the chance of getting a result this good if the strategy had no edge at all.</span></span></div>
+    <div><b>trial</b><span>one backtested configuration of a rule and its parameters.<span class="plain">one version of the idea that was tested. Changing a lookback from 63 to 126 days is a second trial.</span></span></div>
+    <div><b>selection bias</b><span>inflation of a reported statistic caused by reporting only the best of several trials.<span class="plain">showing only the best attempt makes the result look better than the method really is.</span></span></div>
+    <div><b>MinBTL</b><span>minimum backtest length: years of data needed so that the best of N skill-less trials is not expected to exceed a given Sharpe ratio.<span class="plain">how long the test history must be before trying N versions stops producing an impressive result by chance.</span></span></div>
+    <div><b>skewness γ̂₃</b><span>third standardised moment of returns; negative when large losses are more likely than large gains of the same size.<span class="plain">whether the bad surprises are bigger than the good ones. Negative skew: many small gains, occasional large losses.</span></span></div>
+    <div><b>kurtosis γ̂₄</b><span>fourth standardised moment; 3 for the Normal distribution, higher when extreme returns are more frequent.<span class="plain">how often very large moves happen compared with a bell curve.</span></span></div>
+    <div><b>DSR</b><span>deflated Sharpe ratio: the probability that the true Sharpe ratio exceeds the expected maximum of N skill-less trials, adjusted for skewness and kurtosis.<span class="plain">the chance that the strategy is genuinely better than the best of the failures that were tested alongside it.</span></span></div>
+    <div><b>haircut</b><span>the percentage reduction from the reported Sharpe ratio to the multiple-testing-adjusted Sharpe ratio.<span class="plain">how much of the reported result is removed once the number of tests is taken into account.</span></span></div>
+  </div>
+</section>
+
+<!-- SOURCES -->
+<section class="wrap">
+  <h2>Sources</h2>
+  <div class="gloss">
+    <div><b>Bailey et al.</b><span>D. H. Bailey, J. M. Borwein, M. López de Prado and Q. J. Zhu, "Pseudo-Mathematics and Financial Charlatanism: The Effects of Backtest Overfitting on Out-of-Sample Performance", <em>Notices of the AMS</em> 61(5), 2014. Annualised Sharpe ratio (eq. 2), its asymptotic distribution (eq. 3), the expected maximum of N trials (eq. 4–5), MinBTL (eq. 6) and the five-years, 45-trials statement. Sections 1, 3 and 4.</span></div>
+    <div><b>Bailey and López de Prado</b><span>D. H. Bailey and M. López de Prado, "The Deflated Sharpe Ratio: Correcting for Selection Bias, Backtest Overfitting and Non-Normality", <em>Journal of Portfolio Management</em>, 2014. Eq. 1–2 and the numerical example (N = 100, V = 1/2, T = 1250, γ̂₃ = −3, γ̂₄ = 10). Section 5 and Lab D.</span></div>
+    <div><b>Harvey and Liu</b><span>C. R. Harvey and Y. Liu, "Backtesting", <em>Journal of Portfolio Management</em>, Fall 2015. The t-statistic and Sharpe ratio (eq. 1–2), the multiple-testing p-value and haircut Sharpe ratio (eq. 3–5) and the twenty-year, 200-test example; the caveat on non-normal returns. Sections 1, 5 and 6.</span></div>
+    <div><b>Lo and MacKinlay</b><span>A. W. Lo and A. C. MacKinlay, "Stock Market Prices Do Not Follow Random Walks: Evidence from a Simple Specification Test", <em>Review of Financial Studies</em> 1(1), 1988. Variance linear in the observation interval (p. 44); the variance ratio as a weighted sum of autocorrelations (eq. 16). Section 2 and Lab A.</span></div>
+    <div><b>Politis and Romano</b><span>D. N. Politis and J. P. Romano, "The Stationary Bootstrap", <em>Journal of the American Statistical Association</em> 89(428), 1994. Resampling of blocks of random, geometrically distributed length for weakly dependent series. Section 3.</span></div>
+  </div>
+  <p class="note" style="margin-top:12px">W. F. Sharpe (1966) and A. W. Lo, "The Statistics of Sharpe Ratios" (2002), are quoted from the reading list, not from the text.</p>
+  <p class="note">All numbers on this page are computed by the page's JavaScript from simulated series or from the published inputs. Part of <a href="index.html">quant-notes</a>. See also <a href="ewma.html">02 · Volatility estimation by EWMA</a>, <a href="backtest.html">03 · Backtest errors and controls</a> and <a href="backtester.html">04 · Backtester implementation</a>.</p>
+</section>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const css=k=>getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+// ---------- numerics ----------
+function rng(seed){let a=seed>>>0||1; return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function gauss(r){let s=null; return function(){if(s!==null){const v=s;s=null;return v;} let u=0,v=0; while(u===0)u=r(); v=r(); const m=Math.sqrt(-2*Math.log(u)); s=m*Math.sin(2*Math.PI*v); return m*Math.cos(2*Math.PI*v);};}
+function erfc(x){const z=Math.abs(x),t=1/(1+0.5*z);const r=t*Math.exp(-z*z-1.26551223+t*(1.00002368+t*(0.37409196+t*(0.09678418+t*(-0.18628806+t*(0.27886807+t*(-1.13520398+t*(1.48851587+t*(-0.82215223+t*0.17087277)))))))));return x>=0?r:2-r;}
+const Phi=x=>0.5*erfc(-x/Math.SQRT2);
+function PhiInv(p){const a=[-39.69683028665376,220.9460984245205,-275.9285104469687,138.3577518672690,-30.66479806614716,2.506628277459239],b=[-54.47609879822406,161.5858368580409,-155.6989798598866,66.80131188771972,-13.28068155288572],c=[-0.007784894002430293,-0.3223964580411365,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783],d=[0.007784695709041462,0.3224671290700398,2.445134137142996,3.754408661907416];
+  let x; const pl=0.02425;
+  if(p<pl){const q=Math.sqrt(-2*Math.log(p));x=(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  else if(p<=1-pl){const q=p-0.5,r=q*q;x=(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+  else{const q=Math.sqrt(-2*Math.log(1-p));x=-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  const e=Phi(x)-p, u=e*Math.sqrt(2*Math.PI)*Math.exp(x*x/2); return x-u/(1+x*u/2);}
+const GAMMA=0.5772156649;
+const eMax=N=>N<=1?0:(1-GAMMA)*PhiInv(1-1/N)+GAMMA*PhiInv(1-1/(N*Math.E));
+const f=(v,d)=>(v<0?'−':'')+Math.abs(v).toFixed(d);
+// ---------- canvas helper ----------
+function prep(c){const dpr=window.devicePixelRatio||1; if(!c._w){c._w=c.width;c._h=c.height;} const cw=c.parentElement.clientWidth||c._w; const W=Math.round(Math.max(300,Math.min(c._w,cw))), H=Math.round(Math.max(c._h*W/c._w,c._h*0.8)); if(c._lw!==W){c._lw=W;c._dpr=0;} c.style.aspectRatio=W+'/'+H; if(c._dpr!==dpr){c.width=W*dpr;c.height=H*dpr;c._dpr=dpr;} const ctx=c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H); ctx.font='12px '+css('--mono'); return [ctx,W,H];}
+function axes(ctx,x0,y0,x1,y1){ctx.strokeStyle=css('--line');ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x0,y1);ctx.lineTo(x1,y1);ctx.stroke();}
+// ---------- anatomy diagrams ----------
+const XSR={
+ mu:'<b>μ̂, the sample mean.</b><span>The sum of the T returns divided by T. In <code>backtest.py</code> it is <code>net.mean()</code>, the average daily return after costs and carry. Multiplied by 365 it becomes the annual mean.</span>',
+ rf:'<b>r<sub>f</sub>, the risk-free return.</b><span>The return on cash over one period. Subtracting it measures only what the strategy earned for taking risk. <code>backtest.py</code> sets it to zero; the "In this project" section states the consequence.</span>',
+ sd:'<b>σ̂, the sample standard deviation.</b><span>The square root of the average squared deviation of the returns from their mean, with T − 1 in the denominator. In <code>backtest.py</code> it is <code>net.std()</code>; pandas uses T − 1 by default. Multiplied by √365 it becomes the annual volatility on line 89.</span>',
+ q:'<b>√q, the annualisation factor.</b><span>The mean grows with the number of periods q; the standard deviation grows with √q when returns are uncorrelated. The ratio grows with √q. For q = 365, √q = <span id="sq365"></span>. Section 2 shows the correction when returns are autocorrelated.</span>',
+ hat:'<b>SR̂ and SR.</b><span>SR is the true ratio of the process that generates the returns. It is not observable. SR̂ is the value computed from one sample. Section 3 shows how far SR̂ can be from SR for a given number of years.</span>',
+ t:'<b>t = SR̂ · √T.</b><span>The t-statistic tests whether the mean return is zero. It is the per-period Sharpe ratio times the square root of the number of observations. Example: an annual Sharpe ratio of 0.5 over 5 years of daily data is a per-period ratio of 0.5/√365 = <span id="tPer"></span>, and t = <span id="tVal"></span> with T = 1825.</span>'};
+const XD={
+ sr:'<b>SR̂, the selected strategy\'s estimate.</b><span>The Sharpe ratio of the configuration that was retained, per period. An annual Sharpe ratio is divided by √q first: the paper\'s 2.5 annual with q = 250 is 2.5/√250 = <span id="xd1"></span> per day.</span>',
+ sr0:'<b>SR̂<sub>0</sub>, the rejection threshold.</b><span>The Sharpe ratio that the best of N trials is expected to reach when every trial has zero true Sharpe ratio: the expected maximum of section 4, scaled by the spread of the trials\' Sharpe ratios. The strategy is credited only with the part of SR̂ above this level.</span>',
+ T:'<b>√(T − 1), the sample length.</b><span>T is the number of returns. A longer sample makes the same gap between SR̂ and SR̂<sub>0</sub> more significant, as the t-statistic in section 1 does.</span>',
+ g3:'<b>γ̂<sub>3</sub>, skewness.</b><span>The average cubed standardised return. Negative skewness means large losses are more frequent than large gains of the same size. In the denominator, −γ̂<sub>3</sub>·SR̂ is positive when skewness is negative and SR̂ is positive, so the denominator grows and the DSR falls.</span>',
+ g4:'<b>γ̂<sub>4</sub>, kurtosis.</b><span>The average fourth power of the standardised return; 3 for a Normal distribution. Kurtosis above 3 means extreme returns are more frequent than under a Normal. The term (γ̂<sub>4</sub> − 1)/4 · SR̂² grows with it, so the DSR falls.</span>',
+ V:'<b>V[{SR̂<sub>n</sub>}], the variance across trials.</b><span>The variance of the Sharpe ratios of all N trials. If the trials are near-copies of one another, their Sharpe ratios differ little, V is small and the threshold is low. In the paper\'s example the annual variance is 1/2, which is 1/(2·250) per day.</span>',
+ Z:'<b>Z[·], the standard Normal cumulative distribution.</b><span>Z[x] is the probability that a standard Normal variable is below x. Z[1.645] = <span id="z1645"></span>, so a ratio inside the brackets above 1.645 gives a DSR above 0.95.</span>'};
+function anat(boxId,xId,MAP,after){const box=$(boxId); const show=k=>{box.querySelectorAll('.term').forEach(b=>b.classList.toggle('on',b.dataset.k===k)); $(xId).innerHTML=MAP[k]; after&&after(); const b=box.querySelector('.term.on'); if(window.matchMedia('(min-width:761px)').matches){const off=Math.max(0,b.offsetTop-box.offsetTop); $(xId).style.marginTop=off+'px';} else $(xId).style.marginTop='0';};
+  box.querySelectorAll('.term').forEach(b=>b.addEventListener('click',()=>show(b.dataset.k))); show(box.querySelector('.term.on').dataset.k);}
+function fillAnat(){const s=$('sq365'); if(s) s.textContent=Math.sqrt(365).toFixed(3); const tp=$('tPer'); if(tp){tp.textContent=(0.5/Math.sqrt(365)).toFixed(4); $('tVal').textContent=(0.5/Math.sqrt(365)*Math.sqrt(1825)).toFixed(2);}
+  const x1=$('xd1'); if(x1) x1.textContent=(2.5/Math.sqrt(250)).toFixed(4); const z=$('z1645'); if(z) z.textContent=Phi(1.645).toFixed(3);}
+anat('termsSR','xSR',XSR,fillAnat); anat('termsD','xD',XD,fillAnat);
+// ---------- text numbers ----------
+const yrs=SR=>1.96*1.96*(1+SR*SR/(2*365))/(SR*SR);
+$('yr05').textContent=yrs(0.5).toFixed(1); $('yr10').textContent=yrs(1).toFixed(1);
+$('em10').textContent=eMax(10).toFixed(2);
+{const se=Math.sqrt((1+0.25/730)/5); $('bR1').textContent=f(0.5-1.96*se,2); $('bR2').textContent=f(0.5+1.96*se,2);}
+const nFor=y=>{let N=1; while(eMax(N+1)/Math.sqrt(y)<=1) N++; return N;};
+$('nfor5').textContent=nFor(5); $('nfor2').textContent=nFor(2);
+// ---------- Lab A ----------
+let aQ=365, simA=null, simKey='';
+function VR(h,rho){let s=0; for(let k=1;k<h;k++) s+=2*(h-k)/h*Math.pow(rho,k); return 1+s;}
+function labA(){const mu=+$('aMu').value/1e4, sd=+$('aSd').value/100, rho=+$('aRho').value, seed=+$('aSeed').value;
+  $('aMuO').textContent=f(+$('aMu').value,1); $('aSdO').textContent=(+$('aSd').value).toFixed(1); $('aRhoO').textContent=f(rho,2); $('aSeedO').textContent=seed;
+  const key=[mu,sd,rho,seed,aQ].join(',');
+  if(key!==simKey){const g=gauss(rng(seed*977+13)); const n=300*aQ; const r=new Float64Array(n); const se=sd*Math.sqrt(1-rho*rho); let prev=g()*sd; for(let i=0;i<n;i++){prev=rho*prev+se*g(); r[i]=mu+prev;}
+    const H=[1,5,21,63,126,aQ]; const pts=[]; for(const h of H){const m=Math.floor(n/h); let s1=0,s2=0; for(let j=0;j<m;j++){let s=0; for(let i=j*h;i<(j+1)*h;i++) s+=r[i]; s1+=s; s2+=s*s;} const mean=s1/m, v=(s2-m*mean*mean)/(m-1); pts.push([h,Math.sqrt(v)/sd,mean,Math.sqrt(v)]);}
+    simA=pts; simKey=key;}
+  const vr=VR(aQ,rho), srd=mu/sd, srq=srd*Math.sqrt(aQ), srt=srq/Math.sqrt(vr); const last=simA[simA.length-1];
+  $('aSRd').textContent=f(srd,4); $('aSRq').textContent=f(srq,2); $('aVR').textContent=vr.toFixed(2); $('aSRt').textContent=f(srt,2); $('aSRs').textContent=f(last[2]/last[3],2);
+  const [ctx,W,H]=prep($('cvA')); const L=56,R=16,T=14,B=34; const X=h=>L+(W-L-R)*h/aQ; const ymax=Math.max(Math.sqrt(aQ*VR(aQ,0.3)),...simA.map(p=>p[1]))*1.05; const Y=v=>H-B-(H-B-T)*v/ymax;
+  axes(ctx,L,T,W-R,H-B); ctx.fillStyle=css('--muted'); ctx.textAlign='right'; for(let v=0;v<=ymax;v+=ymax>40?10:5){ctx.fillText(v.toFixed(0),L-6,Y(v)+4); ctx.strokeStyle=css('--line'); ctx.globalAlpha=.5; ctx.beginPath(); ctx.moveTo(L,Y(v)); ctx.lineTo(W-R,Y(v)); ctx.stroke(); ctx.globalAlpha=1;}
+  ctx.textAlign='center'; for(const h of [1,63,126,189,252,aQ===365?365:null].filter(Boolean)){ctx.fillText(h,X(h),H-B+16);} ctx.fillText('horizon h, days',X(aQ/2),H-4);
+  ctx.save(); ctx.translate(14,(T+H-B)/2); ctx.rotate(-Math.PI/2); ctx.fillText('std of h-day sum ÷ σ',0,0); ctx.restore();
+  ctx.lineWidth=2; ctx.strokeStyle=css('--muted'); ctx.setLineDash([5,4]); ctx.beginPath(); for(let h=1;h<=aQ;h++){const y=Y(Math.sqrt(h)); h===1?ctx.moveTo(X(h),y):ctx.lineTo(X(h),y);} ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle=css('--accent'); ctx.lineWidth=2.5; ctx.beginPath(); for(let h=1;h<=aQ;h++){const y=Y(Math.sqrt(h*VR(h,rho))); h===1?ctx.moveTo(X(h),y):ctx.lineTo(X(h),y);} ctx.stroke();
+  ctx.fillStyle=css('--warm'); for(const p of simA){ctx.beginPath(); ctx.arc(X(p[0]),Y(p[1]),5,0,2*Math.PI); ctx.fill();}}
+['aMu','aSd','aRho','aSeed'].forEach(id=>$(id).addEventListener('input',labA));
+$('aQ').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{$('aQ').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); aQ=+b.dataset.q; labA();}));
+// ---------- Lab B ----------
+let simB=null,keyB='';
+function srOf(g,n,mu,sd,q){let s1=0,s2=0; for(let i=0;i<n;i++){const x=mu+sd*g(); s1+=x; s2+=x*x;} const m=s1/n, v=(s2-n*m*m)/(n-1); return m/Math.sqrt(v)*Math.sqrt(q);}
+function labB(){const SR=+$('bSR').value, y=+$('bY').value, seed=+$('bSeed').value, q=365, M=600;
+  $('bSRO').textContent=SR.toFixed(2); $('bYO').textContent=y; $('bSeedO').textContent=seed;
+  const key=[SR,y,seed].join(','); if(key!==keyB){const g=gauss(rng(seed*7919+y*31+Math.round(SR*100))); const sd=0.01, mu=SR*sd/Math.sqrt(q); const a=[]; for(let j=0;j<M;j++) a.push(srOf(g,y*q,mu,sd,q)); simB=a.sort((u,v)=>u-v); keyB=key;}
+  const mean=simB.reduce((s,v)=>s+v,0)/M, sdE=Math.sqrt(simB.reduce((s,v)=>s+(v-mean)*(v-mean),0)/(M-1)), se=Math.sqrt((1+SR*SR/(2*q))/y);
+  const lo=simB[Math.floor(0.025*M)], hi=simB[Math.ceil(0.975*M)-1], neg=simB.filter(v=>v<0).length/M;
+  $('bMean').textContent=f(mean,2); $('bSdE').textContent=sdE.toFixed(2); $('bSdF').textContent=se.toFixed(2); $('bInt').textContent=f(lo,2)+' to '+f(hi,2); $('bNeg').textContent=(neg*100).toFixed(1)+'%';
+  const [ctx,W,H]=prep($('cvB')); const L=40,R=16,T=12,B=34; const xmin=-1.5, xmax=3.5; const X=v=>L+(W-L-R)*(v-xmin)/(xmax-xmin);
+  const bw=0.05, nb=Math.round((xmax-xmin)/bw), cnt=new Array(nb).fill(0); for(const v of simB){const i=Math.floor((v-xmin)/bw); if(i>=0&&i<nb) cnt[i]++;}
+  const dens=cnt.map(c=>c/(M*bw)); const pk=Math.max(...dens, 1/(se*Math.sqrt(2*Math.PI)))*1.08; const Y=d=>H-B-(H-B-T)*d/pk;
+  axes(ctx,L,T,W-R,H-B); ctx.fillStyle=css('--muted'); ctx.textAlign='center'; for(let v=-1;v<=3.5;v+=0.5) ctx.fillText(f(v,1),X(v),H-B+16); ctx.fillText('estimated annual Sharpe ratio',X(1),H-4);
+  ctx.fillStyle=css('--accent'); ctx.globalAlpha=.55; dens.forEach((d,i)=>{if(d>0) ctx.fillRect(X(xmin+i*bw)+0.5,Y(d),(W-L-R)*bw/(xmax-xmin)-1,H-B-Y(d));}); ctx.globalAlpha=1;
+  ctx.strokeStyle=css('--warm'); ctx.lineWidth=2.5; ctx.beginPath(); for(let i=0;i<=400;i++){const v=xmin+(xmax-xmin)*i/400, d=Math.exp(-0.5*((v-SR)/se)**2)/(se*Math.sqrt(2*Math.PI)); i?ctx.lineTo(X(v),Y(d)):ctx.moveTo(X(v),Y(d));} ctx.stroke();
+  ctx.lineWidth=1.5; ctx.strokeStyle=css('--muted'); ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(X(0),T); ctx.lineTo(X(0),H-B); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle=css('--ink'); ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(X(SR),T); ctx.lineTo(X(SR),H-B); ctx.stroke();}
+['bSR','bY','bSeed'].forEach(id=>$(id).addEventListener('input',labB));
+// ---------- Lab C ----------
+const NS=[1,2,3,5,7,10,20,45,100,200,500,1000]; let simC=null,keyC='';
+function labC(){const N=NS[+$('cN').value], y=+$('cY').value, seed=+$('cSeed').value, q=365;
+  $('cNO').textContent=N; $('cYO').textContent=y; $('cSeedO').textContent=seed;
+  const key=[N,y,seed].join(','); if(key!==keyC){const g=gauss(rng(seed*104729+N*7+y)); const a=[]; for(let j=0;j<N;j++) a.push(srOf(g,y*q,0,0.01,q)); simC=a; keyC=key;}
+  const mx=Math.max(...simC), em=eMax(N)/Math.sqrt(y), ub=N>1?Math.sqrt(2*Math.log(N))/Math.sqrt(y):0;
+  $('cMax').textContent=f(mx,2); $('cEm').textContent=f(em,2); $('cBtl').textContent=(eMax(N)**2).toFixed(2); $('cNmax').textContent=nFor(y);
+  const [ctx,W,H]=prep($('cvC')); const L=20,R=16,T=12,B=34; const xmin=-3, xmax=4; const X=v=>L+(W-L-R)*(v-xmin)/(xmax-xmin);
+  axes(ctx,L,H-B,W-R,H-B); ctx.fillStyle=css('--muted'); ctx.textAlign='center'; for(let v=-3;v<=4;v+=1) ctx.fillText(f(v,0),X(v),H-B+16); ctx.fillText('estimated annual Sharpe ratio',X(0.5),H-4);
+  const r=rng(seed+99); const band=H-B-T-10;
+  ctx.fillStyle=css('--accent'); ctx.globalAlpha=N>200?.45:.75; let im=0; simC.forEach((v,i)=>{if(v===mx){im=i;return;} ctx.beginPath(); ctx.arc(X(v),T+5+r()*band,N>200?2.5:4,0,2*Math.PI); ctx.fill();}); ctx.globalAlpha=1;
+  ctx.lineWidth=2; ctx.strokeStyle=css('--muted'); ctx.setLineDash([2,4]); ctx.beginPath(); ctx.moveTo(X(0),T); ctx.lineTo(X(0),H-B); ctx.stroke();
+  if(N>1){ctx.setLineDash([5,4]); ctx.beginPath(); ctx.moveTo(X(ub),T); ctx.lineTo(X(ub),H-B); ctx.stroke(); ctx.setLineDash([]); ctx.strokeStyle=css('--good'); ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(X(em),T); ctx.lineTo(X(em),H-B); ctx.stroke();}
+  ctx.setLineDash([]); ctx.fillStyle=css('--warm'); ctx.beginPath(); ctx.arc(X(mx),(T+H-B)/2,7,0,2*Math.PI); ctx.fill(); ctx.textAlign='left'; ctx.fillText('max '+f(mx,2),X(mx)+10,(T+H-B)/2-10);}
+['cN','cY','cSeed'].forEach(id=>$(id).addEventListener('input',labC));
+// ---------- Lab D ----------
+function labD(){const SRa=+$('dSR').value, q=+$('dQ').value, T=+$('dT').value, N=Math.max(1,Math.round(+$('dN').value)), V=+$('dV').value, g3=+$('dG3').value, g4=+$('dG4').value;
+  const sr=SRa/Math.sqrt(q), sr0=Math.sqrt(V/q)*eMax(N), den=1-g3*sr+(g4-1)/4*sr*sr, z=(sr-sr0)*Math.sqrt(T-1)/Math.sqrt(den), dsr=Phi(z);
+  $('dOut').textContent='SR̂ per period   = '+SRa+' / √'+q+' = '+sr.toFixed(4)+'\n'+
+   'E[max_N], N='+N+'  = '+eMax(N).toFixed(4)+'\n'+
+   'SR̂₀ per period  = √('+V+'/'+q+') × '+eMax(N).toFixed(4)+' = '+sr0.toFixed(4)+'   (annual '+(sr0*Math.sqrt(q)).toFixed(3)+')\n'+
+   'denominator     = √(1 − ('+f(g3,2)+')·'+sr.toFixed(4)+' + ('+g4+'−1)/4·'+sr.toFixed(4)+'²) = '+Math.sqrt(den).toFixed(4)+'\n'+
+   'z               = ('+sr.toFixed(4)+' − '+sr0.toFixed(4)+') × √'+(T-1)+' / '+Math.sqrt(den).toFixed(4)+' = '+z.toFixed(3)+'\n'+
+   'DSR = Z[z]      = '+dsr.toFixed(4);
+  const v=$('dV95'); v.className='verdict '+(dsr>0.95?'pass':'fail'); v.textContent=dsr>0.95?'DSR > 0.95: retained as evidence of a positive true Sharpe ratio at the 95% level':'DSR ≤ 0.95: not evidence of a positive true Sharpe ratio at the 95% level';}
+function labH(){const SRa=+$('hSR').value, q=+$('hQ').value, T=+$('hT').value, N=Math.max(1,Math.round(+$('hN').value));
+  const sr=SRa/Math.sqrt(q), t=sr*Math.sqrt(T), pS=2*(1-Phi(t)), pM=1-Math.pow(1-pS,N), tM=PhiInv(1-pM/2), hsr=tM/Math.sqrt(T)*Math.sqrt(q), hc=(SRa-hsr)/SRa;
+  $('hOut').textContent='t = SR̂·√T        = '+sr.toFixed(4)+' × √'+T+' = '+t.toFixed(3)+'\n'+
+   'pˢ (single test)   = '+pS.toPrecision(2)+'\n'+
+   'pᴹ = 1 − (1 − pˢ)ᴺ = '+pM.toFixed(3)+'   (N = '+N+')\n'+
+   't for pᴹ           = '+tM.toFixed(3)+'\n'+
+   'haircut SR, annual = '+tM.toFixed(3)+' / √'+T+' × √'+q+' = '+hsr.toFixed(3)+'\n'+
+   'haircut            = ('+SRa+' − '+hsr.toFixed(3)+') / '+SRa+' = '+(hc*100).toFixed(0)+'%';}
+['dSR','dQ','dT','dN','dV','dG3','dG4'].forEach(id=>$(id).addEventListener('input',labD));
+['hSR','hQ','hT','hN'].forEach(id=>$(id).addEventListener('input',labH));
+$('dEx').addEventListener('click',()=>{const v={dSR:2.5,dQ:250,dT:1250,dN:100,dV:0.5,dG3:-3,dG4:10}; for(const k in v) $(k).value=v[k]; labD();});
+$('dNorm').addEventListener('click',()=>{$('dG3').value=0; $('dG4').value=3; labD();});
+$('hEx').addEventListener('click',()=>{const v={hSR:0.75,hQ:12,hT:240,hN:200}; for(const k in v) $(k).value=v[k]; labH();});
+// ---------- boot ----------
+function all(){labA();labB();labC();labD();labH();}
+all();
+window.addEventListener('resize',()=>{labA();labB();labC();});
+if(window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',all);
+new MutationObserver(all).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+</script>
+</body>
+</html>

@@ -18,6 +18,7 @@ Live site: https://teejay772.github.io/quant-notes/
 | 04 | docs/backtester.html | Backtester implementation (backtest.py) |
 | 04a | docs/backtester-sheet.html | Backtester structure sheet (one-sheet companion to 04) |
 | 05 | docs/roadmap.html | Research plan: phases, weekly scope, sources, deliverables |
+| 06 | docs/sharpe.html | Sharpe ratio estimation |
 
 ## Adding a note
 
