@@ -128,6 +128,13 @@ pre .fnhead.f-rv{color:var(--f-rv)}pre .fnhead.f-bt{color:var(--f-bt)}pre .fnhea
 .xa{display:grid;grid-template-columns:1fr;gap:10px}
 .xa .explain{margin-top:0}
 #steps{gap:6px}#steps button.pill{font-size:13px;padding:4px 10px}
+.outp{border:1px dashed var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.outp h3{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.outp .kv{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 16px;font-family:var(--mono);font-size:12.5px}
+.outp .kv div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding:2px 0}
+.outp .kv b{font-weight:500}
+.outp .win{display:grid;grid-template-columns:64px 1fr;gap:8px;align-items:center;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.outp .bar{display:flex;height:16px}.outp .bar i{display:block;height:100%}.outp .bar .tr{background:var(--f-wf-soft);border:1px solid var(--f-wf)}.outp .bar .te{background:var(--warm-soft);border:1px solid var(--warm)}
 /* labels */
 .labels{display:flex;flex-direction:column;gap:4px}
 .lrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:4px 8px;border-radius:6px;border-left:6px solid transparent}
@@ -230,6 +237,7 @@ code{font-family:var(--mono)}
       <pre id="code"></pre>
       <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
         <div class="tbl"><table id="six"><thead><tr id="sixHead"></tr></thead><tbody id="sixBody"></tbody></table></div>
+        <div id="outPanel" hidden></div>
         <div class="xa"><div class="explain" id="stepX"></div>
         <div class="arith" id="arith"></div></div>
       </div>
@@ -448,7 +456,24 @@ function renderTable(filled,onCol,danger){const head=$('sixHead'); head.innerHTM
       return `<td class="${on?'on':''}${danger&&on?' danger':''}${show?'':' empty'}">${show?fmt[k](v,i):'·'}${closed&&show?' <span style="color:var(--muted)">(closed)</span>':''}</td>`;}).join(''); body.appendChild(tr);}}
 function renderSteps(){const st=activeSteps(); $('steps').innerHTML='<span class="fkey" style="width:100%"><span><i style="background:var(--f-rv)"></i>realised_vol</span><span><i style="background:var(--f-bt)"></i>backtest</span><span><i style="background:var(--warm)"></i>the lag (danger)</span><span><i style="background:var(--f-st)"></i>stats</span><span><i style="background:var(--f-yr)"></i>yearly</span><span><i style="background:var(--f-wf)"></i>walk_forward</span></span><span class="note">Step (or click any line of code):</span>'+st.map((s,i)=>`<button class="pill ${s.danger?'danger':fclass(s)}${i===stepIdx?' on':''}" data-i="${i}" title="${s.fn||'backtest'}">${i+1} · ${s.label}</button>`).join('')+`<button class="pill" id="prevStep">← prev</button><button class="pill" id="nextStep">next →</button>`;
   $('steps').querySelectorAll('button[data-i]').forEach(b=>b.addEventListener('click',()=>{stepIdx=+b.dataset.i; showStep();})); $('nextStep').addEventListener('click',()=>{stepIdx=(stepIdx+1)%activeSteps().length; showStep();}); $('prevStep').addEventListener('click',()=>{const n=activeSteps().length; stepIdx=(stepIdx-1+n)%n; showStep();});}
+
+function renderOut(s){const panel=$('outPanel'); const tbl=$('six').closest('.tbl'); const fn=s.fn||'backtest';
+  if(fn==='backtest'||fn==='realised_vol'){panel.hidden=true; tbl.hidden=false; return;}
+  tbl.hidden=true; panel.hidden=false;
+  if(fn==='stats'){const S=statsOf(R); panel.innerHTML=`<div class="outp"><h3>stats(res) on the six-day table</h3><div class="kv">${S.map(x=>`<div><span>${x[0]}</span><b>${isFinite(x[1])?x[4](x[1]):'nan'}</b></div>`).join('')}</div><p class="note">The Series returned by lines 90–104, computed from the table above. CAGR and TurnoverPerYear annualise six days by 365/6.</p></div>`;}
+  else if(fn==='yearly'){let peak=-Infinity; const mdd=Math.min(...R.equity.map(e=>{peak=Math.max(peak,e);return e/peak-1;}));
+    panel.innerHTML=`<div class="outp"><h3>yearly(res) on the six-day table</h3><table><thead><tr><th>year</th><th>Return</th><th>MaxDD</th></tr></thead><tbody><tr><td>this year</td><td>${pct(R.equity[5]-1)}</td><td>${(mdd*100).toFixed(2)}%</td></tr></tbody></table><p class="note">The six days fall in one calendar year, so one row: the compounded net return and the worst drawdown within the year.</p></div>`;}
+  else {panel.innerHTML=`<div class="outp"><h3>walk_forward(prices, rule, grid): outputs</h3><p class="note">Not computable on six days: the defaults need three years of training data and one year of testing per window. Structure of the two outputs, with 7 years of daily data:</p>
+    <div class="win"><span>window 1</span><div class="bar"><i class="tr" style="width:42.8%"></i><i class="te" style="width:14.3%"></i></div></div>
+    <div class="win"><span>window 2</span><div class="bar"><i style="width:14.3%"></i><i class="tr" style="width:42.8%"></i><i class="te" style="width:14.3%"></i></div></div>
+    <div class="win"><span>window 3</span><div class="bar"><i style="width:28.6%"></i><i class="tr" style="width:42.8%"></i><i class="te" style="width:14.3%"></i></div></div>
+    <div class="win"><span>window 4</span><div class="bar"><i style="width:42.9%"></i><i class="tr" style="width:42.8%"></i><i class="te" style="width:14.3%"></i></div></div>
+    <div class="win"><span>oos</span><div class="bar"><i style="width:42.9%"></i><i class="te" style="width:57.1%"></i></div></div>
+    <p class="note">Pink: training window, every grid entry run, best Sharpe selected. Orange: test window, the selected entry only. The orange windows concatenated are <code>oos</code>, a results table with the same columns as backtest's.</p>
+    <div class="tbl"><table><thead><tr><th>train_start</th><th>test_start</th><th>test_end</th><th>chosen</th><th>train_sharpe</th><th>test_sharpe</th></tr></thead><tbody><tr><td>date</td><td>date</td><td>date</td><td>{"lookback": …}</td><td>number</td><td>number</td></tr></tbody></table></div>
+    <p class="note">The selection log, one row per window.</p></div>`;}}
 function showStep(){R=compute(scen); const st=activeSteps(); if(stepIdx>=st.length)stepIdx=0; const s=st[stepIdx]; const filled=new Set(st.slice(0,stepIdx+1).map(x=>x.col).filter(Boolean));
+  renderOut(s);
   renderCode(s.lines,s.danger?'danger':fclass(s)); renderTable(filled,s.col,!!s.danger); renderSteps(); $('stepX').innerHTML='<span>'+s.text+'</span>'; $('arith').textContent=(s.col?'Day 3 by hand:\n':'')+s.arith(R); renderStats();}
 $('scen').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{$('scen').querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); scen=b.dataset.s; stepIdx=Math.min(stepIdx,activeSteps().length-1); showStep();}));
 // ---------------- map ----------------
