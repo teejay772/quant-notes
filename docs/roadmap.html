@@ -233,6 +233,7 @@ details.week summary::-webkit-details-marker{display:none}
     <div><b>Liu &amp; Tsyvinski</b><span>Y. Liu, A. Tsyvinski, "Risks and Returns of Cryptocurrency", <em>Review of Financial Studies</em> 34 (2021). Week 3.</span></div>
     <div><b>Tsay</b><span>R. Tsay, <em>Analysis of Financial Time Series</em>, 2nd ed., Wiley, 2005. Ch. 1 and 3 in week 4; ch. 2 in week 9; ch. 8 in week 10.</span></div>
     <div><b>Wasserman</b><span>L. Wasserman, <em>All of Statistics</em>, Springer, 2004, ch. 2–3. Week 4, optional.</span></div>
+    <div><b>Markowitz</b><span>H. Markowitz, "Portfolio Selection", <em>Journal of Finance</em> 7 (1952). Week 5.</span></div>
     <div><b>Bailey et al. 2015</b><span>D. Bailey, J. Borwein, M. López de Prado, Q. J. Zhu, "The Probability of Backtest Overfitting", working paper 2015, published in <em>Journal of Computational Finance</em> 20 (2017). Week 5.</span></div>
     <div><b>Bailey &amp; López de Prado</b><span>D. Bailey, M. López de Prado, "The Deflated Sharpe Ratio", <em>Journal of Portfolio Management</em> 40 (2014). Week 6.</span></div>
     <div><b>Harvey &amp; Liu</b><span>C. Harvey, Y. Liu, "Backtesting", <em>Journal of Portfolio Management</em> 42 (2015). Week 6.</span></div>
@@ -269,7 +270,7 @@ const W=[
   read:["Carver, Systematic Trading, ch. 1–3 and ch. 12, with his ch. 2 Sharpe-across-periods and ch. 12 cost-template sheets","López de Prado 2018: one line per reason on how the repo handles it","RiskMetrics 1996 ch. 5: the EWMA recursion, against realised_vol","Bailey et al. 2014, Pseudo-Mathematics: why repeated backtesting produces fake results","Sharpe 1994: the definition of the ratio; stats() uses a zero benchmark, recorded as a convention in the log"],
   math:["Shreve I ch. 2: probability on coin-toss space, conditional expectation, the martingale property; exercises 2.1–2.4 and a 10,000-path simulation checking that the discounted price does not drift"],
   links:[["backtest.html","03 · Backtest errors and controls"],["backtester.html","04 · Backtester implementation"],["ewma.html","02 · Volatility estimation by EWMA"],["sharpe.html","06 · Sharpe ratio estimation"]],
-  out:"src/backtest.py annotated; the tradable mask and its test; results/02_cost_sensitivity.csv; the README cost table with measured numbers; the 2026-01-30 gold print checked against a second source with a verdict in the log; one commit."},
+  out:"src/backtest.py annotated; notebooks/02_backtester_study.ipynb, verifying the backtester: a hand-computed six-day example reproduced to four decimals, the position confirmed equal to the lagged signal, and a copy with the lag removed shown to inflate the Sharpe ratio; the tradable mask and its test; results/02_cost_sensitivity.csv; the README cost table with measured numbers; the 2026-01-30 gold print checked against a second source with a verdict in the log; one commit."},
  {n:3,p:"p2",t:"Trend signals on two instruments",brief:"Time-series momentum at several horizons, moving-average crossover, Donchian breakout and EWMAC, on gold and bitcoin separately.",
   work:["Time-series momentum at 1, 3, 6 and 12 months for XAU and BTC separately","Moving-average crossover and Donchian breakout as alternative trend signals","Carver's EWMAC(16,64) with forecast scaling, compared with tsmom and ma_cross"],
   read:["Moskowitz, Ooi & Pedersen 2012: the rule, the 12-month lookback, the vol-scaled position formula","Hurst, Ooi & Pedersen 2017: a century of evidence and the drawdown years; the regime list for week 7 comes from here","Liu & Tsyvinski 2021: momentum in bitcoin at one week and one month; what it implies for the BTC lookback grid","Carver ch. 7 and the EWMAC sheet: forecast scaling cell by cell"],
@@ -284,7 +285,7 @@ const W=[
   out:"Model 1 v1 with a full-history backtest, costs included."},
  {n:5,p:"p2",t:"Walk-forward testing",brief:"Parameters chosen on training windows and scored strictly out of sample; in-sample and out-of-sample Sharpe compared honestly.",
   work:["Split the history: fit in sample, evaluate strictly out of sample","Walk-forward re-estimation of every parameter in the grid","In-sample vs out-of-sample Sharpe, per instrument and combined","Instrument weights handcrafted 50/50 by risk; the optimiser read, not run"],
-  read:["Carver ch. 4–5: handcrafting versus fitting weights; the system diagram","Bailey et al. 2015, Probability of Backtest Overfitting, sections 1–4"],
+  read:["Carver ch. 4–5: handcrafting versus fitting weights; the system diagram","Bailey et al. 2015, Probability of Backtest Overfitting, sections 1–4","Markowitz 1952, first half: mean and variance as the two criteria, the efficient set, diversification through covariance; read before Carver ch. 4"],
   math:["Shreve II ch. 2: information, conditioning, filtrations; exercises on conditional expectation"],
   links:[["backtest.html","03 · Backtest errors and controls"]],
   out:"Out-of-sample results table and the walk-forward selection log."},
