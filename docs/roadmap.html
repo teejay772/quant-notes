@@ -272,7 +272,7 @@ const W=[
   work:["Time-series momentum at 1, 3, 6 and 12 months for XAU and BTC separately","Moving-average crossover and Donchian breakout as alternative trend signals","Carver's EWMAC(16,64) with forecast scaling, compared with tsmom and ma_cross"],
   read:["Moskowitz, Ooi & Pedersen 2012: the rule, the 12-month lookback, the vol-scaled position formula","Hurst, Ooi & Pedersen 2017: a century of evidence and the drawdown years; the regime list for week 7 comes from here","Liu & Tsyvinski 2021: momentum in bitcoin at one week and one month; what it implies for the BTC lookback grid","Carver ch. 7 and the EWMAC sheet: forecast scaling cell by cell"],
   math:["Shreve I ch. 3 (state prices, Radon–Nikodym derivative) and ch. 5 (random walk, first passage times)"],
-  links:[["momentum.html","01 · momentum"]],
+  links:[["momentum.html","01 · Time-series momentum"]],
   out:"Signal research notebook: which horizons work on which instrument, with costs."},
  {n:4,p:"p2",t:"Volatility sizing and risk",brief:"EWMA realised volatility per instrument, a 10% annual risk target each, a hard leverage cap, and a rule for going flat.",
   work:["EWMA realised volatility per instrument; target 10% annual risk each","Position shrinks as volatility rises; hard cap on leverage","Rule for flat positions when signals disagree or volatility explodes","Gold and bitcoin checked against Carver's instrument criteria, answer in the log"],
@@ -351,7 +351,7 @@ function renderTL(on){
   $('tl').innerHTML=PHASES.map(p=>`<div class="phase"><div class="pn"><b>${p.name}</b>${p.span}</div><div class="cells">${p.weeks.map(n=>`<button class="cell ${p.id}${STATUS[n]?' '+STATUS[n]:''}${LIVE.includes(n)?' live':''}${n===on?' on':''}" data-n="${n}" aria-label="week ${n}">${n}</button>`).join('')}</div></div>`).join('');
   $('tl').querySelectorAll('.cell').forEach(b=>b.addEventListener('click',()=>{renderTL(+b.dataset.n); const d=document.querySelector(`details[data-n="${b.dataset.n}"]`); if(d){d.open=true;}}));
   const w=byN(on); const st=STATUS[on]==='done'?'Complete.':STATUS[on]==='now'?'In progress.':'Not started.';
-  $('tlX').innerHTML=`<b>Week ${w.n} · ${w.t}</b><span>${w.brief}</span><span class="note">${st}${LIVE.includes(on)?' A model begins simulated trading this week.':''} Deliverable: ${w.out.split('.')[0]}.</span>`;
+  $('tlX').innerHTML=`<b>Week ${w.n} · ${w.t}</b><span>${w.brief}</span><span class="note">${st}${LIVE.includes(on)?' A model begins simulated trading this week.':''} Deliverable: ${w.out.split(/;\s|\.\s/)[0].replace(/\.$/,'')}.</span>`;
 }
 renderTL(2);
 // stats computed from the plan

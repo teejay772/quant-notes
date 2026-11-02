@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Backtester Implementation · quant-notes</title>
-<meta name="description" content="Documentation of backtest.py: structure, a six-day worked example computed in the page, line classification, pandas methods, formulas, summary statistics, walk-forward selection and review questions.">
+<meta name="description" content="Documentation of backtest.py: structure, a six-day worked example computed in the page, formulas, summary statistics, walk-forward selection and review questions.">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
@@ -193,7 +193,7 @@ code{font-family:var(--mono)}
 <header class="wrap">
   <p class="eyebrow">Quant notes · 04 · interactive</p>
   <h1>Backtester implementation</h1>
-  <p class="lede">This page documents <code>backtest.py</code> in the xau-btc-models repository: 157 lines, five functions. Each function is described and then traced on a six-day example with invented closing prices. The page also classifies each line of <code>backtest</code>, defines the twelve pandas methods the file uses, states the formulas, and lists review questions. All numbers are computed by the page's JavaScript from the six closes and can be checked by hand.</p>
+  <p class="lede">This page documents <code>backtest.py</code> in the xau-btc-models repository: 157 lines, five functions. Each function is described and then traced on a six-day example with invented closing prices. The page also states the formulas, computes the summary statistics on the example, shows walk-forward selection, and lists review questions. All numbers are computed by the page's JavaScript from the six closes and can be checked by hand.</p>
   <div class="rules"><b>Constraints</b>
     <span>1 · Signals use only past data. 2 · The one-bar lag, <code>pos = target.shift(1)</code>, is never removed. 3 · Every result includes costs.</span></div>
   <p class="note">The six-day example uses invented prices. No market data is used and no performance is reported.</p>
@@ -247,32 +247,10 @@ code{font-family:var(--mono)}
 </section>
 
 <!-- 3 LABELS -->
-<section class="wrap">
-  <h2>3 · Line classification</h2>
-  <p>Lines 50–80, the body of <code>backtest</code>, are classified in four categories: <span class="k">input handling</span>, <span style="color:var(--purple)">signal to position</span>, <span class="w">costs</span> and <span class="g">output</span>. Select a category for each line, then reveal the classification. Colours are hidden until revealed.</p>
-</section>
-<section class="wide">
-  <div class="lab">
-    <div class="key"><span><i style="background:var(--accent)"></i>IN · input handling</span><span><i style="background:var(--purple)"></i>SIG · signal to position</span><span><i style="background:var(--warm)"></i>COST · costs</span><span><i style="background:var(--good)"></i>OUT · output</span><button class="small" id="revAll">Reveal all</button><button class="small" id="hideAll">Hide all</button><span id="score" style="font-family:var(--mono)"></span></div>
-    <div class="labels" id="labels"></div>
-  </div>
-</section>
-
 <!-- 4 METHODS -->
-<section class="wrap">
-  <h2>4 · pandas methods</h2>
-  <p>The twelve pandas methods used in the file. Each entry gives the line where the method appears, a three-row example computed from the six-day data, and a one-sentence definition, hidden until revealed.</p>
-</section>
-<section class="wide">
-  <div class="lab">
-    <div class="key"><button class="small" id="revM">Reveal all definitions</button><button class="small" id="hideM">Hide all</button></div>
-    <div class="methods" id="methods"></div>
-  </div>
-</section>
-
 <!-- 5 FORMULAS -->
 <section class="wrap">
-  <h2>5 · Formulas</h2>
+  <h2>3 · Formulas</h2>
   <p>One formula per box, in the order the code computes them, each followed by its reading.</p>
   <div class="formula">vol<sub>t</sub> = ewm_std<sub>span</sub>(r)<sub>t</sub> · √<span style="border-top:1.5px solid currentColor;padding:0 .2em">365</span></div>
   <p class="reading">Line 23. The exponentially weighted standard deviation of daily returns up to day t, times √365 to quote it per year. Span 30 corresponds to λ ≈ 0.935; the <a href="ewma.html">EWMA note (02)</a> covers this line.</p>
@@ -308,7 +286,7 @@ code{font-family:var(--mono)}
 
 <!-- 6 STATS -->
 <section class="wrap">
-  <h2>6 · Summary statistics</h2>
+  <h2>4 · Summary statistics</h2>
   <p>The eleven values returned by <code>stats</code>, computed from the table in section 2 for the selected scenario. Selecting a value shows its line and its arithmetic.</p>
 </section>
 <section class="wide">
@@ -322,7 +300,7 @@ code{font-family:var(--mono)}
 
 <!-- 7 WALK FORWARD -->
 <section class="wrap">
-  <h2>7 · Walk-forward selection</h2>
+  <h2>5 · Walk-forward selection</h2>
   <p>Lines 116–157. Parameters are selected on a training window and applied to the following test window only. The windows then advance, and the test windows are concatenated. Select a stage.</p>
 </section>
 <section class="wide">
@@ -336,14 +314,14 @@ code{font-family:var(--mono)}
 
 <!-- 8 QUESTIONS -->
 <section class="wrap">
-  <h2>8 · Review questions</h2>
+  <h2>6 · Review questions</h2>
   <p>Seven questions from session 3 of the study guide. Answers are hidden until revealed.</p>
   <div class="qs" id="qs"></div>
 </section>
 
 <!-- 9 GLOSSARY -->
 <section class="wide">
-  <h2>9 · Terminology</h2>
+  <h2>7 · Terminology</h2>
   <p class="note">Each entry: the technical definition first, then the same idea in everyday words in the orange strip.</p>
   <div class="gloss cols">
     <div><b>Series / DataFrame</b><span>pandas' one-column and many-column tables, indexed by date here.<span class="plain">a column of numbers with dates down the side, and a whole spreadsheet of them.</span></span></div>
@@ -370,7 +348,6 @@ code{font-family:var(--mono)}
     <div><b>Harvey &amp; Liu</b><span>"Backtesting", <em>Journal of Portfolio Management</em> (2015). The haircut on reported Sharpe ratios; costs and trial counts.</span></div>
     <div><b>López de Prado</b><span>"The 10 Reasons Most Machine Learning Funds Fail" (2018). Look-ahead, and pitfall 9 on walk-forward testing a single path.</span></div>
     <div><b>Hurst, Ooi &amp; Pedersen</b><span>"A Century of Evidence on Trend-Following Investing", <em>Journal of Portfolio Management</em> (2017). Judging a rule decade by decade, the habit yearly() applies at the scale of one model.</span></div>
-    <div><b>pandas documentation</b><span><em>pandas.Series</em>: <code>pct_change</code>, <code>reindex</code>, <code>fillna</code>, <code>ewm</code>, <code>clip</code>, <code>shift</code>, <code>where</code>, <code>ffill</code>, <code>diff</code>, <code>cumprod</code>, <code>cummax</code>; <em>pandas.DataFrame.groupby</em>. The definitions in section 4 are paraphrased from these pages.</span></div>
     <div><b>Code Walkthrough</b><span>The project's Code Walkthrough doc: the six-day worked example, the three study sessions and the seven questions in section 8.</span></div>
     <div><b>backtest.py</b><span><code>xau-btc-models/src/backtest.py</code>, 157 lines, as read on 30 October 2026. Line numbers on this page refer to that version.</span></div>
   </div>
@@ -441,10 +418,10 @@ const STEPS=[
   arith:R=>`net[3] = ${pct(R.gross[2])} − ${(R.cost[2]*100).toFixed(2)}% − 0 = ${pct(R.net[2])}`},
  {k:'equity',lines:[75,76,77,78,79,80],col:'equity',label:'equity',text:'<b>Lines 75–80.</b> Everything is packed into one DataFrame, one row per day, and equity is the running product of (1 + net): the growth of $1. The function returns the whole table so any column can be inspected or plotted.',
   arith:R=>`equity[3] = equity[2] × (1 + net[3]) = ${R.equity[1].toFixed(4)} × (1 ${R.net[2]<0?'−':'+'} ${Math.abs(R.net[2]).toFixed(4)}) = ${R.equity[2].toFixed(4)}\nequity[6] = ${R.equity[5].toFixed(4)}`},
- {k:'stats1',lines:[83,84,85,86,87,88,89],label:'stats: setup',fn:'stats',text:'<b>Lines 83–89.</b> <code>stats</code> takes the DataFrame and pulls out net and equity. Drawdown is equity over its running maximum minus one. Years is rows divided by bars per year. CAGR compounds the final equity to a yearly rate. Vol annualises the daily standard deviation. Section 6 shows every one of these computed on this table.',
+ {k:'stats1',lines:[83,84,85,86,87,88,89],label:'stats: setup',fn:'stats',text:'<b>Lines 83–89.</b> <code>stats</code> takes the DataFrame and pulls out net and equity. Drawdown is equity over its running maximum minus one. Years is rows divided by bars per year. CAGR compounds the final equity to a yearly rate. Vol annualises the daily standard deviation. Section 4 shows every one of these computed on this table.',
   arith:R=>'yrs = 6 / 365 = '+(6/365).toFixed(4)+'\ndd[6] = equity[6] / max(equity[1..6]) − 1 = '+R.equity[5].toFixed(4)+' / '+Math.max(...R.equity).toFixed(4)+' − 1 = '+((R.equity[5]/Math.max(...R.equity)-1)*100).toFixed(2)+'%'},
  {k:'stats2',lines:[90,91,92,93,94,95,96,97,98,99,100,101,102,103,104],label:'stats: the eleven numbers',fn:'stats',text:'<b>Lines 90–104.</b> The Series that comes back: CAGR, Vol, Sharpe (annualised mean over annualised vol, NaN if vol is zero), MaxDrawdown (the minimum of dd), the worst and best single bar, turnover per year, how much costs and carry ate per year, the share of days with a position, and the row count.',
-  arith:R=>'Sharpe = mean(net) × 365 / Vol   (see section 6 for the numbers on this table)'},
+  arith:R=>'Sharpe = mean(net) × 365 / Vol   (see section 4 for the numbers on this table)'},
  {k:'yearly',lines:[107,108,109,110,111,112],label:'yearly',fn:'yearly',text:'<b>Lines 107–112.</b> Group the rows by calendar year and, for each year, compound the net returns into one return and take the worst drawdown. The quickest regime check: a rule that only worked in two years out of nine is suspect. The six example days are all one year, so one row.',
   arith:R=>'this year: Return = ∏(1 + net) − 1 = '+((R.equity[5]-1)*100).toFixed(2)+'%'},
  {k:'wfsig',lines:[116,117,118,119,120,121,122,123,124],label:'walk_forward signature',fn:'walk_forward',text:'<b>Lines 116–124.</b> Inputs: prices, a <code>rule</code> function that turns prices and parameters into a signal, a <code>grid</code> of parameter dicts to choose from, a training length (default three years) and a test length (default one year). Anything else (<code>**bt_kwargs</code>) is passed straight to <code>backtest</code>: costs, carry, the vol target.',
@@ -508,7 +485,7 @@ const MAP={
  st:`<b>stats: "summarise that whole table in eleven numbers"</b>
 <span>Once the replay is done you have hundreds or thousands of rows. Nobody reads them. stats boils them down to the figures a trader or a risk manager asks for: how fast the money grew per year, how bumpy the ride was, the ratio of the two (the Sharpe ratio, profit per unit of bumpiness), the worst fall from a peak to the next trough, the single best and worst days, how much you traded, how much the fees and the rent ate per year, and what share of days you were actually in a position.</span>
 <span><b>In:</b> the table from backtest. <b>Out:</b> eleven named numbers: CAGR, Vol, Sharpe, MaxDrawdown, WorstBar, BestBar, TurnoverPerYear, CostDrag, CarryDrag, TimeInMarket, Bars.</span>
-<span class="note"><b>In the code:</b> <code>def stats(res, bars_per_year=365) -> Series</code>. Section 6 shows each number computed on the six-day table.</span>
+<span class="note"><b>In the code:</b> <code>def stats(res, bars_per_year=365) -> Series</code>. Section 4 shows each number computed on the six-day table.</span>
 <span class="note"><b>In the literature:</b> the Sharpe ratio is the headline everyone quotes and the one most easily inflated: Bailey &amp; López de Prado (<em>The Deflated Sharpe Ratio</em>, 2014) show it must be read together with how many things were tried and how fat-tailed the returns are, and Harvey &amp; Liu (2015) explain the "haircut" practitioners apply to it. MaxDrawdown is the number the firm's risk page will ask for first.</span>`,
  yr:`<b>yearly: "did it work most years, or in one lucky year?"</b>
 <span>A single Sharpe ratio over ten years can hide a rule that made all its money in 2020–21 and lost quietly in every other year. yearly cuts the replay into calendar years and gives each one its own return and its own worst fall. If the rule only worked in two years out of nine, you have found a regime, not a strategy.</span>
@@ -530,43 +507,6 @@ const MAP={
   function light(k){svg.querySelectorAll('.edge,.elab').forEach(e=>{const on=e.dataset.f===k||e.dataset.t===k; e.classList.toggle('lit',on); if(e.classList.contains('edge')) e.setAttribute('marker-end',`url(#mArr-${on?k:'muted'})`); if(on) e.style.stroke=e.classList.contains('edge')?`var(--f-${k})`:''; else e.style.stroke=''; if(on&&!e.classList.contains('edge')) e.style.fill=`var(--f-${k})`; else if(!e.classList.contains('edge')) e.style.fill='';});}
   svg.querySelectorAll('.box').forEach(g=>{const act=()=>{svg.querySelectorAll('.box').forEach(n=>n.classList.remove('on')); g.classList.add('on'); $('mapX').innerHTML=MAP[g.dataset.k]; light(g.dataset.k);}; g.addEventListener('click',act); g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();act();}});});
   $('mapX').innerHTML=MAP.bt; light('bt');})();
-// ---------------- labels ----------------
-const CATS={in:'IN',sig:'SIG',cost:'COST',out:'OUT'}; const guesses={};
-function renderLabels(){const box=$('labels'); box.innerHTML=''; CODE.forEach(([n,t,c])=>{if(!c)return; const row=document.createElement('div'); row.className='lrow'; row.dataset.n=n;
-  row.innerHTML=`<code><span class="n">${n}</span>${esc(t.trim())}</code><span class="guess">${Object.keys(CATS).map(k=>`<button data-g="${k}">${CATS[k]}</button>`).join('')}</span><span style="display:flex;gap:6px;align-items:center"><button class="small rv">reveal</button><span class="verdict"></span></span>`;
-  row.querySelectorAll('.guess button').forEach(b=>b.addEventListener('click',()=>{row.querySelectorAll('.guess button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); guesses[n]=b.dataset.g;}));
-  row.querySelector('.rv').addEventListener('click',()=>reveal(row,c)); box.appendChild(row);});}
-function reveal(row,c){row.classList.add('rev','c-'+c); const g=guesses[row.dataset.n]; row.querySelector('.verdict').textContent=g?(g===c?'✓ '+CATS[c]:'✗ '+CATS[c]):CATS[c]; score();}
-function score(){let n=0,ok=0; document.querySelectorAll('.lrow.rev').forEach(r=>{const g=guesses[r.dataset.n]; if(g){n++; if(r.classList.contains('c-'+g))ok++;}}); $('score').textContent=n?`${ok}/${n} labelled right`:'';}
-$('revAll').addEventListener('click',()=>document.querySelectorAll('.lrow').forEach(r=>{const c=CODE.find(x=>x[0]==+r.dataset.n)[2]; reveal(r,c);}));
-$('hideAll').addEventListener('click',()=>{document.querySelectorAll('.lrow').forEach(r=>{r.className='lrow'; r.querySelector('.verdict').textContent='';}); score();});
-renderLabels();
-// ---------------- methods ----------------
-function mini(rows,cols){return `<table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((v,i)=>`<td>${v}</td>`).join('')}</tr>`).join('')}</tbody></table>`;}
-const B=compute('base'), M=compute('mask');
-const alpha=2/31; const ewm=[]; let v=B.ret[0]; B.ret.forEach((r,i)=>{v=i?alpha*r+(1-alpha)*v:r; ewm.push(v);});
-const f4=x=>(x>=0?'':'−')+Math.abs(x).toFixed(4);
-const METHODS=[
- ['pct_change','line 51','prices.pct_change()',mini([[1,100,'NaN'],[2,102,f4(B.ret[1])],[3,101,f4(B.ret[2])]],['day','price','pct_change']),'Each value divided by the previous one, minus one: the percentage change from row to row. The first row has nothing before it and becomes NaN.'],
- ['reindex','line 52 (and 65)','signal.reindex(prices.index)',mini([['day 1','0','0'],['day 2','+1','+1'],['day 7','—','NaN']],['date','signal','reindexed to price dates']),'Rebuild the Series on a given set of labels, keeping values whose label exists and inserting NaN where it does not. Here it forces the signal onto exactly the price dates.'],
- ['fillna','7 uses, lines 51–68','x.fillna(0.0)',mini([[1,'NaN','0.0000'],[2,f4(B.ret[1]),f4(B.ret[1])],[3,f4(B.ret[2]),f4(B.ret[2])]],['day','before','fillna(0.0)']),'Replace every missing value (NaN) with the value given. The backtester uses 0 so that "no data" means "no return, no position, no trade".'],
- ['ewm','line 23, inside realised_vol','ret.ewm(span=30, adjust=False).mean()',mini([[1,f4(B.ret[0]),f4(ewm[0])],[2,f4(B.ret[1]),f4(ewm[1])],[3,f4(B.ret[2]),f4(ewm[2])]],['day','ret','ewm mean (span 30)']),'An exponentially weighted window: recent values count most and older ones fade by a constant factor. span=30 sets α = 2/31. Shown here as the mean; the file takes .std(). The whole <a href="ewma.html">EWMA note (02)</a> is about this method.'],
- ['clip','lines 57, 59','sig.clip(-2, 2)',mini([['a','+2.5','+2.0'],['b','−3.0','−2.0'],['c','+0.5','+0.5']],['','before','clip(−2, 2)']),'Cap every value to a range: anything above the upper bound becomes the bound, anything below the lower bound likewise. The leverage cap.'],
- ['shift','line 62','target.shift(1)',mini([[1,fmt.target(B.target[0]),'NaN'],[2,fmt.target(B.target[1]),fmt.pos(B.pos[1])],[3,fmt.target(B.target[2]),fmt.pos(B.pos[2])]],['day','target','shift(1)']),'Move every value down by one row (the first row becomes NaN). Row t now holds what row t−1 had. This is the one-bar lag.'],
- ['where','line 66','pos.where(ok)',mini([[3,'+1','True','+1'],[4,'+1','False','NaN'],[5,'−1','False','NaN']],['day','pos','ok','where(ok)']),'Keep values where the condition is True and replace the rest with NaN. On closed days the position is blanked, ready to be filled from the day before.'],
- ['ffill','line 66','pos.where(ok).ffill()',mini([[3,'+1','+1'],[4,'NaN','+1'],[5,'NaN','+1']],['day','after where','ffill()']),'Forward-fill: replace each NaN with the last non-missing value above it. The position is carried through the weekend unchanged.'],
- ['diff','line 68','pos.diff()',mini([[2,fmt.pos(B.pos[1]),(B.pos[1]-B.pos[0]).toString()],[3,fmt.pos(B.pos[2]),(B.pos[2]-B.pos[1]).toString()],[5,fmt.pos(B.pos[4]),(B.pos[4]-B.pos[3]).toString()]],['day','pos','diff()']),'Each value minus the previous one. Its absolute value is turnover. A flip from +1 to −1 gives −2, so turnover 2.'],
- ['cumprod','line 79 (and 156)','(1 + net).cumprod()',mini([[1,'1 + 0 = 1.0000',B.equity[0].toFixed(4)],[2,'1 + 0 = 1.0000',B.equity[1].toFixed(4)],[3,'1 '+(B.net[2]<0?'−':'+')+' '+Math.abs(B.net[2]).toFixed(4),B.equity[2].toFixed(4)]],['day','1 + net','cumprod()']),'Running product: each row is the product of all rows up to and including it. Compounding daily net returns into the growth of $1.'],
- ['cummax','line 86 (and 111)','equity.cummax()',mini([[4,B.equity[3].toFixed(4),Math.max(...B.equity.slice(0,4)).toFixed(4)],[5,B.equity[4].toFixed(4),Math.max(...B.equity.slice(0,5)).toFixed(4)],[6,B.equity[5].toFixed(4),Math.max(...B.equity.slice(0,6)).toFixed(4)]],['day','equity','cummax()']),'Running maximum: the highest value seen so far. Equity divided by it, minus one, is the drawdown.'],
- ['groupby','line 109, inside yearly','res.groupby(res.index.year)',mini([['2025-12-30','+0.5%','2025'],['2025-12-31','−0.2%','2025'],['2026-01-01','+0.1%','2026']],['date','net','group']),'Split the rows into groups by a key (here the calendar year) so a function can be applied to each group separately: one return and one drawdown per year.']];
-const GROUPS=[['Clean the inputs','in',['pct_change','reindex','fillna']],['Size and lag','sig',['ewm','clip','shift']],['Closed days','sig2',['where','ffill']],['Costs and results','cost',['diff','cumprod','cummax','groupby']]];
-const GCOL={in:'--accent',sig:'--purple',sig2:'--purple',cost:'--warm'}, GSOFT={in:'--accent-soft',sig:'--purple-soft',sig2:'--purple-soft',cost:'--warm-soft'};
-function renderMethods(){let h=''; for(const [gname,gk,names] of GROUPS){h+=`<div class="mgroup" style="--gc:var(${GCOL[gk]});--gs:var(${GSOFT[gk]})"><p class="eyebrow" style="color:var(--gc)">${gname}</p><div class="methods">`;
-  for(const name of names){const i=METHODS.findIndex(m=>m[0]===name); const m=METHODS[i]; const tbl=m[3].replace(/<th>([^<]*)<\/th>(?=<\/tr>)/,'<th class="after">$1</th>').replace(/<td>([^<]*)<\/td>(?=<\/tr>)/g,'<td class="after">$1</td>');
-    h+=`<div class="m" data-i="${i}"><div class="mhead"><h3>.${m[0]}()</h3><span class="where">${m[1]}</span></div><code class="call">${esc(m[2])}</code>${tbl}<button class="small rvm">reveal definition</button><div class="def">${m[4]}</div></div>`;}
-  h+='</div></div>';}
-  $('methods').innerHTML=h; document.querySelectorAll('.m .rvm').forEach(b=>b.addEventListener('click',()=>b.closest('.m').classList.toggle('rev')));}
-renderMethods(); $('revM').addEventListener('click',()=>document.querySelectorAll('.m').forEach(m=>m.classList.add('rev'))); $('hideM').addEventListener('click',()=>document.querySelectorAll('.m').forEach(m=>m.classList.remove('rev')));
 // ---------------- stats ----------------
 function statsOf(R){const net=R.net, eq=R.equity, n=net.length; const mean=net.reduce((a,b)=>a+b,0)/n; const sd=Math.sqrt(net.reduce((a,b)=>a+(b-mean)*(b-mean),0)/(n-1)); const yrs=n/BPY;
   let peak=-Infinity; const dd=eq.map(e=>{peak=Math.max(peak,e); return e/peak-1;}); const vol=sd*Math.sqrt(BPY);
