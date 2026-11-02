@@ -227,6 +227,7 @@ details.week summary::-webkit-details-marker{display:none}
     <div><b>López de Prado</b><span>M. López de Prado, "The 10 Reasons Most Machine Learning Funds Fail", <em>Journal of Portfolio Management</em> 44 (2018). Week 2.</span></div>
     <div><b>RiskMetrics</b><span>J.P. Morgan / Reuters, <em>RiskMetrics Technical Document</em>, 4th ed., 1996, ch. 5. Week 2.</span></div>
     <div><b>Bailey et al. 2014</b><span>D. Bailey, J. Borwein, M. López de Prado, Q. J. Zhu, "Pseudo-Mathematics and Financial Charlatanism", <em>Notices of the AMS</em> 61 (2014). Week 2.</span></div>
+    <div><b>Sharpe</b><span>W. F. Sharpe, "The Sharpe Ratio", <em>Journal of Portfolio Management</em> 21 (1994). Week 2.</span></div>
     <div><b>Moskowitz et al.</b><span>T. Moskowitz, Y. H. Ooi, L. H. Pedersen, "Time Series Momentum", <em>Journal of Financial Economics</em> 104 (2012). Week 3.</span></div>
     <div><b>Hurst et al.</b><span>B. Hurst, Y. H. Ooi, L. H. Pedersen, "A Century of Evidence on Trend-Following Investing", <em>Journal of Portfolio Management</em> 44 (2017). Week 3.</span></div>
     <div><b>Liu &amp; Tsyvinski</b><span>Y. Liu, A. Tsyvinski, "Risks and Returns of Cryptocurrency", <em>Review of Financial Studies</em> 34 (2021). Week 3.</span></div>
@@ -235,6 +236,7 @@ details.week summary::-webkit-details-marker{display:none}
     <div><b>Bailey et al. 2015</b><span>D. Bailey, J. Borwein, M. López de Prado, Q. J. Zhu, "The Probability of Backtest Overfitting", working paper 2015, published in <em>Journal of Computational Finance</em> 20 (2017). Week 5.</span></div>
     <div><b>Bailey &amp; López de Prado</b><span>D. Bailey, M. López de Prado, "The Deflated Sharpe Ratio", <em>Journal of Portfolio Management</em> 40 (2014). Week 6.</span></div>
     <div><b>Harvey &amp; Liu</b><span>C. Harvey, Y. Liu, "Backtesting", <em>Journal of Portfolio Management</em> 42 (2015). Week 6.</span></div>
+    <div><b>Lo</b><span>A. W. Lo, "The Statistics of Sharpe Ratios", <em>Financial Analysts Journal</em> 58 (2002). Week 6.</span></div>
     <div><b>Efron &amp; Tibshirani</b><span>B. Efron, R. Tibshirani, <em>An Introduction to the Bootstrap</em>, Chapman &amp; Hall, 1993, ch. 1–6. Week 7.</span></div>
     <div><b>Politis &amp; Romano</b><span>D. Politis, J. Romano, "The Stationary Bootstrap", <em>Journal of the American Statistical Association</em> 89 (1994). Week 7.</span></div>
     <div><b>Lo &amp; MacKinlay</b><span>A. Lo, A. C. MacKinlay, "Stock Market Prices Do Not Follow Random Walks", <em>Review of Financial Studies</em> 1 (1988). Week 9.</span></div>
@@ -264,7 +266,7 @@ const W=[
   out:"data/raw/ with the four downloads; data/clean/daily.csv, one row per calendar day since 2017-08-17 with btc, xau, xau_tradable; the sanity report (missing values, moves over 15%, largest gap) in the research log."},
  {n:2,p:"p1",t:"Backtester with real costs",brief:"A vectorised backtester with the one-bar lag, a cost model and a tradable mask, studied line by line; the cost assumptions replaced by measured broker numbers.",
   work:["Vectorised backtester: signal → position → P&L, every signal lagged one bar","Cost model: spread plus slippage per unit of turnover; carry (funding) per day held; gold frozen on closed days","Metrics: Sharpe, max drawdown, worst day, turnover, time in market, cost drag","Cost sensitivity: the trend rule at 0×, 1×, 2×, 3× spread crossed with 0 / 5 / 10% carry","Real costs from the brokers' own pages, with date and source, into the README cost table"],
-  read:["Carver, Systematic Trading, ch. 1–3 and ch. 12, with his ch. 2 Sharpe-across-periods and ch. 12 cost-template sheets","López de Prado 2018: one line per reason on how the repo handles it","RiskMetrics 1996 ch. 5: the EWMA recursion, against realised_vol","Bailey et al. 2014, Pseudo-Mathematics: why repeated backtesting produces fake results"],
+  read:["Carver, Systematic Trading, ch. 1–3 and ch. 12, with his ch. 2 Sharpe-across-periods and ch. 12 cost-template sheets","López de Prado 2018: one line per reason on how the repo handles it","RiskMetrics 1996 ch. 5: the EWMA recursion, against realised_vol","Bailey et al. 2014, Pseudo-Mathematics: why repeated backtesting produces fake results","Sharpe 1994: the definition of the ratio; stats() uses a zero benchmark, recorded as a convention in the log"],
   math:["Shreve I ch. 2: probability on coin-toss space, conditional expectation, the martingale property; exercises 2.1–2.4 and a 10,000-path simulation checking that the discounted price does not drift"],
   links:[["backtest.html","03 · Backtest errors and controls"],["backtester.html","04 · Backtester implementation"],["ewma.html","02 · Volatility estimation by EWMA"]],
   out:"src/backtest.py annotated; the tradable mask and its test; results/02_cost_sensitivity.csv; the README cost table with measured numbers; the 2026-01-30 gold print checked against a second source with a verdict in the log; one commit."},
@@ -288,7 +290,7 @@ const W=[
   out:"Out-of-sample results table and the walk-forward selection log."},
  {n:6,p:"p2",t:"Robustness I",brief:"Does the result survive nearby parameters, double and triple costs, and each instrument on its own? The Sharpe haircut for the number of variants tried.",
   work:["Parameter sensitivity: do nearby lookbacks give similar results?","Cost sensitivity at 2× and 3× assumed spread and funding","Gold-only and bitcoin-only versus the combination","A no-edge baseline: the rule on random prices, the Sharpe you get by luck","Forecast weights and the diversification multiplier for the tsmom + EWMAC + Donchian blend"],
-  read:["Bailey & López de Prado 2014, Deflated Sharpe Ratio: computed for the variants tried so far","Harvey & Liu 2015, Backtesting: the haircut after N trials, cross-checked","Carver ch. 8 and its two sheets; the pysystemtrade system-design docs"],
+  read:["Bailey & López de Prado 2014, Deflated Sharpe Ratio: computed for the variants tried so far","Harvey & Liu 2015, Backtesting: the haircut after N trials, cross-checked","Lo 2002: the standard error of the Sharpe ratio and the annualisation correction for autocorrelated returns; the walk-forward Sharpe reported with its standard error","Carver ch. 8 and its two sheets; the pysystemtrade system-design docs"],
   math:["Shreve II ch. 3.1–3.4: Brownian motion, quadratic variation; simulate paths and check quadratic variation numerically"],
   out:"Robustness report in the research log."},
  {n:7,p:"p2",t:"Robustness II and freeze Model 1",brief:"Regimes, event days, a bootstrap stress test, then the exact rule written down and frozen before any live order.",
@@ -342,7 +344,7 @@ const W=[
   math:["Review: rework the hardest exercises of ch. 3–6; a one-page summary of Itô, Girsanov and Feynman–Kac"],
   out:"Research package complete."}];
 const byN=n=>W.find(w=>w.n===n);
-const SUBJ=[[/quantstats|Alpaca|ccxt|yfinance|README\.md, Data notes|pysystemtrade/i,'prog'],[/Avellaneda/i,'math'],[/López de Prado|RiskMetrics|Bailey|Harvey|Efron|Politis|Tsay|Wasserman|Lo & MacKinlay|Deflated|random prices|Carver ch\. 8/i,'sts'],[/./,'fin']];
+const SUBJ=[[/quantstats|Alpaca|ccxt|yfinance|README\.md, Data notes|pysystemtrade/i,'prog'],[/Avellaneda/i,'math'],[/López de Prado|RiskMetrics|Bailey|Harvey|Efron|Politis|Tsay|Wasserman|Lo & MacKinlay|Deflated|random prices|Sharpe 1994|Lo 2002|Carver ch\. 8/i,'sts'],[/./,'fin']];
 const subj=t=>SUBJ.find(([re])=>re.test(t))[1];
 const SLAB={fin:'finance',sts:'statistics',math:'mathematics',prog:'programming'};
 const tagLi=(t,k)=>`<li><span class="stag ${k}">${SLAB[k]}</span>${t}</li>`;
