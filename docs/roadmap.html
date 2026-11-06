@@ -174,11 +174,13 @@ details.week summary::-webkit-details-marker{display:none}
 </section>
 <section class="wide">
   <div class="callout cgrid"><b>Conditions for a result to be reported as credible.</b>
-    <span>An <dfn title="Measured on data that was not used when the parameters were chosen.">out-of-sample</dfn> Sharpe ratio, net of costs, within a plausible range: approximately 0.7–1.2 for a daily trend model. Backtest values of 3 or above are treated as evidence of overfitting rather than of skill.</span>
+    <span>An <dfn title="Measured on data that was not used when the parameters were chosen.">out-of-sample</dfn> Sharpe ratio, net of costs, within a plausible range: approximately 0.3–0.6 per instrument and 0.5–0.8 for the combined two-instrument book. Values of 1.0 or above are re-examined for an error before they are reported; backtest values of 3 or above are treated as evidence of overfitting rather than of skill.</span>
     <span>Simulated-account results consistent with the backtest: comparable position sizes and turnover, and realised slippage within the cost assumption.</span>
     <span>A complete research log: each rule recorded before it is tested, negative results retained, and the number of variants tried stated so that the Sharpe ratio can be adjusted for multiple testing.</span>
     <span>Funding rates, gold trading hours and weekend gaps modelled within the backtest rather than noted outside it.</span></div>
-  <p class="reading" style="font-size:15px;color:var(--muted);padding-left:16px;border-left:3px solid var(--accent-soft)">Results are presented only after three to four months of simulated trading, which places that point around weeks 20–24, beyond the end of this plan. The plan is the preparation; the live log is the evidence.</p>
+  <p class="reading" style="font-size:15px;color:var(--muted);padding-left:16px;border-left:3px solid var(--accent-soft)">Results are presented only after three to four months of simulated trading, which places that point around weeks 20–24, beyond the end of this plan.</p>
+  <p class="reading" style="font-size:15px;color:var(--muted);padding-left:16px;border-left:3px solid var(--accent-soft)">Basis for the Sharpe ranges: Carver reports about 0.40 for a diversified set of trend rules on a single instrument. Two instruments at equal risk, each with Sharpe ratio s and with return correlation ρ, combine to s·√2/√(1 + ρ); at ρ = 0.1 this is <span id="cmb4"></span> for s = 0.4 and <span id="cmb5"></span> for s = 0.5.</p>
+  <p class="reading" style="font-size:15px;color:var(--muted);padding-left:16px;border-left:3px solid var(--warm-soft)"><strong>Open decision, due before week 8: the short side.</strong> The firm's specification is long/short on XAU/USD and BTC/USD. The Alpaca paper account cannot short crypto, and its gold instrument is GLD, an exchange-traded fund that trades in US market hours only. In the full-history BTC backtest the rule is short on 31% of days. Model 1 begins simulated trading only on an account that can hold short positions in both instruments, with that account's fees and funding entered in the backtest; until then, a long-only Alpaca run is recorded as a plumbing test, not as Model 1.</p>
 </section>
 
 <!-- 4 in this project -->
@@ -296,17 +298,17 @@ const W=[
   links:[["sharpe.html","06 · Sharpe ratio estimation"]],
   out:"Robustness report in the research log."},
  {n:7,p:"p2",t:"Robustness II and freeze Model 1",brief:"Regimes, event days, a bootstrap stress test, then the exact rule written down and frozen before any live order.",
-  work:["Regime analysis: 2020 crash, 2021 bitcoin bull run, 2022 bear, 2024–25 gold rally","Behaviour on Fed decision days and large USD moves","Stationary-bootstrap Monte Carlo: distribution of max drawdown and worst year; how often a no-skill strategy matches the backtest Sharpe","Freeze: the exact rules written in notes/ before going live, with the diary columns the live log will use"],
+  work:["Regime analysis: 2020 crash, 2021 bitcoin bull run, 2022 bear, 2024–25 gold rally","Behaviour on Fed decision days and large USD moves","Stationary-bootstrap Monte Carlo: distribution of max drawdown and worst year; how often a no-skill strategy matches the backtest Sharpe","Venue for the short side: one simulated account that can short XAU/USD and BTC/USD; its measured fees and funding entered as cost_bps and carry_annual, and the backtest re-run before the freeze","Freeze: the exact rules written in notes/ before simulated trading begins, with the diary columns the live log will use"],
   read:["Efron & Tibshirani ch. 1–6 and Politis & Romano 1994: the bootstrap and block resampling for autocorrelated returns","Carver ch. 13–14 (skim) and the ch. 13 trading-diary sheet"],
   math:["Shreve II ch. 3.5–3.7: reflection principle, Markov property; first-passage exercises"],
   out:"Model 1 frozen spec and a research-note draft."},
  {n:8,p:"p3",t:"Model 1 on the simulated account",brief:"A scheduled daily script converts the frozen rule into orders on the simulated account; the live log begins.",
-  work:["Simulated accounts: Alpaca paper for BTC/USD; a gold broker (OANDA or IG) for XAU/USD and for short positions","Daily script: signals → target positions → orders, run on a schedule","Live log: date, signal, fill, slippage, P&L against the backtest's expectation"],
+  work:["Simulated account: the venue chosen in week 7, long and short on both instruments; the Alpaca paper account remains a long-only plumbing test","Daily script: signals → target positions → orders, run on a schedule","Live log: date, signal, fill, slippage, P&L against the backtest's expectation"],
   read:["The Alpaca trading API docs, side by side with live/live_alpaca.py until each function can be explained"],
   math:["Shreve II ch. 4.1–4.3: the Itô integral; exercises on simple integrands"],
   out:"Model 1 trading on the simulated account; results/live_log.csv started fresh."},
  {n:9,p:"p3",t:"Intraday behaviour of gold and bitcoin",brief:"Hourly returns: autocorrelation, volatility by hour and weekday, sessions, and which short horizons revert.",
-  work:["Autocorrelation and volatility by hour of day and day of week","Sessions: the London/New York overlap for gold; weekend behaviour for bitcoin","Short-horizon mean reversion versus continuation; the variance-ratio test on both instruments"],
+  work:["Autocorrelation and volatility by hour of day and day of week","Sessions: the London/New York overlap for gold; weekend behaviour for bitcoin","Short-horizon mean reversion versus continuation; the variance-ratio test on both instruments","Cost budget for Model 2, before any rule is specified: the maximum turnover that the measured costs allow (taker 0.25%, maker 0.15% on Alpaca, or the week-7 venue's fees), following Carver's speed limit; the bar size (1h or 4h) and the order type (market or limit) chosen from it"],
   read:["Lo & MacKinlay 1988: the variance-ratio test","Tsay ch. 2.1–2.6: stationarity, ACF, AR models, the ADF test"],
   math:["Shreve II ch. 4.4: Itô's lemma, applied to geometric Brownian motion and to log prices"],
   out:"Intraday research notebook."},
@@ -360,6 +362,7 @@ function renderTL(on){
 renderTL(2);
 // stats computed from the plan
 const nWork=W.reduce((a,w)=>a+w.work.length,0), nRead=W.reduce((a,w)=>a+w.read.length+(w.math||[]).length,0), nDone=Object.values(STATUS).filter(s=>s==='done').length;
+{const c=(sr,r)=>sr*Math.SQRT2/Math.sqrt(1+r); const a=document.getElementById('cmb4'), b=document.getElementById('cmb5'); if(a) a.textContent=c(0.4,0.1).toFixed(2); if(b) b.textContent=c(0.5,0.1).toFixed(2);}
 $('stats').innerHTML=`<div class="stat"><b>${W.length}</b><span>weeks</span></div><div class="stat"><b>${nWork}</b><span>work items</span></div><div class="stat"><b>${nRead}</b><span>reading items</span></div><div class="stat"><b>${nDone}</b><span>weeks complete (from the research log)</span></div>`;
 // weeks
 $('weeks').innerHTML=W.map(w=>{const st=STATUS[w.n]||'next'; const lab={done:'complete',now:'in progress',next:'not started'}[st];
