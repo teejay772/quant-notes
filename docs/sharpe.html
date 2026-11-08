@@ -62,6 +62,12 @@ canvas{width:100%;height:auto;display:block;max-width:100%}
 .formula .frac > span:first-child{border-bottom:1.5px solid currentColor}
 .formula .big{font-size:1.4em;line-height:1}
 .sq{border-top:1.5px solid currentColor;padding:0 .2em}
+.hat{position:relative;display:inline-block}.hat::after{content:"";position:absolute;left:50%;top:-.22em;width:.34em;height:.34em;border-top:1.5px solid currentColor;border-left:1.5px solid currentColor;transform:translateX(-50%) rotate(45deg);pointer-events:none}
+.formula .frac .frac{font-size:.92em}
+.formula .frac > span:last-child{padding-top:.3em}
+.formula .lim{display:inline-flex;flex-direction:column;align-items:center;line-height:1;margin:0 .2em;font-size:.7em}.formula .lim .sig{font-size:2.1em;line-height:.9}
+.formula .sq{padding-top:.28em}
+
 .reading{font-size:15px;color:var(--muted);padding-left:16px;border-left:3px solid var(--accent-soft)}
 .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
 .legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
@@ -124,14 +130,14 @@ table.t td:first-child,table.t th:first-child{text-align:left}
 <!-- 1 DEFINITION -->
 <section class="wrap">
   <h2>1 · Definition</h2>
-  <p>Sharpe (1994, eq. 3–6) defines the ex post ratio on the differential return D<sub>t</sub> = R<sub>Ft</sub> − R<sub>Bt</sub>, the return of the fund minus the return of a benchmark, over periods t = 1, …, T. The ratio is the average of D<sub>t</sub> divided by its standard deviation, computed with T − 1 in the denominator. When the benchmark is the risk-free return r<sub>f</sub>, with μ̂ the sample mean of the returns and σ̂ the sample standard deviation, the Sharpe ratio per period is</p>
-  <div class="formula">SR̂ = <span class="frac"><span><span class="k">μ̂</span> − <span class="w">r<sub>f</sub></span></span><span><span class="g">σ̂</span></span></span></div>
+  <p>Sharpe (1994, eq. 3–6) defines the ex post ratio on the differential return D<sub>t</sub> = R<sub>Ft</sub> − R<sub>Bt</sub>, the return of the fund minus the return of a benchmark, over periods t = 1, …, T. The ratio is the average of D<sub>t</sub> divided by its standard deviation, computed with T − 1 in the denominator. When the benchmark is the risk-free return r<sub>f</sub>, with <span class="hat">μ</span> the sample mean of the returns and <span class="hat">σ</span> the sample standard deviation, the Sharpe ratio per period is</p>
+  <div class="formula"><span class="hat">SR</span> = <span class="frac"><span><span class="k"><span class="hat">μ</span></span> − <span class="w">r<sub>f</sub></span></span><span><span class="g"><span class="hat">σ</span></span></span></span></div>
   <p class="reading">Read aloud: the estimated Sharpe ratio is the average return in excess of the risk-free rate, divided by the standard deviation of those returns. The hat on a symbol marks a quantity estimated from a sample.</p>
   <p>Sharpe ratios are quoted in annual units so that strategies sampled at different frequencies can be compared. With q periods per year and returns independent and identically distributed (IID), Sharpe (1994, eq. 7–10) and Bailey, Borwein, López de Prado and Zhu (2014, eq. 2) give</p>
   <div class="formula">SR<sub>annual</sub> = <span class="frac"><span><span class="k">μ</span></span><span><span class="g">σ</span></span></span> · <span class="w">√<span class="sq">q</span></span></div>
   <p class="reading">Read aloud: the annual Sharpe ratio is the per-period ratio of mean to standard deviation, multiplied by the square root of the number of periods in a year. Daily data with one row per calendar day has q = 365.</p>
   <p>Sharpe (1994) notes that "the t-statistic will equal the Sharpe Ratio times the square root of T", and Harvey and Liu (2015, eq. 1–2) use the same relation to test the null hypothesis that the mean return is zero:</p>
-  <div class="formula">t = <span class="frac"><span><span class="k">μ̂</span></span><span><span class="g">σ̂</span> / √<span class="sq">T</span></span></span> = SR̂ · √<span class="sq">T</span></div>
+  <div class="formula">t = <span class="frac"><span><span class="k"><span class="hat">μ</span></span></span><span><span class="g"><span class="hat">σ</span></span></span></span> · √<span class="sq">T</span> = <span class="hat">SR</span> · √<span class="sq">T</span></div>
   <p class="reading">Read aloud: the t-statistic is the per-period Sharpe ratio times the square root of the number of observations. For a fixed sample length, a higher Sharpe ratio means a higher t-statistic and a smaller p-value.</p>
   <p>Select a term of the formula for its definition and its counterpart in <code>backtest.py</code>.</p>
 </section>
@@ -139,12 +145,12 @@ table.t td:first-child,table.t th:first-child{text-align:left}
   <div class="lab">
     <div class="anat">
       <div class="terms" id="termsSR">
-        <button class="term on" data-k="mu"><span class="sym k">μ̂</span><span>sample mean of returns<small>average of the daily net returns</small></span></button>
+        <button class="term on" data-k="mu"><span class="sym k"><span class="hat">μ</span></span><span>sample mean of returns<small>average of the daily net returns</small></span></button>
         <button class="term" data-k="rf"><span class="sym w">r<sub>f</sub></span><span>risk-free return<small>what cash earns per period</small></span></button>
-        <button class="term" data-k="sd"><span class="sym g">σ̂</span><span>sample standard deviation<small>typical size of a deviation from the mean</small></span></button>
+        <button class="term" data-k="sd"><span class="sym g"><span class="hat">σ</span></span><span>sample standard deviation<small>typical size of a deviation from the mean</small></span></button>
         <button class="term" data-k="q"><span class="sym w">√q</span><span>annualisation factor<small>periods per year, under the square root</small></span></button>
-        <button class="term" data-k="hat"><span class="sym">SR̂ vs SR</span><span>estimate and true value<small>sample statistic and population parameter</small></span></button>
-        <button class="term" data-k="t"><span class="sym">SR̂·√T</span><span>t-statistic<small>the same ratio scaled by sample length</small></span></button>
+        <button class="term" data-k="hat"><span class="sym"><span class="hat">SR</span> vs SR</span><span>estimate and true value<small>sample statistic and population parameter</small></span></button>
+        <button class="term" data-k="t"><span class="sym"><span class="hat">SR</span>·√T</span><span>t-statistic<small>the same ratio scaled by sample length</small></span></button>
       </div>
       <div class="explain" id="xSR"></div>
     </div>
@@ -156,9 +162,10 @@ table.t td:first-child,table.t th:first-child{text-align:left}
   <h2>2 · Annualisation</h2>
   <p>Over q periods the mean of a sum of returns is q times the per-period mean. If the returns are uncorrelated, the variance of the sum is q times the per-period variance, so the standard deviation grows with √q. The ratio of the two therefore grows with q / √q = √q (Sharpe, 1994, eq. 7–10, under the stated condition of "zero serial correlation"). Lo and MacKinlay (1988, p. 44) state the underlying property: "the variance of the increments of a random walk is linear in the observation interval."</p>
   <p>When returns are autocorrelated the variance of the q-period sum is no longer q times the one-period variance. Lo and MacKinlay measure the departure with the variance ratio VR(q), the variance of q-period returns divided by q times the variance of one-period returns. Their equation 16 expresses it through the autocorrelations ρ(k):</p>
-  <div class="formula">VR(q) ≈ 1 + <span class="big">Σ</span><sub style="align-self:flex-end">k = 1 … q−1</sub> <span class="frac"><span>2 (q − k)</span><span>q</span></span> <span class="w">ρ(k)</span></div>
-  <p class="reading">Read aloud: the variance ratio is one plus a weighted sum of the autocorrelations at lags 1 to q − 1, with weights that decline in a straight line from nearly 2 at lag 1 to 2/q at lag q − 1. Positive autocorrelation makes VR(q) greater than 1; negative autocorrelation makes it less than 1.</p>
-  <div class="formula">SR(q) = η(q) · SR,   η(q) = <span class="frac"><span>q</span><span>√<span class="sq">q + 2 <span class="big">Σ</span><sub>k = 1 … q−1</sub> (q − k) <span class="w">ρ<sub>k</sub></span></span></span></span> = <span class="frac"><span>√<span class="sq">q</span></span><span>√<span class="sq">VR(q)</span></span></span></div>
+  <div class="formula">VR(q) ≈ 1 + 2 <span class="lim"><span>q − 1</span><span class="sig">Σ</span><span>k = 1</span></span> <span class="big">(</span> 1 − <span class="frac"><span>k</span><span>q</span></span> <span class="big">)</span> <span class="w">ρ<sub>k</sub></span></div>
+  <p class="reading">Read aloud: the variance ratio is one plus twice the sum, over lags k = 1 to q − 1, of the autocorrelation ρ<sub>k</sub> weighted by (1 − k/q); the weight falls in a straight line from nearly 1 at lag 1 to 1/q at lag q − 1. Positive autocorrelation makes VR(q) greater than 1; negative autocorrelation makes it less than 1.</p>
+  <div class="formula">SR(q) = η(q) · SR</div>
+  <div class="formula">η(q) = <span class="frac"><span>q</span><span>√<span class="sq">q + 2 <span class="lim"><span>q − 1</span><span class="sig">Σ</span><span>k = 1</span></span> (q − k) <span class="w">ρ<sub>k</sub></span></span></span></span> = <span class="frac"><span>√<span class="sq">q</span></span><span>√<span class="sq">VR(q)</span></span></span></div>
   <p class="reading">Read aloud: the q-period Sharpe ratio is the one-period ratio multiplied by the scale factor η(q). The scale factor is q divided by the square root of q plus twice the weighted sum of the autocorrelations, which is the same as √q divided by the square root of the variance ratio. With no autocorrelation, η(q) = √q.</p>
   <p>This is Lo (2002, eq. 20). Lo concludes that "monthly Sharpe ratios cannot be annualized by multiplying by √12 except under very special circumstances" (p. 36). For a first-order autoregressive process, with ρ<sub>k</sub> = ρ<sup>k</sup>, his eq. 22 gives η(q) in closed form. Computed here for monthly data (q = 12): η = <b id="eta0"></b> with ρ = 0, <b id="etaP"></b> with ρ = 0.20 and <b id="etaN"></b> with ρ = −0.20, the values Lo reports in the text and in Table 2 (p. 41). Positive serial correlation lowers the annual Sharpe ratio below the √q figure; negative serial correlation raises it.</p>
 </section>
@@ -195,9 +202,10 @@ table.t td:first-child,table.t th:first-child{text-align:left}
 <section class="wrap">
   <h2>3 · Sampling error</h2>
   <p>The true Sharpe ratio is a property of the process that generates returns and is not observed. A backtest of y years returns an estimate, and a different y-year history from the same process would return a different estimate. For IID returns, Lo (2002, eq. 9) gives the standard error of the per-period estimate as √((1 + ½SR²)/T). With SR<sub>per period</sub> = SR/√q and T = yq this becomes, for the annualised estimate (Bailey et al., 2014, eq. 3):</p>
-  <div class="formula">SR̂ <span style="font-size:.85em">→</span> N <span class="big">(</span> SR , <span class="frac"><span>1 + <span class="frac" style="font-size:.85em"><span>SR<sup>2</sup></span><span>2q</span></span></span><span><span class="w">y</span></span></span> <span class="big">)</span></div>
+  <div class="formula"><span class="hat">SR</span><sub>annual</sub> ~ N<span class="big">(</span> SR<sub>annual</sub> , Var[<span class="hat">SR</span><sub>annual</sub>] <span class="big">)</span>   for large T</div>
+  <div class="formula">Var[<span class="hat">SR</span><sub>annual</sub>] ≈ <span class="frac"><span>1</span><span><span class="w">y</span></span></span> · <span class="big">(</span> 1 + <span class="frac"><span>SR<sub>annual</sub><sup>2</sup></span><span>2 q</span></span> <span class="big">)</span>   SE[<span class="hat">SR</span><sub>annual</sub>] = √<span class="sq">Var</span></div>
   <p class="reading">Read aloud: as the sample grows, the estimated annual Sharpe ratio is approximately Normal, centred on the true value, with variance one plus SR squared over 2q, all divided by the number of years y. The standard error falls with the square root of the number of years, not with the number of observations: sampling daily instead of monthly does not shorten the history required.</p>
-  <p>Lo's Table 1 (p. 39) tabulates eq. 9 for per-period ratios. Computed here for T = 60: a true Sharpe ratio of 1.50 gives a standard error of <b id="lo150"></b> and 3.00 gives <b id="lo300"></b>, the values printed in the table. A 95% interval is approximately SR̂ ± 1.96 standard errors (Lo, 2002, eq. 10). The interval excludes zero only when y exceeds 1.96² (1 + SR²/2q) / SR². For a true annual Sharpe ratio of 0.5 that is <b id="yr05">–</b> years; for 1.0 it is <b id="yr10">–</b> years. The formula assumes IID Normal returns. For returns with autocorrelation and changing volatility, the stationary bootstrap of Politis and Romano (1994) resamples blocks of consecutive returns of random, geometrically distributed length, and is the method the research plan applies to the project's own returns.</p>
+  <p>Lo's Table 1 (p. 39) tabulates eq. 9 for per-period ratios. Computed here for T = 60: a true Sharpe ratio of 1.50 gives a standard error of <b id="lo150"></b> and 3.00 gives <b id="lo300"></b>, the values printed in the table. A 95% interval is approximately <span class="hat">SR</span> ± 1.96 standard errors (Lo, 2002, eq. 10). The interval excludes zero only when y exceeds 1.96² (1 + SR²/2q) / SR². For a true annual Sharpe ratio of 0.5 that is <b id="yr05">–</b> years; for 1.0 it is <b id="yr10">–</b> years. The formula assumes IID Normal returns. For returns with autocorrelation and changing volatility, the stationary bootstrap of Politis and Romano (1994) resamples blocks of consecutive returns of random, geometrically distributed length, and is the method the research plan applies to the project's own returns.</p>
 </section>
 <section class="wide">
   <div class="lab">
@@ -215,7 +223,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}
       <div class="stat"><b id="bSdE">–</b><span>standard deviation, simulated</span></div>
       <div class="stat"><b id="bSdF">–</b><span>standard error, Lo eq. 9</span></div>
       <div class="stat"><b id="bInt">–</b><span>central 95% of the estimates</span></div>
-      <div class="stat w"><b id="bNeg">–</b><span>share of histories with SR̂ &lt; 0</span></div>
+      <div class="stat w"><b id="bNeg">–</b><span>share of histories with <span class="hat">SR</span> &lt; 0</span></div>
     </div>
     <div class="callout"><b>Lab steps</b>
       <span>1. True Sharpe ratio 0.5, 5 years. By Lo eq. 9, 95% of estimates fall between <b id="bR1"></b> and <b id="bR2"></b>. A history with a true Sharpe ratio of 0.5 can report almost any value in that range.</span>
@@ -228,11 +236,11 @@ table.t td:first-child,table.t th:first-child{text-align:left}
 <section class="wrap">
   <h2>4 · Selection among trials</h2>
   <p>A trial is one backtested configuration: a rule with one set of parameters. If N independent trials are run and the configuration with the highest Sharpe ratio is retained, the retained estimate is the maximum of N noisy estimates, and it exceeds zero even when every true Sharpe ratio is zero. For N independent standard Normal variables, Bailey et al. (2014, eq. 4) approximate the expected maximum as</p>
-  <div class="formula">E[max<sub>N</sub>] ≈ (1 − <span class="k">γ</span>) Z<sup>−1</sup><span class="big">[</span>1 − <span class="frac"><span>1</span><span><span class="w">N</span></span></span><span class="big">]</span> + <span class="k">γ</span> Z<sup>−1</sup><span class="big">[</span>1 − <span class="frac"><span>1</span><span><span class="w">N</span></span></span>e<sup>−1</sup><span class="big">]</span></div>
+  <div class="formula">E[max<sub>N</sub>] ≈ (1 − <span class="k">γ</span>) · Z<sup>−1</sup><span class="big">[</span> 1 − <span class="frac"><span>1</span><span><span class="w">N</span></span></span> <span class="big">]</span> + <span class="k">γ</span> · Z<sup>−1</sup><span class="big">[</span> 1 − <span class="frac"><span>1</span><span><span class="w">N</span> · e</span></span> <span class="big">]</span></div>
   <p class="reading">Read aloud: the expected largest of N standard Normal draws is a weighted combination of two Normal quantiles, with weights set by the Euler–Mascheroni constant γ ≈ 0.5772. Z<sup>−1</sup> is the inverse of the standard Normal cumulative distribution and e is Euler's number. The value grows with N without limit, but slowly, and stays below √(2 ln N).</p>
   <p>With zero true Sharpe ratio, the annualised estimate over y years has standard deviation y<sup>−1/2</sup> (eq. 3 with SR = 0). The expected maximum annual Sharpe ratio among N skill-less trials is therefore E[max<sub>N</sub>] / √y (eq. 5). For N = 10 and one year this is <b id="em10">–</b>, the figure the paper reports as 1.57. Solving for y gives the minimum backtest length, MinBTL, the number of years required for the expected maximum to stay at a chosen level, here 1 (eq. 6):</p>
-  <div class="formula">MinBTL ≈ <span class="big">(</span> <span class="frac"><span>E[max<sub>N</sub>]</span><span>E[max SR̂]</span></span> <span class="big">)</span><sup>2</sup> &lt; <span class="frac"><span>2 ln N</span><span>E[max SR̂]<sup>2</sup></span></span></div>
-  <p class="reading">Read aloud: the minimum backtest length in years is the square of the expected maximum of N standard Normal draws divided by the Sharpe ratio that the best skill-less trial is allowed to reach. More trials require more years.</p>
+  <div class="formula">MinBTL ≈ <span class="big">(</span> <span class="frac"><span>E[max<sub>N</sub>]</span><span><span class="w">SR<sup>*</sup><sub>IS</sub></span></span></span> <span class="big">)</span><sup>2</sup>   &lt;   <span class="frac"><span>2 ln N</span><span>(<span class="w">SR<sup>*</sup><sub>IS</sub></span>)<sup>2</sup></span></span></div>
+  <p class="reading">Read aloud: the minimum backtest length in years is the square of E[max<sub>N</sub>], the expected largest of N standard Normal draws, divided by <span class="w">SR<sup>*</sup><sub>IS</sub></span>, the in-sample annual Sharpe ratio that the best skill-less trial must not be allowed to reach. The paper writes this target as E[max<sub>N</sub>] too; the two symbols are separated here. More trials, or a lower target, require more years.</p>
   <p>The paper's statement, computed here: with five years of data, at most <b id="nfor5">–</b> independent configurations can be tried before the best of them is expected to show an annual Sharpe ratio of 1 with no skill; with two years, <b id="nfor2">–</b>. The paper concludes that "a backtest which does not report the number of trials N used to identify the selected configuration makes it impossible to assess the risk of overfitting" (Bailey et al., 2014, p. 461).</p>
 </section>
 <section class="wide">
@@ -262,22 +270,23 @@ table.t td:first-child,table.t th:first-child{text-align:left}
 <!-- 5 DEFLATED SHARPE RATIO -->
 <section class="wrap">
   <h2>5 · The deflated Sharpe ratio and the haircut</h2>
-  <p>Bailey and López de Prado (2014) combine the two sources of inflation, selection among trials and non-Normal returns, in one statistic. The deflated Sharpe ratio is the probability that the true Sharpe ratio exceeds the threshold SR̂<sub>0</sub> expected from the best of N skill-less trials (eq. 2). All Sharpe ratios in the formula are per period, not annualised.</p>
-  <div class="formula">DSR = Z <span class="big">[</span> <span class="frac"><span>(<span class="k">SR̂</span> − <span class="w">SR̂<sub>0</sub></span>) √<span class="sq">T − 1</span></span><span>√<span class="sq">1 − <span class="g">γ̂<sub>3</sub></span> SR̂ + <span class="frac" style="font-size:.85em"><span><span class="g">γ̂<sub>4</sub></span> − 1</span><span>4</span></span> SR̂<sup>2</sup></span></span></span> <span class="big">]</span></div>
-  <div class="formula"><span class="w">SR̂<sub>0</sub></span> = √<span class="sq">V[{SR̂<sub>n</sub>}]</span> · <span class="big">(</span>(1 − γ) Z<sup>−1</sup>[1 − 1/N] + γ Z<sup>−1</sup>[1 − e<sup>−1</sup>/N]<span class="big">)</span></div>
-  <p class="reading">Read aloud: the deflated Sharpe ratio is the standard Normal probability of the gap between the estimate and the threshold, multiplied by the square root of the sample length minus one, and divided by a term that grows when returns are negatively skewed or fat-tailed. The threshold is the expected maximum of N skill-less trials, scaled by the standard deviation of the Sharpe ratios across the trials. A DSR above 0.95 is evidence at the 95% level that the selected strategy has a positive true Sharpe ratio.</p>
-  <p>Harvey and Liu (2015, eq. 3–5) take a p-value route. The single-test p-value of the t-statistic SR̂·√T is converted to a multiple-testing p-value for N independent tests, p<sup>M</sup> = 1 − (1 − p<sup>S</sup>)<sup>N</sup>, and the haircut Sharpe ratio is the Sharpe ratio whose single-test p-value equals p<sup>M</sup>. Their example: twenty years of monthly returns, an annual Sharpe ratio of 0.75, and 200 tests reduce the Sharpe ratio to about 0.32. Select a term for its definition.</p>
+  <p>Bailey and López de Prado (2014) combine the two sources of inflation, selection among trials and non-Normal returns, in one statistic. The deflated Sharpe ratio is the probability that the true Sharpe ratio exceeds the threshold <span class="hat">SR</span><sub>0</sub> expected from the best of N skill-less trials (eq. 2). All Sharpe ratios in the formula are per period, not annualised.</p>
+  <div class="formula">PSR[SR<sup>*</sup>] = Z<span class="big">[</span> <span class="frac"><span>( <span class="k"><span class="hat">SR</span></span> − <span class="w">SR<sup>*</sup></span> ) · √<span class="sq">T − 1</span></span><span>√<span class="sq">1 − <span class="g"><span class="hat">γ</span><sub>3</sub></span> · <span class="hat">SR</span> + ¼ (<span class="g"><span class="hat">γ</span><sub>4</sub></span> − 1) · <span class="hat">SR</span><sup>2</sup></span></span></span> <span class="big">]</span></div>
+  <div class="formula">DSR = PSR[ <span class="w"><span class="hat">SR</span><sub>0</sub></span> ]</div>
+  <div class="formula"><span class="w"><span class="hat">SR</span><sub>0</sub></span> = √<span class="sq">V[{<span class="hat">SR</span><sub>n</sub>}]</span> · <span class="big">(</span> (1 − γ) · Z<sup>−1</sup><span class="big">[</span> 1 − <span class="frac"><span>1</span><span>N</span></span> <span class="big">]</span> + γ · Z<sup>−1</sup><span class="big">[</span> 1 − <span class="frac"><span>1</span><span>N · e</span></span> <span class="big">]</span> <span class="big">)</span></div>
+  <p class="reading">Read aloud, line by line. The probabilistic Sharpe ratio PSR[SR<sup>*</sup>] is the standard Normal probability that the true Sharpe ratio exceeds a threshold SR<sup>*</sup>: the gap between the per-period estimate <span class="hat">SR</span> and the threshold, times the square root of the sample length minus one, divided by a term that grows when returns are negatively skewed (<span class="hat">γ</span><sub>3</sub> &lt; 0) or fat-tailed (<span class="hat">γ</span><sub>4</sub> &gt; 3). The deflated Sharpe ratio is the PSR evaluated at the threshold <span class="hat">SR</span><sub>0</sub>. That threshold is the expected maximum of N skill-less trials, scaled by the standard deviation of the Sharpe ratios across the trials. A DSR above 0.95 is evidence at the 95% level that the selected strategy has a positive true Sharpe ratio.</p>
+  <p>Harvey and Liu (2015, eq. 3–5) take a p-value route. The single-test p-value of the t-statistic <span class="hat">SR</span>·√T is converted to a multiple-testing p-value for N independent tests, p<sup>M</sup> = 1 − (1 − p<sup>S</sup>)<sup>N</sup>, and the haircut Sharpe ratio is the Sharpe ratio whose single-test p-value equals p<sup>M</sup>. Their example: twenty years of monthly returns, an annual Sharpe ratio of 0.75, and 200 tests reduce the Sharpe ratio to about 0.32. Select a term for its definition.</p>
 </section>
 <section class="wide">
   <div class="lab">
     <div class="anat">
       <div class="terms" id="termsD">
-        <button class="term on" data-k="sr"><span class="sym k">SR̂</span><span>selected strategy's estimate<small>per period, not annualised</small></span></button>
-        <button class="term" data-k="sr0"><span class="sym w">SR̂<sub>0</sub></span><span>rejection threshold<small>expected best of N skill-less trials</small></span></button>
+        <button class="term on" data-k="sr"><span class="sym k"><span class="hat">SR</span></span><span>selected strategy's estimate<small>per period, not annualised</small></span></button>
+        <button class="term" data-k="sr0"><span class="sym w"><span class="hat">SR</span><sub>0</sub></span><span>rejection threshold<small>expected best of N skill-less trials</small></span></button>
         <button class="term" data-k="T"><span class="sym">√(T − 1)</span><span>sample length<small>number of returns, minus one</small></span></button>
-        <button class="term" data-k="g3"><span class="sym g">γ̂<sub>3</sub></span><span>skewness<small>asymmetry of the return distribution</small></span></button>
-        <button class="term" data-k="g4"><span class="sym g">γ̂<sub>4</sub></span><span>kurtosis<small>weight of the tails; 3 for a Normal</small></span></button>
-        <button class="term" data-k="V"><span class="sym">V[{SR̂<sub>n</sub>}]</span><span>variance across trials<small>how widely the tried configurations differ</small></span></button>
+        <button class="term" data-k="g3"><span class="sym g"><span class="hat">γ</span><sub>3</sub></span><span>skewness<small>asymmetry of the return distribution</small></span></button>
+        <button class="term" data-k="g4"><span class="sym g"><span class="hat">γ</span><sub>4</sub></span><span>kurtosis<small>weight of the tails; 3 for a Normal</small></span></button>
+        <button class="term" data-k="V"><span class="sym">V[{<span class="hat">SR</span><sub>n</sub>}]</span><span>variance across trials<small>how widely the tried configurations differ</small></span></button>
         <button class="term" data-k="Z"><span class="sym">Z[·]</span><span>standard Normal CDF<small>turns a z-score into a probability</small></span></button>
       </div>
       <div class="explain" id="xD"></div>
@@ -292,22 +301,22 @@ table.t td:first-child,table.t th:first-child{text-align:left}
       <div class="card">
         <h3 style="font-size:18px">Deflated Sharpe ratio, Bailey and López de Prado (2014)</h3>
         <div class="inputs">
-          <div><span>annual SR̂</span><input id="dSR" type="number" step="0.1" value="2.5"></div>
+          <div><span>annual <span class="hat">SR</span></span><input id="dSR" type="number" step="0.1" value="2.5"></div>
           <div><span>periods per year q</span><input id="dQ" type="number" step="1" value="250"></div>
           <div><span>sample length T</span><input id="dT" type="number" step="50" value="1250"></div>
           <div><span>trials N</span><input id="dN" type="number" step="1" min="1" value="100"></div>
-          <div><span>V[annual SR̂ across trials]</span><input id="dV" type="number" step="0.1" value="0.5"></div>
-          <div><span>skewness γ̂<sub>3</sub></span><input id="dG3" type="number" step="0.5" value="-3"></div>
-          <div><span>kurtosis γ̂<sub>4</sub></span><input id="dG4" type="number" step="0.5" value="10"></div>
+          <div><span>V[annual <span class="hat">SR</span> across trials]</span><input id="dV" type="number" step="0.1" value="0.5"></div>
+          <div><span>skewness <span class="hat">γ</span><sub>3</sub></span><input id="dG3" type="number" step="0.5" value="-3"></div>
+          <div><span>kurtosis <span class="hat">γ</span><sub>4</sub></span><input id="dG4" type="number" step="0.5" value="10"></div>
         </div>
-        <div class="row"><button class="pill" id="dEx">Paper example</button><button class="pill" id="dNorm">Normal returns (γ̂₃ = 0, γ̂₄ = 3)</button></div>
+        <div class="row"><button class="pill" id="dEx">Paper example</button><button class="pill" id="dNorm">Normal returns (<span class="hat">γ</span>₃ = 0, <span class="hat">γ</span>₄ = 3)</button></div>
         <div class="arith" id="dOut"></div>
         <div class="verdict" id="dV95"></div>
       </div>
       <div class="card">
         <h3 style="font-size:18px">Multiple-testing haircut, Harvey and Liu (2015)</h3>
         <div class="inputs">
-          <div><span>annual SR̂</span><input id="hSR" type="number" step="0.05" value="0.75"></div>
+          <div><span>annual <span class="hat">SR</span></span><input id="hSR" type="number" step="0.05" value="0.75"></div>
           <div><span>periods per year q</span><input id="hQ" type="number" step="1" value="12"></div>
           <div><span>sample length T</span><input id="hT" type="number" step="12" value="240"></div>
           <div><span>tests N</span><input id="hN" type="number" step="1" min="1" value="200"></div>
@@ -328,7 +337,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}
 <!-- 6 TAILS AND PATH -->
 <section class="wrap">
   <h2>6 · Non-Normal returns and drawdown</h2>
-  <p>The Sharpe ratio uses two moments of the return distribution, the mean and the standard deviation. Harvey and Liu (2015, p. 13) state the limitation: "high observed Sharpe ratios could be the results of non-normal returns, for instance, an option-like strategy with high ex ante negative skew. In this case, Sharpe ratios should be viewed in the context of the skew." The DSR denominator includes the skewness γ̂<sub>3</sub> and kurtosis γ̂<sub>4</sub> for this reason: with negative skewness or kurtosis above 3, the same Sharpe ratio carries less evidence.</p>
+  <p>The Sharpe ratio uses two moments of the return distribution, the mean and the standard deviation. Harvey and Liu (2015, p. 13) state the limitation: "high observed Sharpe ratios could be the results of non-normal returns, for instance, an option-like strategy with high ex ante negative skew. In this case, Sharpe ratios should be viewed in the context of the skew." The DSR denominator includes the skewness <span class="hat">γ</span><sub>3</sub> and kurtosis <span class="hat">γ</span><sub>4</sub> for this reason: with negative skewness or kurtosis above 3, the same Sharpe ratio carries less evidence.</p>
   <p>The Sharpe ratio is also unchanged by the order of the returns. A history in which the losses arrive consecutively and a history in which they are scattered have the same mean and standard deviation, and therefore the same Sharpe ratio, but different maximum drawdowns. The project reports the maximum drawdown from <code>stats()</code> next to every Sharpe ratio for this reason.</p>
 </section>
 
@@ -336,7 +345,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}
 <section class="wrap">
   <h2>In this project</h2>
   <div class="callout"><b>How backtest.py computes the Sharpe ratio</b>
-    <span>Lines 89 and 94 of <code>src/backtest.py</code>: <code>vol = net.std() * np.sqrt(bars_per_year)</code> and <code>Sharpe = (net.mean() * bars_per_year) / vol</code>. This equals (μ̂/σ̂)·√q with q = <code>bars_per_year</code> = 365, the annualised form of section 1.</span>
+    <span>Lines 89 and 94 of <code>src/backtest.py</code>: <code>vol = net.std() * np.sqrt(bars_per_year)</code> and <code>Sharpe = (net.mean() * bars_per_year) / vol</code>. This equals (<span class="hat">μ</span>/<span class="hat">σ</span>)·√q with q = <code>bars_per_year</code> = 365, the annualised form of section 1.</span>
     <span><b style="color:inherit">Risk-free rate.</b> The code uses <code>net</code>, not net minus a risk-free return, so r<sub>f</sub> = 0. Sharpe (1994) states that "it is essential that the Sharpe Ratio be computed using the mean and standard deviation of a differential return". His example: fund X returns 5% with 10% volatility, fund Y 8% with 20%, and cash 3%. Mean over volatility ranks X first (<b id="shX0"></b> against <b id="shY0"></b>); the Sharpe ratio on excess return ranks Y first (<b id="shX1"></b> against <b id="shY1"></b>), and Y is the better choice at equal risk. For a long/short position financed at a cost, the carry line (line 70) already charges financing; for a funded long position, setting r<sub>f</sub> = 0 overstates the Sharpe ratio by approximately the cash rate divided by the volatility. Each model report states the benchmark used.</span>
     <span><b style="color:inherit">Costs and lag.</b> <code>net</code> is computed after the one-bar lag (line 62), after transaction costs (line 69) and after carry (line 70). Every Sharpe ratio the project reports therefore satisfies constraints 2 and 3.</span>
     <span><b style="color:inherit">Gold on a calendar-day table.</b> The clean table has one row per calendar day, and gold's forward-filled weekend rows carry zero return. Annualisation sums per-row means and variances over the 365 rows of a year; rows with zero return add nothing to either sum. The result is close to the figure from gold's own trading days with q ≈ 252, which keeps the two instruments on one annualisation convention.</span>
@@ -358,13 +367,13 @@ table.t td:first-child,table.t th:first-child{text-align:left}
     <div><b>autocorrelation ρ(k)</b><span>correlation between a return and the return k periods earlier.<span class="plain">how much today's move tends to follow (positive) or reverse (negative) the move k days ago.</span></span></div>
     <div><b>variance ratio</b><span>variance of q-period returns divided by q times the variance of one-period returns; 1 for uncorrelated returns.<span class="plain">a check on whether risk adds up over time the simple way. Above 1: moves build on each other. Below 1: moves partly cancel.</span></span></div>
     <div><b>standard error</b><span>standard deviation of an estimator across repeated samples.<span class="plain">how much the number would change if the same strategy were tested on a different stretch of history.</span></span></div>
-    <div><b>t-statistic</b><span>an estimate divided by its standard error; for the mean return it equals SR̂·√T.<span class="plain">how many standard errors the result is away from zero. Larger means less likely to be chance.</span></span></div>
+    <div><b>t-statistic</b><span>an estimate divided by its standard error; for the mean return it equals <span class="hat">SR</span>·√T.<span class="plain">how many standard errors the result is away from zero. Larger means less likely to be chance.</span></span></div>
     <div><b>p-value</b><span>probability, under the null hypothesis, of a test statistic at least as extreme as the one observed.<span class="plain">the chance of getting a result this good if the strategy had no edge at all.</span></span></div>
     <div><b>trial</b><span>one backtested configuration of a rule and its parameters.<span class="plain">one version of the idea that was tested. Changing a lookback from 63 to 126 days is a second trial.</span></span></div>
     <div><b>selection bias</b><span>inflation of a reported statistic caused by reporting only the best of several trials.<span class="plain">showing only the best attempt makes the result look better than the method really is.</span></span></div>
     <div><b>MinBTL</b><span>minimum backtest length: years of data needed so that the best of N skill-less trials is not expected to exceed a given Sharpe ratio.<span class="plain">how long the test history must be before trying N versions stops producing an impressive result by chance.</span></span></div>
-    <div><b>skewness γ̂₃</b><span>third standardised moment of returns; negative when large losses are more likely than large gains of the same size.<span class="plain">whether the bad surprises are bigger than the good ones. Negative skew: many small gains, occasional large losses.</span></span></div>
-    <div><b>kurtosis γ̂₄</b><span>fourth standardised moment; 3 for the Normal distribution, higher when extreme returns are more frequent.<span class="plain">how often very large moves happen compared with a bell curve.</span></span></div>
+    <div><b>skewness <span class="hat">γ</span>₃</b><span>third standardised moment of returns; negative when large losses are more likely than large gains of the same size.<span class="plain">whether the bad surprises are bigger than the good ones. Negative skew: many small gains, occasional large losses.</span></span></div>
+    <div><b>kurtosis <span class="hat">γ</span>₄</b><span>fourth standardised moment; 3 for the Normal distribution, higher when extreme returns are more frequent.<span class="plain">how often very large moves happen compared with a bell curve.</span></span></div>
     <div><b>DSR</b><span>deflated Sharpe ratio: the probability that the true Sharpe ratio exceeds the expected maximum of N skill-less trials, adjusted for skewness and kurtosis.<span class="plain">the chance that the strategy is genuinely better than the best of the failures that were tested alongside it.</span></span></div>
     <div><b>haircut</b><span>the percentage reduction from the reported Sharpe ratio to the multiple-testing-adjusted Sharpe ratio.<span class="plain">how much of the reported result is removed once the number of tests is taken into account.</span></span></div>
   </div>
@@ -377,7 +386,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}
     <div><b>Bailey et al.</b><span>D. H. Bailey, J. M. Borwein, M. López de Prado and Q. J. Zhu, "Pseudo-Mathematics and Financial Charlatanism: The Effects of Backtest Overfitting on Out-of-Sample Performance", <em>Notices of the AMS</em> 61(5), 2014. Annualised Sharpe ratio (eq. 2), its asymptotic distribution (eq. 3), the expected maximum of N trials (eq. 4–5), MinBTL (eq. 6) and the five-years, 45-trials statement. Sections 1, 3 and 4.</span></div>
     <div><b>Sharpe</b><span>W. F. Sharpe, "The Sharpe Ratio", <em>Journal of Portfolio Management</em> 21(1), Fall 1994. The ex post ratio on differential returns (eq. 3–6), the relation to the t-statistic, time aggregation under zero serial correlation (eq. 7–10), and the example of funds X and Y. Sections 1 and 2; In this project.</span></div>
     <div><b>Lo</b><span>A. W. Lo, "The Statistics of Sharpe Ratios", <em>Financial Analysts Journal</em> 58(4), July/August 2002. Standard error under IID returns (eq. 9–10, Table 1), time aggregation with serial correlation (eq. 17–22, Table 2). Sections 2 and 3; Lab A.</span></div>
-    <div><b>Bailey and López de Prado</b><span>D. H. Bailey and M. López de Prado, "The Deflated Sharpe Ratio: Correcting for Selection Bias, Backtest Overfitting and Non-Normality", <em>Journal of Portfolio Management</em>, 2014. Eq. 1–2 and the numerical example (N = 100, V = 1/2, T = 1250, γ̂₃ = −3, γ̂₄ = 10). Section 5 and Lab D.</span></div>
+    <div><b>Bailey and López de Prado</b><span>D. H. Bailey and M. López de Prado, "The Deflated Sharpe Ratio: Correcting for Selection Bias, Backtest Overfitting and Non-Normality", <em>Journal of Portfolio Management</em>, 2014. Eq. 1–2 and the numerical example (N = 100, V = 1/2, T = 1250, <span class="hat">γ</span>₃ = −3, <span class="hat">γ</span>₄ = 10). Section 5 and Lab D.</span></div>
     <div><b>Harvey and Liu</b><span>C. R. Harvey and Y. Liu, "Backtesting", <em>Journal of Portfolio Management</em>, Fall 2015. The t-statistic and Sharpe ratio (eq. 1–2), the multiple-testing p-value and haircut Sharpe ratio (eq. 3–5) and the twenty-year, 200-test example; the caveat on non-normal returns. Sections 1, 5 and 6.</span></div>
     <div><b>Lo and MacKinlay</b><span>A. W. Lo and A. C. MacKinlay, "Stock Market Prices Do Not Follow Random Walks: Evidence from a Simple Specification Test", <em>Review of Financial Studies</em> 1(1), 1988. Variance linear in the observation interval (p. 44); the variance ratio as a weighted sum of autocorrelations (eq. 16). Section 2 and Lab A.</span></div>
     <div><b>Politis and Romano</b><span>D. N. Politis and J. P. Romano, "The Stationary Bootstrap", <em>Journal of the American Statistical Association</em> 89(428), 1994. Resampling of blocks of random, geometrically distributed length for weakly dependent series. Section 3.</span></div>
@@ -409,19 +418,19 @@ function prep(c){const dpr=window.devicePixelRatio||1; if(!c._w){c._w=c.width;c.
 function axes(ctx,x0,y0,x1,y1){ctx.strokeStyle=css('--line');ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x0,y1);ctx.lineTo(x1,y1);ctx.stroke();}
 // ---------- anatomy diagrams ----------
 const XSR={
- mu:'<b>μ̂, the sample mean.</b><span>The sum of the T returns divided by T. In <code>backtest.py</code> it is <code>net.mean()</code>, the average daily return after costs and carry. Multiplied by 365 it becomes the annual mean.</span>',
+ mu:'<b><span class="hat">μ</span>, the sample mean.</b><span>The sum of the T returns divided by T. In <code>backtest.py</code> it is <code>net.mean()</code>, the average daily return after costs and carry. Multiplied by 365 it becomes the annual mean.</span>',
  rf:'<b>r<sub>f</sub>, the risk-free return.</b><span>The return on cash over one period. Subtracting it measures only what the strategy earned for taking risk. <code>backtest.py</code> sets it to zero; the "In this project" section states the consequence.</span>',
- sd:'<b>σ̂, the sample standard deviation.</b><span>The square root of the average squared deviation of the returns from their mean, with T − 1 in the denominator. In <code>backtest.py</code> it is <code>net.std()</code>; pandas uses T − 1 by default. Multiplied by √365 it becomes the annual volatility on line 89.</span>',
+ sd:'<b><span class="hat">σ</span>, the sample standard deviation.</b><span>The square root of the average squared deviation of the returns from their mean, with T − 1 in the denominator. In <code>backtest.py</code> it is <code>net.std()</code>; pandas uses T − 1 by default. Multiplied by √365 it becomes the annual volatility on line 89.</span>',
  q:'<b>√q, the annualisation factor.</b><span>The mean grows with the number of periods q; the standard deviation grows with √q when returns are uncorrelated. The ratio grows with √q. For q = 365, √q = <span id="sq365"></span>. Section 2 shows the correction when returns are autocorrelated.</span>',
- hat:'<b>SR̂ and SR.</b><span>SR is the true ratio of the process that generates the returns. It is not observable. SR̂ is the value computed from one sample. Section 3 shows how far SR̂ can be from SR for a given number of years.</span>',
- t:'<b>t = SR̂ · √T.</b><span>The t-statistic tests whether the mean return is zero. It is the per-period Sharpe ratio times the square root of the number of observations. Example: an annual Sharpe ratio of 0.5 over 5 years of daily data is a per-period ratio of 0.5/√365 = <span id="tPer"></span>, and t = <span id="tVal"></span> with T = 1825.</span>'};
+ hat:'<b><span class="hat">SR</span> and SR.</b><span>SR is the true ratio of the process that generates the returns. It is not observable. <span class="hat">SR</span> is the value computed from one sample. Section 3 shows how far <span class="hat">SR</span> can be from SR for a given number of years.</span>',
+ t:'<b>t = <span class="hat">SR</span> · √T.</b><span>The t-statistic tests whether the mean return is zero. It is the per-period Sharpe ratio times the square root of the number of observations. Example: an annual Sharpe ratio of 0.5 over 5 years of daily data is a per-period ratio of 0.5/√365 = <span id="tPer"></span>, and t = <span id="tVal"></span> with T = 1825.</span>'};
 const XD={
- sr:'<b>SR̂, the selected strategy\'s estimate.</b><span>The Sharpe ratio of the configuration that was retained, per period. An annual Sharpe ratio is divided by √q first: the paper\'s 2.5 annual with q = 250 is 2.5/√250 = <span id="xd1"></span> per day.</span>',
- sr0:'<b>SR̂<sub>0</sub>, the rejection threshold.</b><span>The Sharpe ratio that the best of N trials is expected to reach when every trial has zero true Sharpe ratio: the expected maximum of section 4, scaled by the spread of the trials\' Sharpe ratios. The strategy is credited only with the part of SR̂ above this level.</span>',
- T:'<b>√(T − 1), the sample length.</b><span>T is the number of returns. A longer sample makes the same gap between SR̂ and SR̂<sub>0</sub> more significant, as the t-statistic in section 1 does.</span>',
- g3:'<b>γ̂<sub>3</sub>, skewness.</b><span>The average cubed standardised return. Negative skewness means large losses are more frequent than large gains of the same size. In the denominator, −γ̂<sub>3</sub>·SR̂ is positive when skewness is negative and SR̂ is positive, so the denominator grows and the DSR falls.</span>',
- g4:'<b>γ̂<sub>4</sub>, kurtosis.</b><span>The average fourth power of the standardised return; 3 for a Normal distribution. Kurtosis above 3 means extreme returns are more frequent than under a Normal. The term (γ̂<sub>4</sub> − 1)/4 · SR̂² grows with it, so the DSR falls.</span>',
- V:'<b>V[{SR̂<sub>n</sub>}], the variance across trials.</b><span>The variance of the Sharpe ratios of all N trials. If the trials are near-copies of one another, their Sharpe ratios differ little, V is small and the threshold is low. In the paper\'s example the annual variance is 1/2, which is 1/(2·250) per day.</span>',
+ sr:'<b><span class="hat">SR</span>, the selected strategy\'s estimate.</b><span>The Sharpe ratio of the configuration that was retained, per period. An annual Sharpe ratio is divided by √q first: the paper\'s 2.5 annual with q = 250 is 2.5/√250 = <span id="xd1"></span> per day.</span>',
+ sr0:'<b><span class="hat">SR</span><sub>0</sub>, the rejection threshold.</b><span>The Sharpe ratio that the best of N trials is expected to reach when every trial has zero true Sharpe ratio: the expected maximum of section 4, scaled by the spread of the trials\' Sharpe ratios. The strategy is credited only with the part of <span class="hat">SR</span> above this level.</span>',
+ T:'<b>√(T − 1), the sample length.</b><span>T is the number of returns. A longer sample makes the same gap between <span class="hat">SR</span> and <span class="hat">SR</span><sub>0</sub> more significant, as the t-statistic in section 1 does.</span>',
+ g3:'<b><span class="hat">γ</span><sub>3</sub>, skewness.</b><span>The average cubed standardised return. Negative skewness means large losses are more frequent than large gains of the same size. In the denominator, −<span class="hat">γ</span><sub>3</sub>·<span class="hat">SR</span> is positive when skewness is negative and <span class="hat">SR</span> is positive, so the denominator grows and the DSR falls.</span>',
+ g4:'<b><span class="hat">γ</span><sub>4</sub>, kurtosis.</b><span>The average fourth power of the standardised return; 3 for a Normal distribution. Kurtosis above 3 means extreme returns are more frequent than under a Normal. The term (<span class="hat">γ</span><sub>4</sub> − 1)/4 · <span class="hat">SR</span>² grows with it, so the DSR falls.</span>',
+ V:'<b>V[{<span class="hat">SR</span><sub>n</sub>}], the variance across trials.</b><span>The variance of the Sharpe ratios of all N trials. If the trials are near-copies of one another, their Sharpe ratios differ little, V is small and the threshold is low. In the paper\'s example the annual variance is 1/2, which is 1/(2·250) per day.</span>',
  Z:'<b>Z[·], the standard Normal cumulative distribution.</b><span>Z[x] is the probability that a standard Normal variable is below x. Z[1.645] = <span id="z1645"></span>, so a ratio inside the brackets above 1.645 gives a DSR above 0.95.</span>'};
 function anat(boxId,xId,MAP,after){const box=$(boxId); const show=k=>{box.querySelectorAll('.term').forEach(b=>b.classList.toggle('on',b.dataset.k===k)); $(xId).innerHTML=MAP[k]; after&&after(); const b=box.querySelector('.term.on'); if(window.matchMedia('(min-width:761px)').matches){const off=Math.max(0,b.offsetTop-box.offsetTop); $(xId).style.marginTop=off+'px';} else $(xId).style.marginTop='0';};
   box.querySelectorAll('.term').forEach(b=>b.addEventListener('click',()=>show(b.dataset.k))); show(box.querySelector('.term.on').dataset.k);}
@@ -495,16 +504,16 @@ function labC(){const N=NS[+$('cN').value], y=+$('cY').value, seed=+$('cSeed').v
 // ---------- Lab D ----------
 function labD(){const SRa=+$('dSR').value, q=+$('dQ').value, T=+$('dT').value, N=Math.max(1,Math.round(+$('dN').value)), V=+$('dV').value, g3=+$('dG3').value, g4=+$('dG4').value;
   const sr=SRa/Math.sqrt(q), sr0=Math.sqrt(V/q)*eMax(N), den=1-g3*sr+(g4-1)/4*sr*sr, z=(sr-sr0)*Math.sqrt(T-1)/Math.sqrt(den), dsr=Phi(z);
-  $('dOut').textContent='SR̂ per period   = '+SRa+' / √'+q+' = '+sr.toFixed(4)+'\n'+
+  $('dOut').textContent='<span class="hat">SR</span> per period   = '+SRa+' / √'+q+' = '+sr.toFixed(4)+'\n'+
    'E[max_N], N='+N+'  = '+eMax(N).toFixed(4)+'\n'+
-   'SR̂₀ per period  = √('+V+'/'+q+') × '+eMax(N).toFixed(4)+' = '+sr0.toFixed(4)+'   (annual '+(sr0*Math.sqrt(q)).toFixed(3)+')\n'+
+   '<span class="hat">SR</span>₀ per period  = √('+V+'/'+q+') × '+eMax(N).toFixed(4)+' = '+sr0.toFixed(4)+'   (annual '+(sr0*Math.sqrt(q)).toFixed(3)+')\n'+
    'denominator     = √(1 − ('+f(g3,2)+')·'+sr.toFixed(4)+' + ('+g4+'−1)/4·'+sr.toFixed(4)+'²) = '+Math.sqrt(den).toFixed(4)+'\n'+
    'z               = ('+sr.toFixed(4)+' − '+sr0.toFixed(4)+') × √'+(T-1)+' / '+Math.sqrt(den).toFixed(4)+' = '+z.toFixed(3)+'\n'+
    'DSR = Z[z]      = '+dsr.toFixed(4);
   const v=$('dV95'); v.className='verdict '+(dsr>0.95?'pass':'fail'); v.textContent=dsr>0.95?'DSR > 0.95: retained as evidence of a positive true Sharpe ratio at the 95% level':'DSR ≤ 0.95: not evidence of a positive true Sharpe ratio at the 95% level';}
 function labH(){const SRa=+$('hSR').value, q=+$('hQ').value, T=+$('hT').value, N=Math.max(1,Math.round(+$('hN').value));
   const sr=SRa/Math.sqrt(q), t=sr*Math.sqrt(T), pS=2*(1-Phi(t)), pM=1-Math.pow(1-pS,N), tM=PhiInv(1-pM/2), hsr=tM/Math.sqrt(T)*Math.sqrt(q), hc=(SRa-hsr)/SRa;
-  $('hOut').textContent='t = SR̂·√T        = '+sr.toFixed(4)+' × √'+T+' = '+t.toFixed(3)+'\n'+
+  $('hOut').textContent='t = <span class="hat">SR</span>·√T        = '+sr.toFixed(4)+' × √'+T+' = '+t.toFixed(3)+'\n'+
    'pˢ (single test)   = '+pS.toPrecision(2)+'\n'+
    'pᴹ = 1 − (1 − pˢ)ᴺ = '+pM.toFixed(3)+'   (N = '+N+')\n'+
    't for pᴹ           = '+tM.toFixed(3)+'\n'+

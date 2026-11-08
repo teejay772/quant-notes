@@ -35,7 +35,7 @@ h3{font-size:21px}
 p{margin:0}
 .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
 header{padding-block:56px 24px;display:flex;flex-direction:column;gap:16px}
-.lede{font-size:21px;color:var(--muted);max-width:620px}
+.lede{font-size:21px;color:var(--muted);max-width:none;line-height:1.5}
 section{display:flex;flex-direction:column;gap:18px}
 .lab{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px;margin-top:8px}
 .lab-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
@@ -131,7 +131,7 @@ details.week summary::-webkit-details-marker{display:none}
 <header class="wide">
   <p class="eyebrow">Quant notes · 05 research plan</p>
   <h1>Development, backtesting and out-of-sample evaluation of two long/short models on gold and bitcoin</h1>
-  <p class="lede">A daily trend model and an intraday model on XAU/USD and BTC/USD are specified from the literature, backtested net of transaction costs, validated by walk-forward analysis, frozen, and run on a simulated account. This page sets out the sixteen-week schedule, the sources consulted in each week and the deliverable that records it, so that the sequence of work can be checked against the research log.</p>
+  <p class="lede">A daily trend model and an intraday model on XAU/USD and BTC/USD are specified from the literature, backtested net of transaction costs, validated by walk-forward analysis, frozen, and run on a simulated account.</p>
 </header>
 
 <!-- 1 shape -->
@@ -168,21 +168,6 @@ details.week summary::-webkit-details-marker{display:none}
   <div class="weeks" id="weeks"></div>
 </section>
 
-<!-- 3 credible -->
-<section class="wide">
-  <h2>3 · Evaluation criteria</h2>
-</section>
-<section class="wide">
-  <div class="callout cgrid"><b>Conditions for a result to be reported as credible.</b>
-    <span>An <dfn title="Measured on data that was not used when the parameters were chosen.">out-of-sample</dfn> Sharpe ratio, net of costs, within a plausible range: approximately 0.3–0.6 per instrument and 0.5–0.8 for the combined two-instrument book. Values of 1.0 or above are re-examined for an error before they are reported; backtest values of 3 or above are treated as evidence of overfitting rather than of skill.</span>
-    <span>Simulated-account results consistent with the backtest: comparable position sizes and turnover, and realised slippage within the cost assumption.</span>
-    <span>A complete research log: each rule recorded before it is tested, negative results retained, and the number of variants tried stated so that the Sharpe ratio can be adjusted for multiple testing.</span>
-    <span>Funding rates, gold trading hours and weekend gaps modelled within the backtest rather than noted outside it.</span></div>
-  <p class="reading" style="font-size:15px;color:var(--muted);padding-left:16px;border-left:3px solid var(--accent-soft)">Results are presented only after three to four months of simulated trading, which places that point around weeks 20–24, beyond the end of this plan.</p>
-  <p class="reading" style="font-size:15px;color:var(--muted);padding-left:16px;border-left:3px solid var(--accent-soft)">Basis for the Sharpe ranges: Carver reports about 0.40 for a diversified set of trend rules on a single instrument. Two instruments at equal risk, each with Sharpe ratio s and with return correlation ρ, combine to s·√2/√(1 + ρ); at ρ = 0.1 this is <span id="cmb4"></span> for s = 0.4 and <span id="cmb5"></span> for s = 0.5.</p>
-  <p class="reading" style="font-size:15px;color:var(--muted);padding-left:16px;border-left:3px solid var(--warm-soft)"><strong>Open decision, due before week 8: the short side.</strong> The firm's specification is long/short on XAU/USD and BTC/USD. The Alpaca paper account cannot short crypto, and its gold instrument is GLD, an exchange-traded fund that trades in US market hours only. In the full-history BTC backtest the rule is short on 31% of days. Model 1 begins simulated trading only on an account that can hold short positions in both instruments, with that account's fees and funding entered in the backtest; until then, a long-only Alpaca run is recorded as a plumbing test, not as Model 1.</p>
-</section>
-
 <!-- 4 in this project -->
 <section class="wide">
   <h2>In this project</h2>
@@ -198,25 +183,6 @@ details.week summary::-webkit-details-marker{display:none}
     <div><b>live/live_alpaca.py</b><span>Weeks 8 and 14. The daily script that turns a frozen rule into orders on the simulated account and appends to <code>results/live_log.csv</code>.</span></div>
     <div><b>notes/&lt;model&gt;_spec.md</b><span>Weeks 7 and 13. The frozen rule, written out exactly, before any live order.</span></div>
     <div><b>tests/</b><span>Every change to <code>src/</code>. Buy-and-hold reproduces the asset, the position is yesterday's signal, costs reduce returns, the mask freezes gold.</span></div>
-  </div>
-</section>
-
-<!-- 5 glossary -->
-<section class="wide">
-  <h2>4 · Terminology</h2>
-  <p class="note">Each entry gives the technical definition, then the same idea in everyday terms in the orange strip.</p>
-</section>
-<section class="wide">
-  <div class="gloss">
-    <div><b>long / short</b><span>a long position gains when the price rises; a short position gains when it falls.<span class="plain">a position that benefits from a rise, or one that benefits from a fall. A long/short model can hold either, so it does not depend on the market going up.</span></span></div>
-    <div><b>simulated account</b><span>a broker account that executes orders against live prices with simulated capital; also called a paper or demo account.<span class="plain">a practice account with real prices and real order handling but no real money. It tests the execution and the process, not the return.</span></span></div>
-    <div><b>walk-forward</b><span>parameters are chosen on a training window and evaluated on the following, unseen window; the procedure is repeated along the history and the evaluation windows are concatenated.<span class="plain">choose the setting on three years of data, apply it to the next year only, move forward a year, repeat. No setting is judged on the data that chose it.</span></span></div>
-    <div><b>out-of-sample</b><span>data not used when the parameters were chosen.<span class="plain">the part of the history the rule was not fitted to.</span></span></div>
-    <div><b>robustness</b><span>the stability of a result under perturbation: neighbouring parameters, higher assumed costs, each instrument alone, different market regimes.<span class="plain">whether the result survives small changes. A rule that works only at one exact lookback and one exact cost level is a coincidence.</span></span></div>
-    <div><b>frozen specification</b><span>the rule, parameters and position sizing recorded in full and held fixed from the start of simulated trading.<span class="plain">the method written down before it is run. A later change defines a new model with a new log, not a revision of the old one.</span></span></div>
-    <div><b>regime</b><span>a period of the history with distinct statistical character: a crash, a sustained rise, a flat year.<span class="plain">a period with its own conditions. A rule evaluated only on favourable periods has not been tested.</span></span></div>
-    <div><b>live log</b><span>one record per trading day: signal, target position, fill, slippage, and profit and loss against the backtest's expectation.<span class="plain">the daily record that lets a reader check that the model did in practice what the backtest said it would.</span></span></div>
-    <div><b>Model 1 / Model 2</b><span>a daily trend-following model and a short-term intraday model on the same two instruments.<span class="plain">a slow model that follows moves lasting months, and a fast one that trades within days. They are expected to earn at different times.</span></span></div>
   </div>
 </section>
 
